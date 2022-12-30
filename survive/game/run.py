@@ -11,7 +11,7 @@ from mainmenu import GAME_TITLE, MainMenu
 from sprites import SpriteSheet
 
 
-def main():
+def run():
     pygame.init()
 
     DISPLAYSURF = pygame.display.set_mode((WINDOW_W, WINDOW_H))
@@ -117,7 +117,3 @@ def main():
         prev_state = curr_state
 
     pygame.quit()
-
-
-if __name__ == "__main__":
-    main()
