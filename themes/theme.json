@@ -1,0 +1,299 @@
+{
+    "load_courier_prime": {
+        "font": {
+            "name": "courier_prime",
+            "size": 64,
+            "regular_path": "fonts/CourierPrime-Regular.ttf",
+            "bold_path": "fonts/CourierPrime-Bold.ttf",
+            "italic_path": "fonts/CourierPrime-Italic.ttf",
+            "bold_italic_path": "fonts/CourierPrime-BoldItalic.ttf"
+        }
+    },
+    "defaults": {
+        "colours": {
+             "normal_bg":"#45494e",
+             "hovered_bg":"#35393e",
+             "disabled_bg":"#25292e",
+             "selected_bg":"#193754",
+             "dark_bg":"#15191e",
+             "normal_text":"#c5cbd8",
+             "hovered_text":"#FFFFFF",
+             "selected_text":"#FFFFFF",
+             "disabled_text":"#6d736f",
+             "link_text": "#0000EE",
+             "link_hover": "#2020FF",
+             "link_selected": "#551A8B",
+             "text_shadow": "#777777",
+             "normal_border": "#DDDDDD",
+             "hovered_border": "#B0B0B0",
+             "disabled_border": "#808080",
+             "selected_border": "#8080B0",
+             "active_border": "#8080B0",
+             "filled_bar":"#f4251b",
+             "unfilled_bar":"#CCCCCC"
+        }
+    },
+    "panel": {
+        "colours": {
+            "dark_bg": "#55595e"
+        }
+    },
+    "label":
+    {
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "text_box":
+    {
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "#close_button": {
+        "font": {
+            "name": "montserrat",
+            "size": "12"
+        }
+    },
+    "button":
+    {
+        "misc":
+        {
+            "shape": "rounded_rectangle",
+            "shape_corner_radius": "10",
+            "border_width": "1",
+            "shadow_width": "2"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "14"
+        }
+    },
+    "#inventory":
+     {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "0,320,32,32"
+             }
+         }
+    },
+    "#pause":
+     {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "480,320,32,32"
+             }
+         }
+    },
+    "@inventory_ui_destroy":
+     {
+        "colours": {
+            "normal_bg": "#55595e"
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "384,320,32,32"
+             }
+         }
+    },
+    "@inventory_ui_inspect":
+     {
+        "colours": {
+            "normal_bg": "#55595e"
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "256,320,32,32"
+             }
+         }
+    },
+    "@shop_ui_purchase":
+     {
+        "colours": {
+            "normal_bg": "#55595e"
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "416,384,32,32"
+             }
+         }
+    },
+    "@inventory_ui_item": {
+        "colours": {
+            "dark_bg": "#55595e"
+        },
+        "misc": {
+            "text_horiz_alignment": "left",
+            "text_vert_alignment": "center",
+            "border_width": "0",
+            "shadow_width": "0"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "@inventory_ui_wield":
+     {
+        "colours": {
+            "normal_bg": "#55595e"
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "224,96,32,32"
+             }
+         }
+    },
+    "@inventory_ui_potion":
+     {
+        "colours": {
+            "normal_bg": "#55595e"
+        },
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+         "images": {
+             "normal_image":
+             {
+                 "path": "ui/icons.png",
+                 "sub_surface_rect": "0,288,32,32"
+             }
+         }
+    },
+    "@mainmenu_title":
+     {
+        "font": {
+            "name": "courier_prime",
+            "size": "32"
+        }
+    },
+    "@mainmenu_subtitle":
+     {
+        "font": {
+            "name": "courier_prime",
+            "size": "16"
+        }
+    },
+    "@mainmenu_buttons":
+     {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "@battle_buttons": {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "14"
+        }
+    },
+    "@battle_ui": {
+        "colours": {
+            "dark_bg": "#15191e"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "#battle_title":
+     {
+        "font": {
+            "name": "courier_prime",
+            "size": "32"
+        }
+    },
+    "#battle_subtitle":
+     {
+        "font": {
+            "name": "courier_prime",
+            "size": "16"
+        }
+    },
+    "@battle_textbox":
+    {
+        "misc": {
+            "border_width": "0"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "@dialog":
+    {
+        "misc": {
+            "border_width": "0"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    }
+}
