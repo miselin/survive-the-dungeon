@@ -1,8 +1,8 @@
 import pygame
 import pygame_gui
 
-from game import Game, game
-from item import InstantEffectItem, Weapon, WieldableItem
+from .game import Game, game
+from .item import InstantEffectItem, Weapon, WieldableItem
 
 
 class InventoryModal(object):

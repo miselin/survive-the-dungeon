@@ -1,4 +1,4 @@
-from dice import Dice
+from .dice import Dice
 
 COLOR_RED = "#FF6464"
 COLOR_GREEN = "#64FF64"

@@ -1,6 +1,6 @@
 import math
 
-from game import game
+from .game import game
 
 
 class Combat:
@@ -20,10 +20,10 @@ class Combat:
 
         armorBonus = defender.defenseBonus * defmult
         shieldBonus = 0
-        AC = 10 + armorBonus + shieldBonus + defender.attributes.getModifier("dex")
+        AC = 10 + armorBonus + shieldBonus + defender.attributes.get_modifier("dex")
 
         attackRoll = self.dice.roll()
-        attackBonus = attacker.attackBonus + defender.attributes.getModifier("str")
+        attackBonus = attacker.attackBonus + defender.attributes.get_modifier("str")
         AR = attackRoll + attackBonus
 
         hit = False

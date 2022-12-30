@@ -3,7 +3,7 @@ import struct
 
 import numpy as np
 
-from worldmap import Cell, Map, Room
+from .worldmap import Cell, Map, Room
 
 
 def buckshot_positions(r, max_x, max_y, count=16):

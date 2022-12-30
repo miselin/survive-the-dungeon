@@ -4,11 +4,11 @@ import pygame
 import pygame_gui
 import tcod
 
-from dungeon import WINDOW_H, WINDOW_W, Dungeon, SpriteSet
-from game import Game, set_game
-from gameend import GameEndedScreen
-from mainmenu import GAME_TITLE, MainMenu
-from sprites import SpriteSheet
+from .dungeon import WINDOW_H, WINDOW_W, Dungeon, SpriteSet
+from .game import Game, set_game
+from .gameend import GameEndedScreen
+from .mainmenu import GAME_TITLE, MainMenu
+from .sprites import SpriteSheet
 
 
 def run():

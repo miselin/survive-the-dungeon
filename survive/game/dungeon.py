@@ -4,22 +4,22 @@ import numpy as np
 import pygame
 import pygame_gui
 
-from ai import AI
-from attributes import AttributeSet
-from battle import Battle
-from combat import Combat
-from creature import Creature
-from dice import Dice
-from game import Game
-from inventoryui import InventoryModal
-from item import (Armor, Buff, Container, Gold, InstantEffectItem, Poison,
-                  Weapon, WieldableItem)
-from mapgen import Cell, generate_map
-from shopui import Shop
-from transferui import InventoryTransferModal
-from words import random_adjective, random_adverb
-from worldmap import Room
-from env import ON_REPLIT
+from .ai import AI
+from .attributes import AttributeSet
+from .battle import Battle
+from .combat import Combat
+from .creature import Creature
+from .dice import Dice
+from .env import ON_REPLIT
+from .game import Game
+from .inventoryui import InventoryModal
+from .item import (Armor, Buff, Container, Gold, InstantEffectItem, Poison,
+                   Weapon, WieldableItem)
+from .mapgen import Cell, generate_map
+from .shopui import Shop
+from .transferui import InventoryTransferModal
+from .words import random_adjective, random_adverb
+from .worldmap import Room
 
 if ON_REPLIT:
     # 800x400 is about right for the Replit cover page
@@ -211,8 +211,6 @@ class Dungeon:
 
         self.ai = AI(
             self,
-            self.player,
-            self.worldmap,
             lambda pos: self.walkable(pos),
             lambda mob: self.handle_attack(mob),
         )
@@ -398,6 +396,7 @@ class Dungeon:
         self._shop_button.visible = False
 
         self._modal = None
+        self._battle = None
 
         self._time_accum = 0.0
         self._x_delta = 0
@@ -501,6 +500,9 @@ class Dungeon:
         if self._modal is not None:
             self._modal.kill()
 
+        if self._battle is not None:
+            self._battle.kill()
+
         self.container.kill()
 
     def handle_attack(self, mob):
@@ -508,13 +510,15 @@ class Dungeon:
         if self._modal is not None:
             return
 
-        self._modal = Battle(
-            self.container,
-            self.ui,
-            self.surface,
+        if self._battle is not None:
+            return
+
+        rect = self.container.get_rect()
+        self._battle = Battle(
             self.player,
             mob,
-            LOG_Y,
+            rect=pygame.Rect(0, 0, rect.width, LOG_Y),
+            manager=self.ui,
         )
         self._inventory_button.visible = False
 
@@ -620,6 +624,10 @@ class Dungeon:
                 self._shop_button.enable()
             elif event.ui_element == self._pause_window:
                 self._pause_window = None
+            elif event.ui_element == self._battle:
+                self._inventory_button.visible = True
+                self._battle = None
+                self.should_think = True
 
     def draw_map(self):
         for cell in self.worldmap.cells:
@@ -788,6 +796,10 @@ class Dungeon:
                 self.should_think = True
             else:
                 return True
+
+        if self._battle is not None:
+            self._battle.tick(dt)
+            return True
 
         if self.first_loop:
             self.should_think = self.first_loop

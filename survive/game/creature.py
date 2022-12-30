@@ -1,14 +1,18 @@
 import math
 
-from attributes import AttributeSet
-from dice import Dice
-from game import game
-from item import Container, Gold
+from .attributes import AttributeSet
+from .dice import Dice
+from .game import game
+from .item import Container, Gold
 
 
 class Creature:
     def __init__(
-        self, sprite, initial_pos, name="Creature", attribute_override=None, debug=False
+        self,
+        sprite,
+        initial_pos,
+        name="Creature",
+        attribute_override=None,
     ):
         self.sprite = sprite
         self.position = initial_pos
@@ -21,9 +25,6 @@ class Creature:
             self.attributes = attribute_override
         else:
             self.attributes = AttributeSet()
-
-        # Debugging dumps (verbose!)
-        self.debug = debug
 
         # Alive or dead?
         self.alive = True
@@ -105,10 +106,6 @@ class Creature:
         # Creatures can be controlled by an AI that needs to think, too.
         self.ai = None
 
-    def writedebug(self, s):
-        if self.debug:
-            print(s)
-
     def rollforattrs(self):
         rolls = self.attributes.rollfor()
 
@@ -133,21 +130,21 @@ class Creature:
 
     def getWeaponDamage(self):
         # Unarmed combat: 1-6 damage.
-        if self.wieldpoints["hands"] == None:
+        if self.wieldpoints["hands"] is not None:
             return "1d6"
         else:
             return self.wieldpoints["hands"].damage()
 
     def getWeaponCriticalRange(self):
         # Unarmed combat is always a 5% chance of a critical
-        if self.wieldpoints["hands"] == None:
+        if self.wieldpoints["hands"] is not None:
             return 20
         else:
             return self.wieldpoints["hands"].criticalRange()
 
     def getWeaponCriticalMultiplier(self):
         # Unarmed combat will always have a 2x damage critical
-        if self.wieldpoints["hands"] == None:
+        if self.wieldpoints["hands"] is not None:
             return 2
         else:
             return self.wieldpoints["hands"].criticalMultiplier()
@@ -164,18 +161,6 @@ class Creature:
 
         # Apply bonuses
         if item is not None:
-            self.writedebug(
-                "Creature '%s' at turn %d wielded '%s' on '%s' for %d Attack Bonus and %d Defense Bonus"
-                % (
-                    self.name,
-                    self.turn,
-                    item.name,
-                    point,
-                    item.getAttackBonus(),
-                    item.getDefenseBonus(),
-                )
-            )
-
             self.attackBonus += item.getAttackBonus()
             self.defenseBonus += item.getDefenseBonus()
 
@@ -187,36 +172,12 @@ class Creature:
 
         buff.setExpiry(self.turn + buff.getLifetime())
 
-        self.writedebug(
-            "Creature '%s' at turn %d has had a buff (%s) applied for %d turns, with +%d HP, +%d Attack Bonus, +%d Defense Bonus."
-            % (
-                self.name,
-                self.turn,
-                buff.name,
-                buff.getLifetime(),
-                buff.getHpBuff(),
-                buff.getAttackBuff(),
-                buff.getDefenseBuff(),
-            )
-        )
-
         self.hitpoints += buff.getHpBuff()
         self.attackBonus += buff.getAttackBuff()
         self.defenseBonus += buff.getDefenseBuff()
 
     def poison(self, poison):
         self.poisons += [poison]
-
-        self.writedebug(
-            "Creature '%s' at turn %d has had poison (%s) applied for %d turns, with %d damage per turn."
-            % (
-                self.name,
-                self.turn,
-                poison.name,
-                poison.getLifetime(),
-                poison.damagePerTurn(),
-            )
-        )
 
         poison.setExpiry(self.turn + poison.getLifetime())
 
@@ -232,10 +193,6 @@ class Creature:
         removeList = []
         for buff in self.buffs:
             if buff.hasExpired(self.turn):
-                self.writedebug(
-                    "Creature '%s' at turn %d has had buff '%s' expire."
-                    % (self.name, self.turn, buff.name)
-                )
                 removeList += [buff]
 
         for buff in removeList:
@@ -254,10 +211,6 @@ class Creature:
         removeList = []
         for poison in self.poisons:
             if poison.hasExpired(self.turn):
-                self.writedebug(
-                    "Creature '%s' at turn %d has had poison '%s' expire."
-                    % (self.name, self.turn, poison.name)
-                )
                 removeList += [poison]
 
             self.hitpoints -= poison.damagePerTurn()
@@ -267,14 +220,8 @@ class Creature:
 
         # Are we dead?
         if self.hitpoints <= 0:
-            self.writedebug("Creature: at turn %d, '%s' died." % (self.turn, self.name))
             self.alive = False
             self.hitpoints = 0
-        else:
-            self.writedebug(
-                "Creature: at turn %d, '%s' has %d HP."
-                % (self.turn, self.name, self.hitpoints)
-            )
 
         # Turn complete
         self.turn += 1

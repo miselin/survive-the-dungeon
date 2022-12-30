@@ -1,43 +1,64 @@
-from game import game
+"""AI for creatures in the dungeon"""
+
+from typing import Callable, List, Optional, Tuple
+
+from . import types
+from .creature import Creature
+from .game import game
+from .worldmap import Room
 
 
 class AI:
-    def __init__(self, dungeon, player, worldmap, pos_walkable_cb, attack_cb):
+    """AI holds the main AI state and instances for each creature"""
+
+    def __init__(
+        self,
+        dungeon: "Dungeon",
+        pos_walkable_cb: Callable[[Tuple[int, int]], bool],
+        attack_cb: Callable[[Creature], None],
+    ):
         self.dungeon = dungeon
-        self.player = player
-        self.worldmap = worldmap
-        self.instances = []
-        self.tasks = []
+        self.player = dungeon.player
+        self.worldmap = dungeon.worldmap
+        self.instances: List["AIInstance"] = []
         self.pos_walkable_cb = pos_walkable_cb
         self.attack_cb = attack_cb
 
-    def attach(self, creature):
+    def attach(self, creature: Creature):
+        """Attach attaches an AIInstance to the given creature."""
         self.instances.append(AIInstance(self, creature))
 
-    def detach(self, instance):
+    def detach(self, instance: "AIInstance"):
+        """Detach removes an attached AIInstance."""
         self.instances.remove(instance)
 
 
 class AIInstance:
-    def __init__(self, ai, creature):
-        self.ai = ai
+    """AIInstance handles AI logic for a single creature"""
+
+    def __init__(self, ai_state: AI, creature: Creature):
+        self.ai_state = ai_state
         self.creature = creature
 
         self.creature.ai_control(self)
 
-        self.moving_to = None
-        self.path = None
+        self.moving_to: Optional[types.Position] = None
+        self.path: List[types.Position] = []
 
         self.leisurely = True
 
     def detach(self):
-        self.ai.detach(self)
+        """Detach this AIInstance from the main AI."""
+        self.ai_state.detach(self)
 
-    def move_to(self, room=None, pos=None):
-        if room is None and pos is None:
-            return
-
+    def move_to(
+        self, room: Optional[Room] = None, pos: Optional[types.Position] = None
+    ):
+        """Set the AI a new move-to goal."""
         if pos is None:
+            if room is None:
+                return
+
             self.moving_to = list(
                 room.generate_random_positions(
                     game().random(), 1, [self.creature.position]
@@ -46,20 +67,22 @@ class AIInstance:
             self.moving_to = room.room_to_world(self.moving_to)
         else:
             self.moving_to = pos
+
         self.path = list(
-            self.ai.worldmap.path_to(
+            self.ai_state.worldmap.path_to(
                 self.creature.position,
                 self.moving_to,
-                self.ai.player,
-                self.ai.dungeon.creatures,
-                self.ai.dungeon.containers,
+                self.ai_state.player,
+                self.ai_state.dungeon.creatures,
+                self.ai_state.dungeon.containers,
             )
         )
 
     def think(self):
-        player_pos = self.ai.player.position
-        player_room = self.ai.worldmap.room_at(*player_pos)
-        my_room = self.ai.worldmap.room_at(*self.creature.position)
+        """Run the AI for an interation."""
+        player_pos = self.ai_state.player.position
+        player_room = self.ai_state.worldmap.room_at(*player_pos)
+        my_room = self.ai_state.worldmap.room_at(*self.creature.position)
 
         if player_room == my_room:
             self.leisurely = False
@@ -68,7 +91,7 @@ class AIInstance:
 
             # we're next to the player. attack!
             if len(self.path) == 1:
-                self.ai.attack_cb(self.creature)
+                self.ai_state.attack_cb(self.creature)
         else:
             self.leisurely = True
 
@@ -84,6 +107,6 @@ class AIInstance:
             # otherwise we flip a coin!
             if (not self.leisurely) or (game().random().randint(1, 12) > 8):
                 next_pos = self.path[0]
-                if self.ai.pos_walkable_cb(next_pos):
+                if self.ai_state.pos_walkable_cb(next_pos):
                     self.creature.position = next_pos
                     self.path = self.path[1:]

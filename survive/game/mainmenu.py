@@ -4,8 +4,8 @@ import time
 import pygame
 import pygame_gui
 
-from customseed import CustomSeed
-from game import Game, game
+from .customseed import CustomSeed
+from .game import Game, game
 
 GAME_TITLE = "Survive the Dungeon"
 GAME_SUBTITLE = "Infinite procedural dungeons. Survival is not guaranteed."

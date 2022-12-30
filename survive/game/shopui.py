@@ -3,7 +3,7 @@ import itertools
 import pygame
 import pygame_gui
 
-from game import game
+from .game import game
 
 
 class Shop(pygame_gui.elements.UIWindow):

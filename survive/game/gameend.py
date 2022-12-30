@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
 
-from game import Game, game
+from .game import Game, game
 
 YOU_WON = "Dungeon cleared!"
 YOU_WON_SUBTITLE = "todo: submit your score here!"

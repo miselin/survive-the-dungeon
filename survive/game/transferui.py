@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
 
-from game import Game, game
+from .game import Game, game
 
 SUBTITLE = "Choose what to loot!"
 

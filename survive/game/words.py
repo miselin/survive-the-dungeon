@@ -1,6 +1,6 @@
 import json
 
-from game import game
+from .game import game
 
 adverbs = None
 adjectives = None
