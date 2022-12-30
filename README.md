@@ -6,3 +6,5 @@ Features:
 - battle system based on dice
 - inventory management and a shop in every dungeon
 - Daily Dungeon with a new seed every 24 hours
+
+Try it out here: https://replit.com/@mattiselin/Survive-the-Dungeon?v=1
