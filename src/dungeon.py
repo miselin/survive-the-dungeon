@@ -19,10 +19,15 @@ from shopui import Shop
 from transferui import InventoryTransferModal
 from words import random_adjective, random_adverb
 from worldmap import Room
+from env import ON_REPLIT
 
-# 800x400 is about right for the Replit cover page
-WINDOW_W = 800  # 640
-WINDOW_H = 400  # 480
+if ON_REPLIT:
+    # 800x400 is about right for the Replit cover page
+    WINDOW_W = 800
+    WINDOW_H = 400
+else:
+    WINDOW_W = 1440
+    WINDOW_H = 900
 
 LOG_ENTRIES = 6
 LOG_PIXELS = 14
