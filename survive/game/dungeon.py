@@ -434,7 +434,9 @@ class Dungeon:
             if mountpoint != "hands":
                 ab = self.dice.roll()
                 db = self.dice.roll()
-                item = Armor(mountpoint, name=name.title(), attackbonus=ab, defensebonus=db)
+                item = Armor(
+                    mountpoint, name=name.title(), attackbonus=ab, defensebonus=db
+                )
 
                 value = (ab * 3) + (db * 2)
                 value *= value_mult

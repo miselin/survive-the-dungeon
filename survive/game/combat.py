@@ -1,10 +1,26 @@
 """This module handles logic for combat"""
 
+import dataclasses
 import math
+from typing import Optional
 
 from .creature import Creature
 from .dice import Dice
 from .game import game
+from .item import InstantEffectItem
+
+
+# TODO(miselin): this should be in Combat
+@dataclasses.dataclass
+class CombatState:
+    """CombatState encapsulates key state for a battle"""
+
+    player: Creature
+    defender: Creature
+    atkmult: float
+    defmult: float
+    needs_turn: bool
+    player_heal: Optional[InstantEffectItem]
 
 
 class Combat:
@@ -13,7 +29,7 @@ class Combat:
     def __init__(self, dice: Dice):
         self.dice = dice
 
-    def attack(self, attacker: Creature, defender: Creature, atkmult=1.0, defmult=1.0):
+    def _attack(self, attacker: Creature, defender: Creature, atkmult=1.0, defmult=1.0):
         """attack handles the logic for an attack from attacker to defender
 
         Returns True if either creature is now dead. False otherwise."""
@@ -33,7 +49,6 @@ class Combat:
 
         attack_roll = self.dice.roll()
         attack_bonus = attacker.attack_bonus + defender.attributes.get_modifier("str")
-        attack_roll = attack_roll + attack_bonus
 
         hit = False
 
@@ -56,6 +71,9 @@ class Combat:
             else:
                 game().log(attacker.name + " HIT")
         else:
+            # not a crit, attack bonus now applies
+            attack_roll += attack_bonus
+
             log_msg = f"AR: {attack_roll} vs AC: {armor_class}"
             hit = attack_roll > armor_class
             if hit:
@@ -75,3 +93,33 @@ class Combat:
             defender.hitpoints -= int(math.ceil(damroll))
 
         return not (attacker.alive and defender.alive)
+
+    def turn(self, state: CombatState):
+        """Run a turn of combat using the given battle state."""
+
+        if not state.needs_turn:
+            return
+
+        # player can either heal or attack on their turn
+        if state.player_heal is not None:
+            state.player.inventory.take_item(state.player_heal)
+            applied = state.player_heal.apply(state.player)
+            game().log(
+                f"{state.player.name} healed {applied} with {state.player_heal.name}"
+            )
+            state.player_heal = None
+        else:
+            self._attack(state.player, state.defender, atkmult=state.atkmult)
+
+        # don't let the defender retaliate if the player dealt a fatal blow
+        if state.defender.hitpoints >= 1:
+            self._attack(state.defender, state.player, defmult=state.defmult)
+
+        state.atkmult = 1.0
+        state.defmult = 1.0
+
+        state.needs_turn = False
+
+        # we have to think after each combat turn to update state correctly
+        state.player.think()
+        state.defender.think()

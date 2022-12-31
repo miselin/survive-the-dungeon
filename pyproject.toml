@@ -16,6 +16,7 @@ black = "^22.12.0"
 mypy = "^0.991"
 isort = "^5.11.4"
 pygame-gui = "^0.6.7"
+coverage = "^7.0.1"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

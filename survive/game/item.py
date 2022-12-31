@@ -73,7 +73,7 @@ class WieldableItem(Item):
     """Base class for items that can be wielded."""
 
     def __init__(self, name="Unknown Wieldable Item", attackbonus=0, defensebonus=0):
-        Item.__init__(self, name)
+        super().__init__(name=name)
 
         self.attackbonus = attackbonus
         self.defensebonus = defensebonus
@@ -110,8 +110,9 @@ class WieldableItem(Item):
 class Armor(WieldableItem):
     """Defines an Armor item."""
 
-    def __init__(self, wields_at: Wieldpoint, *args, name="Unknown Armor", **kwargs):
-        super().__init__(*args, name=name, **kwargs)
+    def __init__(self, wields_at: Wieldpoint, name="Unknown Armor", *args, **kwargs):
+        kwargs["name"] = name
+        super().__init__(*args, **kwargs)
         self.wieldpoint = wields_at
 
     def __repr__(self):
@@ -157,7 +158,7 @@ class Weapon(WieldableItem):
         defensebonus=-1,
         dam="1d6",
     ):
-        WieldableItem.__init__(self, name, attackbonus, defensebonus)
+        super().__init__(name, attackbonus, defensebonus)
 
         self.critrange = critrange
         self.critmult = critmult
@@ -210,7 +211,7 @@ class InstantEffectItem(Item):
     """Describes an item that has an immediate effect when applied."""
 
     def __init__(self, name="Unknown Instant Effect Item", hpboost=0, hpdrop=0):
-        Item.__init__(self, name)
+        super().__init__(name)
 
         self.hpboost = hpboost
         self.hpdrop = hpdrop
@@ -248,7 +249,7 @@ class TurnBasedEffectItem(Item):
     """Describes an item that has an effect per turn when applied."""
 
     def __init__(self, name="Unknown Turn-based Effect Item", lifetime=5):
-        Item.__init__(self, name)
+        super().__init__(name)
 
         self.expiry = 0
         self.lifetime = lifetime
@@ -295,7 +296,7 @@ class Buff(TurnBasedEffectItem):
     def __init__(
         self, name="Unknown Buff", hpbuff=5, attackbuff=2, defensebuff=2, lifetime=5
     ):
-        TurnBasedEffectItem.__init__(self, name, lifetime)
+        super().__init__(name, lifetime)
 
         self.hp_buff = hpbuff
         self.attack_buff = attackbuff

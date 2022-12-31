@@ -6,22 +6,11 @@ from typing import List, Optional
 import pygame
 import pygame_gui
 
-from .combat import Combat
+from .combat import Combat, CombatState
 from .creature import Creature
 from .dice import Dice
 from .game import game
 from .item import InstantEffectItem
-
-
-# TODO(miselin): this should be in Combat
-@dataclasses.dataclass
-class CombatState:
-    """CombatState encapsulates key state for a battle"""
-
-    atkmult: float
-    defmult: float
-    needs_turn: bool
-    player_heal: bool
 
 
 class Battle(pygame_gui.elements.UIWindow):
@@ -43,8 +32,14 @@ class Battle(pygame_gui.elements.UIWindow):
 
         self._dice = Dice()
         self._combat = Combat(self._dice)
-
-        self._combat_state = CombatState(1.0, 1.0, False, False)
+        self._combat_state = CombatState(
+            player=self._player,
+            defender=self._defender,
+            atkmult=1.0,
+            defmult=1.0,
+            needs_turn=False,
+            player_heal=None,
+        )
 
         self._build_ui()
 
@@ -58,17 +53,12 @@ class Battle(pygame_gui.elements.UIWindow):
             self._player.in_battle = True
             self._defender.in_battle = True
 
-            self.combat_turn()
-            self._combat_state.needs_turn = False
-            self._combat_state.player_heal = False
+            self._combat.turn(self._combat_state)
 
             if self.player_can_heal():
                 self._player_heal_button.enable()
             else:
                 self._player_heal_button.disable()
-
-            self._player.think()
-            self._defender.think()
 
             self._defender_hp_label.set_text(f"{self._defender.hitpoints} HP remains")
 
@@ -102,34 +92,9 @@ class Battle(pygame_gui.elements.UIWindow):
                     self._combat_state.needs_turn = True
                 elif which == "#player_heal":
                     self._combat_state.needs_turn = True
-                    self._combat_state.player_heal = True
+                    self._combat_state.player_heal = self.get_heal_item()
 
         return consumed
-
-    def combat_turn(self):
-        """combat_turn handles a single turn of combat"""
-        # TODO(miselin): move this to Combat class
-        if self._combat_state.player_heal:
-            heal_item = self.get_heal_item()
-            if heal_item is not None:
-                self._player.inventory.take_item(heal_item)
-                applied = heal_item.apply(self._player)
-                game().log(
-                    f"{self._player.name} healed {applied} with {heal_item.name}"
-                )
-        else:
-            self._combat.attack(
-                self._player, self._defender, atkmult=self._combat_state.atkmult
-            )
-
-        # don't let the defender retaliate if the player dealt a fatal blow
-        if self._defender.hitpoints >= 1:
-            self._combat.attack(
-                self._defender, self._player, defmult=self._combat_state.defmult
-            )
-
-        self._combat_state.atkmult = 1.0
-        self._combat_state.defmult = 1.0
 
     def player_can_heal(self):
         """player_can_heal returns whether the player has a healing item"""
