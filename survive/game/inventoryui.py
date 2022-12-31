@@ -5,7 +5,7 @@ import pygame_gui
 
 from .creature import Creature
 from .game import game
-from .item import InstantEffectItem, Item, WieldableItem
+from .item import InstantEffectItem, WieldableItem
 
 
 class InventoryModal:

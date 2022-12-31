@@ -1,9 +1,7 @@
-from typing import Tuple
 import unittest
 
-from survive.game.combat import Combat, CombatState
-from survive.game.game import Game, set_game
-from survive.game.item import Item, Chest
+from game.game import Game, set_game
+from game.item import Chest, Item
 
 
 class TestCombat(unittest.TestCase):
@@ -46,7 +44,6 @@ class TestCombat(unittest.TestCase):
 
         self.assertTrue(chest.add_item(item1))
         self.assertFalse(chest.add_item(item2))
-
 
 
 if __name__ == "__main__":

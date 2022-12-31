@@ -1,6 +1,5 @@
 """Battle handles the battle UI logic"""
 
-import dataclasses
 from typing import List, Optional
 
 import pygame
@@ -9,7 +8,6 @@ import pygame_gui
 from .combat import Combat, CombatState
 from .creature import Creature
 from .dice import Dice
-from .game import game
 from .item import InstantEffectItem
 
 

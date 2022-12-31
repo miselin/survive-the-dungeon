@@ -2,7 +2,7 @@
 
 import math
 import typing
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional
 
 import pygame
 
@@ -21,7 +21,7 @@ class Creature:
 
     def __init__(
         self,
-        sprite: pygame.Surface,
+        sprite: Optional[pygame.Surface],
         initial_pos: Position,
         name: str = "Creature",
         attribute_override: Optional[AttributeSet] = None,

@@ -1,10 +1,8 @@
-from typing import Tuple
 import unittest
 
-from survive.game.combat import Combat, CombatState
-from survive.game.game import Game, set_game
+from game.game import Game, set_game
 
-from .util import TestDice, create_creature, equip_standard, create_gold
+from .util import create_creature, create_gold, equip_standard
 
 
 class TestCombat(unittest.TestCase):
@@ -38,7 +36,6 @@ class TestCombat(unittest.TestCase):
         self.assertEqual(creature.level, 2)
         self.assertEqual(creature.xp, xp)
         self.assertEqual(creature.hitpoints, 10)
-
 
 
 if __name__ == "__main__":

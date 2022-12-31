@@ -1,8 +1,8 @@
-from typing import Tuple
 import unittest
+from typing import Tuple
 
-from survive.game.combat import Combat, CombatState
-from survive.game.game import Game, set_game
+from game.combat import Combat, CombatState
+from game.game import Game, set_game
 
 from .util import TestDice, create_creature, equip_standard, get_healing_item
 
@@ -17,7 +17,14 @@ def create_default_combat(dice: TestDice) -> Tuple[Combat, CombatState]:
     equip_standard(combat_a)
     equip_standard(combat_b)
 
-    combat_state = CombatState(player=combat_a, defender=combat_b, atkmult=1.0, defmult=1.0, needs_turn=False, player_heal=None)
+    combat_state = CombatState(
+        player=combat_a,
+        defender=combat_b,
+        atkmult=1.0,
+        defmult=1.0,
+        needs_turn=False,
+        player_heal=None,
+    )
 
     return (combat, combat_state)
 
