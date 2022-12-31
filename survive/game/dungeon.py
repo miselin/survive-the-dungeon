@@ -1,7 +1,7 @@
 """This module holds the main game logic for a dungeon"""
 
 import math
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import pygame
 import pygame_gui
@@ -272,8 +272,10 @@ class Dungeon:
             )
 
             max_damage = room_scale_factor * 300
+            max_bonus = room_scale_factor * 75
 
             weapon_window = self.generated_weapons[min_weapon:]
+            armor_window = self.generated_armors[min_armor:]
 
             for pos in mob_positions:
                 mob = Creature(mob_sprite, room.room_to_world(pos), "Goblin")
@@ -296,11 +298,21 @@ class Dungeon:
                     mob_weapon = weapon_window[-1]
                     # print(f'after {attempts} attempts, gave up and gave {mob.name} {mob_weapon.name} with damage {mob_weapon.dam}')
 
-                mob_armor = self.game.random().choice(
-                    self.generated_armors[min_armor : min_armor + 15]
-                )
+                # avoid giving a too-bonused armor to a mob
+                candidates = self.game.random().sample(armor_window, 15)
+                mob_armor = None
+                attempts = 0
+                for armor in candidates:
+                    if armor.attackbonus < max_bonus and armor.defensebonus < max_bonus:
+                        mob_armor = armor
+                        break
+                    attempts += 1
+                if mob_armor is None:
+                    mob_armor = armor_window[-1]
+
                 mob.wield(mob_weapon.wields_at(), mob_weapon)
                 mob.wield(mob_armor.wields_at(), mob_armor)
+
                 self.creatures.append(mob)
                 self.ai.attach(mob)
 
@@ -394,8 +406,8 @@ class Dungeon:
     def generate_items(self):
         """Generates items to use throughout the dungeon."""
 
-        self.generated_weapons = []
-        self.generated_armors = []
+        self.generated_weapons: List[Armor] = []
+        self.generated_armors: List[Armor] = []
 
         names = {
             "Helmet": "head",
