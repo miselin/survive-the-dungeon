@@ -48,8 +48,12 @@ class AttributeSet:
         return self.attrs[attr]
 
     def get_modifier(self, attr: Attribute) -> int:
-        """get_modifier gets the given attribute as a modifier"""
-        return int(self.get(attr))
+        """get_modifier gets the given attribute as a modifier.
+
+        This follows the D&D equation where an attribute value of 10
+        results in a modifier of +0, and an attribute value of 30
+        results in a modifier to +10."""
+        return int(math.floor((self.get(attr) - 10) / 2))
 
     def attr_label(self, attr: Attribute) -> str:
         """attr_label gets the given attribute's readable label"""
