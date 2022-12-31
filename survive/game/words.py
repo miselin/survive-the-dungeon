@@ -1,43 +1,55 @@
+"""This module exports utilities for getting random words."""
+
 import json
+from dataclasses import dataclass
+from typing import Any
 
 from .game import game
 
-adverbs = None
-adjectives = None
-personal_nouns = None
+
+@dataclass
+class WordsCache:
+    """WordsCache caches words read from files once read once"""
+
+    adverbs: Any
+    adjectives: Any
+    personal_nouns: Any
+
+
+cache = WordsCache(adverbs=None, adjectives=None, personal_nouns=None)
 
 
 def random_adverb():
-    global adverbs
+    """random_adverb gets a single random adverb"""
 
-    r = game().random()
+    random = game().random()
 
-    if not adverbs:
-        with open("words/adverbs.json", "r") as f:
-            adverbs = json.load(f)
+    if not cache.adverbs:
+        with open("words/adverbs.json", "r", encoding="ascii") as data_file:
+            cache.adverbs = json.load(data_file)
 
-    return r.choice(adverbs["adverbs"])
+    return random.choice(cache.adverbs["adverbs"])
 
 
 def random_adjective():
-    global adjectives
+    """random_adjective gets a single random adjective"""
 
-    r = game().random()
+    random = game().random()
 
-    if not adjectives:
-        with open("words/adjs.json", "r") as f:
-            adjectives = json.load(f)
+    if not cache.adjectives:
+        with open("words/adjs.json", "r", encoding="ascii") as data_file:
+            cache.adjectives = json.load(data_file)
 
-    return r.choice(adjectives["adjs"])
+    return random.choice(cache.adjectives["adjs"])
 
 
 def random_personal_noun():
-    global personal_nouns
+    """random_personal_noun gets a single random personal noun"""
 
-    r = game().random()
+    random = game().random()
 
-    if not personal_nouns:
-        with open("words/personal_nouns.json", "r") as f:
-            personal_nouns = json.load(f)
+    if not cache.personal_nouns:
+        with open("words/personal_nouns.json", "r", encoding="ascii") as data_file:
+            cache.personal_nouns = json.load(data_file)
 
-    return r.choice(personal_nouns["personalNouns"])
+    return random.choice(cache.personal_nouns["personalNouns"])

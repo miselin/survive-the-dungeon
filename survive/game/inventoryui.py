@@ -1,12 +1,19 @@
+"""This module handles everything for the inventory management UI."""
+
 import pygame
 import pygame_gui
 
-from .game import Game, game
-from .item import InstantEffectItem, Weapon, WieldableItem
+from .creature import Creature
+from .game import game
+from .item import InstantEffectItem, Item, WieldableItem
 
 
-class InventoryModal(object):
-    def __init__(self, ui, player, surface):
+class InventoryModal:
+    """Runs the modal for inventory management."""
+
+    def __init__(
+        self, ui: pygame_gui.UIManager, player: Creature, surface: pygame.Surface
+    ):
         self.ui = ui
         self.player = player
 
@@ -29,20 +36,25 @@ class InventoryModal(object):
             rect=rt, manager=ui, resizable=False, window_display_title="Inventory"
         )
 
-        # TODO: use a confirmation dialog to show current wielded item for comparison when wielding
-
         self._player = player
         self._done = False
         self.dirty = True
         self.bag = None
 
+        self.popup = None
+        self.confirming_wield = None
+
         self.rebuild()
 
     def kill(self):
+        """Closes the modal."""
+
         if self.bag is not None:
             self.bag.kill()
 
     def rebuild(self):
+        """Rebuilds and displays the modal."""
+
         if self.bag is not None:
             self.bag.kill()
 
@@ -167,21 +179,24 @@ class InventoryModal(object):
                 self.heal[heal_button] = item
 
     def render(self):
-        pass
+        """Unused. Here for compatibility."""
 
-    def tick(self, dt):
-        pass
-
-    def menu(self):
-        game().set_state(Game.STATE_MAIN_MENU)
+    def tick(self, _):
+        """Unused. Here for compatibility."""
 
     def close(self):
+        """Closes the modal."""
+
         self._done = True
 
     def done(self):
+        """Checks whether the modal is done or not."""
+
         return not self.window.alive()
 
-    def wield_item(self, item):
+    def wield_item(self, item: WieldableItem):
+        """Wields the given item on the player."""
+
         wields_at = item.wields_at()
 
         self.player.inventory.take_item(item)
@@ -198,9 +213,12 @@ class InventoryModal(object):
         self.rebuild()
 
     def handle_event(self, event):
+        """Handles pygame events."""
+
         if event.type == pygame.QUIT:
             raise SystemExit()
-        elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
             item = self.inspect.get(event.ui_element)
             if item is not None:
                 self.popup = pygame_gui.windows.ui_message_window.UIMessageWindow(

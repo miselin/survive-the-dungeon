@@ -1,7 +1,7 @@
 """This module exports AttributeSet to handle character attributes."""
 
 import math
-from typing import Dict, Literal
+from typing import Dict, Literal, Tuple
 
 from .dice import Dice
 
@@ -20,7 +20,7 @@ class AttributeSet:
         "chr": "Charisma",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.attrs: Dict[Attribute, int] = {}
         self.attrs["str"] = 10
         self.attrs["dex"] = 10
@@ -29,7 +29,7 @@ class AttributeSet:
         self.attrs["wis"] = 10
         self.attrs["chr"] = 10
 
-    def rollfor(self) -> Dict[Attribute, int]:
+    def rollfor(self) -> Dict[Attribute, Tuple[int, str]]:
         """rollfor rolls dice for all attributes in this set"""
         dice = Dice()
 

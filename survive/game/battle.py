@@ -1,7 +1,7 @@
 """Battle handles the battle UI logic"""
 
 import dataclasses
-from typing import Optional
+from typing import List, Optional
 
 import pygame
 import pygame_gui
@@ -143,9 +143,11 @@ class Battle(pygame_gui.elements.UIWindow):
         """get_heal_item gets the most effective healing item the player carries"""
         hp_needed = self._player.maxhitpoints - self._player.hitpoints
 
-        heals = filter(
-            lambda x: isinstance(x, InstantEffectItem) and x.hpboost > 0,
-            self._player.inventory.items(),
+        heals: List[InstantEffectItem] = list(
+            filter(
+                lambda x: isinstance(x, InstantEffectItem) and x.hpboost > 0,
+                self._player.inventory.items(),
+            )
         )
         if not heals:
             return None

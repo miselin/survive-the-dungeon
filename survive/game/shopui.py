@@ -1,13 +1,28 @@
+"""This module handles the in-dungeon shop."""
+
 import itertools
+from typing import Dict, List
 
 import pygame
 import pygame_gui
 
+from .creature import Creature
 from .game import game
+from .item import Armor, InstantEffectItem, Item, WieldableItem
 
 
 class Shop(pygame_gui.elements.UIWindow):
-    def __init__(self, player, consumables, weapons, armors, *args, **kwargs):
+    """Shows a shop window for purchasing items."""
+
+    def __init__(
+        self,
+        player: Creature,
+        consumables: List[InstantEffectItem],
+        weapons: List[WieldableItem],
+        armors: List[Armor],
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.player = player
@@ -51,7 +66,7 @@ class Shop(pygame_gui.elements.UIWindow):
 
         self.lookup = {}
         self.inspect = {}
-        self.confirms = {}
+        self.confirms: Dict[pygame_gui.elements.UIButton, Item] = {}
 
         prev_row = None
         for nth, item in enumerate(all_inventory):
@@ -114,9 +129,6 @@ class Shop(pygame_gui.elements.UIWindow):
             self.inspect[inspect_button] = item
 
         self.shop_container.update(0.0)
-
-    def item_row(self):
-        pass
 
     def process_event(self, event: pygame.event.Event) -> bool:
         consumed = super().process_event(event)

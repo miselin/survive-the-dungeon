@@ -1,11 +1,15 @@
 """AI for creatures in the dungeon"""
 
+import typing
 from typing import Callable, List, Optional, Tuple
 
 from . import types
-from .creature import Creature
 from .game import game
 from .worldmap import Room
+
+if typing.TYPE_CHECKING:
+    from .creature import Creature
+    from .dungeon import Dungeon
 
 
 class AI:
@@ -15,7 +19,7 @@ class AI:
         self,
         dungeon: "Dungeon",
         pos_walkable_cb: Callable[[Tuple[int, int]], bool],
-        attack_cb: Callable[[Creature], None],
+        attack_cb: Callable[['Creature'], None],
     ):
         self.dungeon = dungeon
         self.player = dungeon.player
@@ -24,7 +28,7 @@ class AI:
         self.pos_walkable_cb = pos_walkable_cb
         self.attack_cb = attack_cb
 
-    def attach(self, creature: Creature):
+    def attach(self, creature: 'Creature'):
         """Attach attaches an AIInstance to the given creature."""
         self.instances.append(AIInstance(self, creature))
 
@@ -36,7 +40,7 @@ class AI:
 class AIInstance:
     """AIInstance handles AI logic for a single creature"""
 
-    def __init__(self, ai_state: AI, creature: Creature):
+    def __init__(self, ai_state: AI, creature: 'Creature'):
         self.ai_state = ai_state
         self.creature = creature
 

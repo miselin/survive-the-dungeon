@@ -1,3 +1,5 @@
+"""This module handles the game's main menu."""
+
 import math
 import time
 
@@ -11,13 +13,16 @@ GAME_TITLE = "Survive the Dungeon"
 GAME_SUBTITLE = "Infinite procedural dungeons. Survival is not guaranteed."
 
 
-def todays_seed():
+def todays_seed() -> int:
+    """Get a random seed for today."""
     t = int(math.ceil(time.time()))
     t = t - (t % 86400000)  # truncate to 24h
     return t
 
 
 class MainMenu(object):
+    """Handles all of the main menu of the game."""
+
     STATE_MAIN = 0
     STATE_CHOOSE_SEED = 1  # todo
     STATE_HIGH_SCORES = 2  # todo
@@ -34,6 +39,8 @@ class MainMenu(object):
         self.rebuild()
 
     def rebuild(self):
+        """Recreate and show the main menu."""
+
         if self.container is not None:
             self.container.kill()
 
@@ -141,9 +148,11 @@ class MainMenu(object):
         )
 
     def render(self):
+        """Render the background of the menu."""
         self.surface.fill(0)
 
     def handle_event(self, event):
+        """Handle pygame events."""
         if event.type == pygame.QUIT:
             raise SystemExit()
 
@@ -163,15 +172,18 @@ class MainMenu(object):
                     self.start_with_seed(self.custom_seed_window.seed())
 
     def tick(self, dt):
-        return
+        """Unused. Here for compatibility."""
 
     def start_random_dungeon(self):
+        """Starts a random dungeon game."""
         self.start_with_seed(int(time.time()))
 
     def start_daily_dungeon(self):
+        """Starts a daily dungeon game."""
         self.start_with_seed(todays_seed())  # TODO: bring this in from a remote source
 
-    def start_with_seed(self, seed):
+    def start_with_seed(self, seed: int):
+        """Starts a dungeon game with a user-selected seed."""
         self.seed = seed
         self._done = True
 
@@ -179,6 +191,7 @@ class MainMenu(object):
         self.container = None
 
     def start_custom_seed(self):
+        """Shows a dialog for the user to chooe a seed."""
         self.custom_seed_window = CustomSeed(
             rect=self.dialog_rt,
             window_display_title="Custom Seed",
@@ -187,13 +200,17 @@ class MainMenu(object):
         )
 
     def start_high_scores(self):
+        """Currentl unused. Will show high score table."""
         pass
 
     def quit(self):
+        """Quits the game."""
         raise SystemExit()
 
     def done(self):
+        """Returns True when the menu is no longer needed."""
         return self._done
 
     def ack_done(self):
+        """Acknowledges a done state to allow the menu to show again in future."""
         self._done = False

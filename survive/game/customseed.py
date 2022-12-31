@@ -1,18 +1,23 @@
+"""This module exports the 'Custom Seed' UI"""
+from typing import Optional
+
 import pygame
 import pygame_gui
 
 
 class CustomSeed(pygame_gui.elements.UIWindow):
-    def __init__(self, *args, **kwargs):
+    """CustomSeed handles getting a custom seed from the player for dungeon generation."""
+
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._seed = None
+        self._seed: Optional[int] = None
 
-        rt = self.get_container().get_rect()
+        container_rect = self.get_container().get_rect()
 
         info = pygame_gui.elements.UITextBox(
             html_text="Select a custom seed from which to generate the dungeon for your run.",
-            relative_rect=pygame.Rect(0, 0, rt.width, -1),
+            relative_rect=pygame.Rect(0, 0, container_rect.width, -1),
             manager=self.ui_manager,
             container=self.get_container(),
             anchors={"left": "left", "top": "top"},
@@ -23,7 +28,7 @@ class CustomSeed(pygame_gui.elements.UIWindow):
         )
 
         self.text_line = pygame_gui.elements.UITextEntryLine(
-            pygame.Rect(8, 8, rt.width - 16, 32),
+            pygame.Rect(8, 8, container_rect.width - 16, 32),
             manager=self.ui_manager,
             container=self.get_container(),
             anchors={"left": "left", "top_target": info},
@@ -38,7 +43,8 @@ class CustomSeed(pygame_gui.elements.UIWindow):
             anchors={"top_target": self.text_line, "centerx": "centerx"},
         )
 
-    def seed(self):
+    def seed(self) -> Optional[int]:
+        """seed returns the seed the player chose, if any"""
         return self._seed
 
     def process_event(self, event: pygame.event.Event) -> bool:
@@ -49,7 +55,7 @@ class CustomSeed(pygame_gui.elements.UIWindow):
                     try:
                         seed = int(self.text_line.get_text())
                     except ValueError:
-                        self.popup = pygame_gui.windows.UIMessageWindow(
+                        pygame_gui.windows.UIMessageWindow(
                             self.rect,
                             "Seeds are required to be numeric.",
                             manager=self.ui_manager,

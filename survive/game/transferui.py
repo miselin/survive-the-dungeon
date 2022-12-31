@@ -1,13 +1,26 @@
+"""This module handles transferring items from chests to the player."""
+
 import pygame
 import pygame_gui
 
-from .game import Game, game
+from .creature import Creature
+from .game import game
+from .item import Chest
 
 SUBTITLE = "Choose what to loot!"
 
 
-class InventoryTransferModal(object):
-    def __init__(self, ui, container, player, surface, title="Chest Opened"):
+class InventoryTransferModal:
+    """A modal to let the player choose what to transfer to their inventory."""
+
+    def __init__(
+        self,
+        ui: pygame_gui.UIManager,
+        container: Chest,
+        player: Creature,
+        surface: pygame.Surface,
+        title="Chest Opened",
+    ):
         self.ui = ui
 
         self.surface = surface
@@ -18,7 +31,10 @@ class InventoryTransferModal(object):
         rt.center = self.surface.get_rect().center
 
         self.window = pygame_gui.elements.UIWindow(
-            rect=rt, manager=ui, resizable=False, window_display_title="Chest Opened"
+            rect=rt,
+            manager=ui,
+            resizable=False,
+            window_display_title=title,
         )
 
         self._container = container
@@ -73,26 +89,23 @@ class InventoryTransferModal(object):
             },
         )
 
-    def kill(self):
-        if self.bag is not None:
-            self.bag.kill()
-
     def render(self):
-        pass
+        """Unused. Here for compatibility."""
 
-    def tick(self, dt):
-        pass
-
-    def menu(self):
-        game().set_state(Game.STATE_MAIN_MENU)
+    def tick(self, _):
+        """Unused. Here for compatibility."""
 
     def close(self):
+        """Closes the modal."""
         self._done = True
 
-    def done(self):
+    def done(self) -> bool:
+        """Check whether the modal has been closed."""
         return not self.window.alive()
 
     def transfer_to_player(self):
+        """Transfer selected items to the player."""
+
         inventory_filled = False
         for entry in self.inventory.get_multi_selection():
             item = self.lookup[entry]
@@ -106,6 +119,8 @@ class InventoryTransferModal(object):
             game().log("Some items were not transferred.")
 
     def handle_event(self, event):
+        """Handle pygame events."""
+
         if event.type == pygame.QUIT:
             raise SystemExit()
         elif event.type == pygame_gui.UI_BUTTON_PRESSED:

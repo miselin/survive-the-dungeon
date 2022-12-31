@@ -1,92 +1,21 @@
+"""This module handles procedural dungeon generation."""
+
 import random
-import struct
+from typing import Iterable, List
 
-import numpy as np
-
+from .types import Position
 from .worldmap import Cell, Map, Room
 
 
-def buckshot_positions(r, max_x, max_y, count=16):
-    result = []
-    center_x = max_x / 2
-    center_y = max_y / 2
-
-    height = 128
-
-    # Ensure deflection can only ever push a piece to the edge of the map.
-    max_x_deflect = center_x / float(height)
-    max_y_deflect = center_y / float(height)
-
-    # Create a bunch of buckshot pieces at the right height, and then randomly
-    # apply a directional vector to them. We then have them travel down that
-    # directional vector until they intersect; if that passes filtering, we
-    # drop in the new cell type.
-    buckshot_pieces = []
-    for i in range(count):
-        buckshot_piece = np.array([float(center_x), float(height), float(center_y)])
-        buckshot_directional = np.array(
-            [
-                r.uniform(-max_x_deflect, max_x_deflect),
-                -1.0,
-                r.uniform(-max_y_deflect, max_y_deflect),
-            ]
-        )
-
-        buckshot_pieces.append([buckshot_piece, buckshot_directional])
-
-    # Do the dirty.
-    for i in range(height):
-        for piece in buckshot_pieces:
-            piece[0] += piece[1]
-
-    # Calculate changes.
-    result = []
-    for i in buckshot_pieces:
-        piece_x, _, piece_y = i[0]
-        if piece_x > max_y or piece_y > max_y:
-            continue
-
-        result.append((int(piece_x), int(piece_y)))
-
-    return result
-
-
-def river_path(r, max_length, max_x, max_y):
-    # We traverse a path from the starting point, with a small chance to
-    # deviate on each tick.
-
-    start_x = r.randint(0, max_x)
-    start_y = r.randint(0, max_y)
-
-    position = np.array([start_x, start_y])
-
-    result = []
-    for i in range(max_length):
-        direction = np.array([r.randint(-1, 1), r.randint(-1, 1)])
-
-        # Ensure we don't go diagonal.
-        if direction.all():
-            direction[r.randint(0, 1)] = 0
-
-        position += direction
-        if position[0] >= max_x or position[0] < 0:
-            break
-        if position[1] >= max_y or position[1] < 0:
-            break
-
-        pos_tuple = (position[0], position[1])
-        if pos_tuple in result:
-            continue
-        result.append(pos_tuple)
-
-    return result
-
-
-def offset(max_x, x, y):
-    return (y * max_x) + x
-
-
-def fill_points(world, max_x, xys, cell_type, passable_only=False, replace=True):
+def fill_points(
+    world: List[Cell],
+    max_x: int,
+    xys: Iterable[Position],
+    cell_type: int,
+    passable_only=False,
+    replace=True,
+):
+    """Set the given points to the given cell type."""
     for (x, y) in xys:
         offset = (y * max_x) + x
         if passable_only and not world[offset].is_passable():
@@ -96,16 +25,16 @@ def fill_points(world, max_x, xys, cell_type, passable_only=False, replace=True)
         world[offset].cell_type = cell_type
 
 
-def fill_region(world, max_x, x, y, width, height, cell_type, passable_only=False):
-    for y_ in range(height):
-        for x_ in range(width):
-            offset = ((y + y_) * max_x) + (x + x_)
-            if passable_only and not world[offset].is_passable():
-                continue
-            world[offset].cell_type = cell_type
-
-
-def paint(world, max_x, x, y, width, height, brush):
+def paint(
+    world: List[Cell],
+    max_x: int,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    brush: List[Cell],
+):
+    """Paint a rectangle of cells into the world."""
     for y_ in range(height):
         for x_ in range(width):
             dest_offset = ((y + y_) * max_x) + (x + x_)
@@ -113,24 +42,8 @@ def paint(world, max_x, x, y, width, height, brush):
             world[dest_offset].cell_type = brush[src_offset].cell_type
 
 
-def match_all(world, world_width, world_height, x, y, width, height, cell_type):
-    x = max(0, x)
-    y = max(0, y)
-    if (x + width) >= world_width:
-        width = world_width - x
-    if (y + height) >= world_height:
-        height = world_height - y
-
-    for y_ in range(height):
-        for x_ in range(width):
-            offset = ((y + y_) * world_width) + (x + x_)
-            if world[offset].cell_type != cell_type:
-                return False
-
-    return True
-
-
-def make_room(width, height):
+def make_room(width: int, height: int) -> List[Cell]:
+    """Create an area of cells with the room type."""
     total_cells = width * height
     result = []
     for _ in range(total_cells):
@@ -142,48 +55,45 @@ def make_room(width, height):
     return result
 
 
-def generate_map(r, print_map=False):
-    WORLD_X = 64
-    WORLD_Y = 64
-    TOTAL_CELLS = WORLD_X * WORLD_Y
+def generate_map(rng: random.Random, print_map=False) -> Map:
+    """Generate a new dungeon."""
+
+    world_x = 64
+    world_y = 64
+    total_cells = world_x * world_y
 
     world = []
-    for y in range(WORLD_Y):
-        for x in range(WORLD_X):
+    for y in range(world_y):
+        for x in range(world_x):
             world.append(Cell((x, y)))
 
-    NUM_RECTS = max(1, int(0.005 * TOTAL_CELLS))
-    NUM_RIVERS = max(2, int(0.005 * TOTAL_CELLS))
-    NUM_CHASMS = max(1, int(0.0015 * TOTAL_CELLS))
-    NUM_CLUTTER_ITEMS = max(8, int(0.05 * TOTAL_CELLS))
+    num_rects = max(1, int(0.005 * total_cells))
 
-    RECT_PLACEMENT_ATTEMPTS = 200
+    rect_placement_attempts = 200
 
-    MAX_RIVER_LENGTH = int(float(WORLD_X) * 1.3)
-
-    rect_max_width = WORLD_X / 8
-    rect_max_height = WORLD_Y / 8
+    rect_max_width = int(world_x // 8)
+    rect_max_height = int(world_y // 8)
     rect_min_width = int(max(4, rect_max_width * 0.05))
     rect_min_height = int(max(4, rect_max_height * 0.25))
 
     rooms = []
     start_room = Room((1, 1), 8, 8)
     start_room.attrs |= Room.ATTR_STARTING_ROOM
-    end_room = Room((WORLD_X - 9, WORLD_Y - 9), 8, 8)
+    end_room = Room((world_x - 9, world_y - 9), 8, 8)
     end_room.attrs |= Room.ATTR_BOSS_ROOM
 
     rooms.append(start_room)
     rooms.append(end_room)
 
-    for i in range(NUM_RECTS):
-        rect_x_dim = r.randint(rect_min_width, rect_max_width)
-        rect_y_dim = r.randint(rect_min_height, rect_max_height)
+    for _ in range(num_rects):
+        rect_x_dim = rng.randint(rect_min_width, rect_max_width)
+        rect_y_dim = rng.randint(rect_min_height, rect_max_height)
 
         # Can we find a place to fit this room in?
-        for _ in range(RECT_PLACEMENT_ATTEMPTS):
+        for _ in range(rect_placement_attempts):
             # one tile border around the entire map
-            x = r.randint(1, WORLD_X - rect_x_dim - 1)
-            y = r.randint(1, WORLD_Y - rect_y_dim - 1)
+            x = rng.randint(1, world_x - rect_x_dim - 1)
+            y = rng.randint(1, world_y - rect_y_dim - 1)
             room = Room((x, y), rect_x_dim, rect_y_dim)
             # one tile padding on every room from each other
             check_room = Room((x - 1, y - 1), rect_x_dim + 2, rect_y_dim + 2)
@@ -207,7 +117,7 @@ def generate_map(r, print_map=False):
         room_map = make_room(*room.dims)
         paint(
             world,
-            WORLD_X,
+            world_x,
             room.pos[0],
             room.pos[1],
             room.dims[0],
@@ -217,52 +127,29 @@ def generate_map(r, print_map=False):
 
     for prev, curr in zip(rooms, rooms[1:]):
         points = list(prev.tunnel_to(curr))
-        fill_points(world, WORLD_X, points, Cell.TYPE_HALL, replace=False)
+        fill_points(world, world_x, points, Cell.TYPE_HALL, replace=False)
 
-    clutter = []
-
-    # Find locations for clutter in the world in each room
-    for room in rooms:
-        # no clutter in boss room or shop room
-        if not (
-            room.attrs == 0
-            or (room.attrs & Room.ATTR_STARTING_ROOM) == Room.ATTR_STARTING_ROOM
-        ):
-            continue
-
-        count = r.randint(1, 3)
-
-        # we never place clutter next to a wall to ensure we don't block a hallway
-        room_clutter = buckshot_positions(
-            r, room.dims[0] - 2, room.dims[1] - 2, count=count
-        )
-
-        clutter.extend(
-            (room.pos[0] + x + 1, room.pos[1] + y + 1) for (x, y) in room_clutter
-        )
-
-    print("world has %d cells" % (len(world),))
-    result = Map(r, WORLD_X, WORLD_Y, rooms, world, clutter)
+    result = Map(rng, world_x, world_y, rooms, world)
 
     # Dump the map to screen.
     if print_map:
-        for y in range(WORLD_Y):
+        for y in range(world_y):
             s = ""
-            for x in range(WORLD_X):
-                cell = result.cell_at(x, y)
-                room = result.room_at(x, y)
+            for x in range(world_x):
+                map_cell = result.cell_at(x, y)
+                map_room = result.room_at(x, y)
 
                 c = ""
-                if cell.cell_type == Cell.TYPE_EMPTY:
+                if map_cell.cell_type == Cell.TYPE_EMPTY:
                     c = " "
-                elif cell.cell_type == Cell.TYPE_ROOM:
+                elif map_cell.cell_type == Cell.TYPE_ROOM:
                     c = "R"
-                elif cell.cell_type == Cell.TYPE_HALL:
+                elif map_cell.cell_type == Cell.TYPE_HALL:
                     c = "H"
 
-                if room is not None and room.attrs & Room.ATTR_SHOP_ROOM:
+                if map_room is not None and map_room.attrs & Room.ATTR_SHOP_ROOM:
                     c = "S"
-                if room is not None and room.attrs & Room.ATTR_BOSS_ROOM:
+                if map_room is not None and map_room.attrs & Room.ATTR_BOSS_ROOM:
                     c = "B"
 
                 s += c

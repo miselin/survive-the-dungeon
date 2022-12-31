@@ -1,20 +1,21 @@
-import math
+"""This module holds the main entrypoint to run the game."""
 
 import pygame
 import pygame_gui
-import tcod
 
-from .dungeon import WINDOW_H, WINDOW_W, Dungeon, SpriteSet
-from .game import Game, set_game
+from .dungeon import WINDOW_H, WINDOW_W, Dungeon
+from .game import Game, GameState, set_game
 from .gameend import GameEndedScreen
 from .mainmenu import GAME_TITLE, MainMenu
-from .sprites import SpriteSheet
+from .sprites import SpriteSet, SpriteSheet
 
 
 def run():
+    """Run the game."""
+
     pygame.init()
 
-    DISPLAYSURF = pygame.display.set_mode((WINDOW_W, WINDOW_H))
+    window = pygame.display.set_mode((WINDOW_W, WINDOW_H))
     pygame.display.set_caption(GAME_TITLE)
 
     font = pygame.freetype.Font("fonts/CourierPrime-Regular.ttf", 14)
@@ -25,7 +26,6 @@ def run():
     spritesheet_chars = SpriteSheet("tiles/Characters-part-1.png")
     spritesheet_items = SpriteSheet("tiles/Tiles-Items-pack.png")
     spritesheet_props = SpriteSheet("tiles/Tiles-Props-pack.png")
-    spritesheet_ui = SpriteSheet("ui/icons.png")
 
     # top_wall = spritesheet.sprite(19)
     floor = spritesheet.sprite(11)
@@ -54,8 +54,8 @@ def run():
     game = Game(seed=0)
     set_game(game)
 
-    main_menu = MainMenu(ui, DISPLAYSURF)
-    game_ended = GameEndedScreen(ui, DISPLAYSURF)
+    main_menu = MainMenu(ui, window)
+    game_ended = GameEndedScreen(ui, window)
 
     receiver = main_menu
 
@@ -71,12 +71,12 @@ def run():
         curr_state = game.state()
 
         # kill an ongoing game if needed
-        if curr_state != Game.STATE_PLAYING:
+        if curr_state != GameState.STATE_PLAYING:
             if active_game is not None:
                 active_game.kill()
                 active_game = None
 
-        if curr_state == Game.STATE_MAIN_MENU:
+        if curr_state == GameState.STATE_MAIN_MENU:
             if prev_state != curr_state:
                 main_menu.rebuild()
 
@@ -86,19 +86,23 @@ def run():
                 # reload game
                 game = Game(seed=main_menu.seed)
                 set_game(game)
-                game.set_state(Game.STATE_PLAYING)
+                game.set_state(GameState.STATE_PLAYING)
 
                 active_game = Dungeon(
-                    game, ui, font, DISPLAYSURF, spriteset, spritesheet_ui
+                    game,
+                    ui,
+                    font,
+                    window,
+                    spriteset,
                 )
                 main_menu.ack_done()
 
                 receiver = active_game
-        elif curr_state in (Game.STATE_WIN, Game.STATE_DEAD):
+        elif curr_state in (GameState.STATE_WIN, GameState.STATE_DEAD):
             receiver = game_ended
 
             if curr_state != prev_state:
-                game_ended.set_won(curr_state == Game.STATE_WIN)
+                game_ended.set_won(curr_state == GameState.STATE_WIN)
                 game_ended.rebuild()
 
         for event in pygame.event.get():
@@ -106,7 +110,7 @@ def run():
             receiver.handle_event(event)
 
         receiver.render()
-        ui.draw_ui(DISPLAYSURF)
+        ui.draw_ui(window)
 
         pygame.display.update()
         dt = clock.tick(60)  # can return time in ticks for arithmetic
@@ -115,5 +119,3 @@ def run():
         ui.update(dt)
 
         prev_state = curr_state
-
-    pygame.quit()

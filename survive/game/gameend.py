@@ -1,7 +1,9 @@
+"""This module handles the game-end screen."""
+
 import pygame
 import pygame_gui
 
-from .game import Game, game
+from .game import GameState, game
 
 YOU_WON = "Dungeon cleared!"
 YOU_WON_SUBTITLE = "todo: submit your score here!"
@@ -9,8 +11,10 @@ YOU_LOST = "The dungeon consumed you."
 YOU_LOST_SUBTITLE = "Better luck next time!"
 
 
-class GameEndedScreen(object):
-    def __init__(self, ui, surface):
+class GameEndedScreen:
+    """Handles all the logic for the end-of-game popup."""
+
+    def __init__(self, ui: pygame_gui.UIManager, surface: pygame.Surface):
         self.won = False
         self.ui = ui
         self.seed = 0
@@ -20,13 +24,18 @@ class GameEndedScreen(object):
 
         self.popup = None
 
-    def set_won(self, won):
+        self.dialog_rt = pygame.Rect(0, 0, 0, 0)
+
+    def set_won(self, won: bool):
+        """Sets the won state."""
         self.won = won
 
-    def tick(self, dt):
-        pass
+    def tick(self, _):
+        """Does nothing, present for compatibility."""
 
     def rebuild(self):
+        """Rebuilds the UI to show the popup again."""
+
         if self.popup is not None:
             self.popup.kill()
             self.popup = None
@@ -56,17 +65,21 @@ class GameEndedScreen(object):
         )
 
     def render(self):
-        pass
+        """Does nothing, present for compatibility."""
 
     def menu(self):
-        game().set_state(Game.STATE_MAIN_MENU)
+        """Puts the game into the main menu."""
+
+        game().set_state(GameState.STATE_MAIN_MENU)
         self.popup.kill()
         self.popup = None
 
     def handle_event(self, event):
+        """Handles pygame events."""
+
         if event.type == pygame.QUIT:
             raise SystemExit()
 
-        elif event.type == pygame_gui.UI_WINDOW_CLOSE:
+        if event.type == pygame_gui.UI_WINDOW_CLOSE:
             if event.ui_element == self.popup:
                 self.menu()

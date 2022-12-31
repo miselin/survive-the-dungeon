@@ -1,6 +1,8 @@
-import math
+"""This module holds the main game logic for a dungeon"""
 
-import numpy as np
+import math
+from typing import Optional, Union
+
 import pygame
 import pygame_gui
 
@@ -11,15 +13,16 @@ from .combat import Combat
 from .creature import Creature
 from .dice import Dice
 from .env import ON_REPLIT
-from .game import Game
+from .game import Game, GameState
 from .inventoryui import InventoryModal
-from .item import (Armor, Buff, Container, Gold, InstantEffectItem, Poison,
-                   Weapon, WieldableItem)
+from .item import Armor, Chest, Gold, InstantEffectItem, Weapon
 from .mapgen import Cell, generate_map
 from .shopui import Shop
+from .sprites import SpriteSet
 from .transferui import InventoryTransferModal
+from .types import Position
 from .words import random_adjective, random_adverb
-from .worldmap import Room
+from .worldmap import Map, Room
 
 if ON_REPLIT:
     # 800x400 is about right for the Replit cover page
@@ -74,60 +77,17 @@ boss_attribs.modify("wis", 17)
 boss_attribs.modify("chr", 15)
 
 
-class SpriteSet:
-    WALL_N = 0
-    WALL_S = 1
-    WALL_E = 2
-    WALL_W = 3
+class Dungeon:
+    """Dungeon handles all of the logic for a single dungeon run."""
 
     def __init__(
-        self, player, mobs, walls, floor, hall_floor, chest, clutter, hall_clutter
+        self,
+        game: Game,
+        ui: pygame_gui.UIManager,
+        font: pygame.font.Font,
+        surface: pygame.Surface,
+        spriteset: SpriteSet,
     ):
-        self.player = player
-        self.mobs = mobs
-        self.walls = walls
-        self.floor = floor
-        self.hall_floor = hall_floor
-        self.chest = chest
-        self.clutter = clutter
-        self.hall_clutter = hall_clutter
-
-    def get_player(self):
-        return self.player
-
-    def get_mob(self, n):
-        return self.mobs[n]
-
-    def get_wall(self, n):
-        return self.walls[n]
-
-    def get_floor(self):
-        return self.floor
-
-    def get_hall_floor(self):
-        return self.hall_floor
-
-    def get_chest(self, empty=False):
-        if empty:
-            return self.chest[1]
-        else:
-            return self.chest[0]
-
-    def get_clutter(self):
-        return self.clutter
-
-    def get_hall_clutter(self):
-        return self.hall_clutter
-
-
-class Chest(Container):
-    def __init__(self, pos, capacity=5):
-        super().__init__(capacity=capacity)
-        self.position = pos
-
-
-class Dungeon:
-    def __init__(self, game, ui, font, surface, spriteset, ui_icons):
         self.font = font
 
         self.game = game
@@ -136,11 +96,14 @@ class Dungeon:
         self.spriteset = spriteset
         self._pause_window = None
 
-        self._shop = None
+        self.left_x = 0
+        self.right_x = 0
+        self.top_y = 0
+        self.bottom_y = 0
 
-        self.worldmap = generate_map(r=game.random())
+        self.worldmap = generate_map(game.random())
 
-        self.current_room = self.worldmap.rooms[0]
+        self.current_room: Optional[Room] = self.worldmap.rooms[0]
 
         surface_rect = self.surface.get_rect()
         parent_size = surface_rect.size
@@ -211,8 +174,8 @@ class Dungeon:
 
         self.ai = AI(
             self,
-            lambda pos: self.walkable(pos),
-            lambda mob: self.handle_attack(mob),
+            self.walkable,
+            self.handle_attack,
         )
 
         mob_sprite = spriteset.get_mob(0)
@@ -250,7 +213,8 @@ class Dungeon:
                     cell.clutter = clutter
 
                 continue
-            elif room.attrs & Room.ATTR_BOSS_ROOM:
+
+            if room.attrs & Room.ATTR_BOSS_ROOM:
                 # generate a boss
                 mob = Creature(
                     mob_sprite,
@@ -272,6 +236,7 @@ class Dungeon:
                 mob.wield(boss_armor_3.wields_at(), boss_armor_3)
                 self.creatures.append(mob)
                 self.ai.attach(mob)
+
                 continue
 
             dist = room.distance_to(starting_room)
@@ -395,14 +360,19 @@ class Dungeon:
 
         self._shop_button.visible = False
 
-        self._modal = None
-        self._battle = None
+        self._modal: Optional[
+            Union[InventoryModal, InventoryTransferModal, Shop]
+        ] = None
+        self._battle: Optional[Battle] = None
+        self._shop: Optional[Shop] = None
 
         self._time_accum = 0.0
         self._x_delta = 0
         self._y_delta = 0
 
     def generate_items(self):
+        """Generates items to use throughout the dungeon."""
+
         self.generated_weapons = []
         self.generated_armors = []
 
@@ -447,9 +417,9 @@ class Dungeon:
                 base_item = self.game.random().choice(names_list)
                 name, mountpoint = base_item
                 if adverb and adj:
-                    name = "The %s %s %s" % (adverb, adj, name)
+                    name = f"The {adverb} {adj} {name}"
                 elif adj:
-                    name = "The %s %s" % (adj, name)
+                    name = f"The {adj} {name}"
 
                 if name in used_names:
                     if adverb:
@@ -464,7 +434,7 @@ class Dungeon:
             if mountpoint != "hands":
                 ab = self.dice.roll()
                 db = self.dice.roll()
-                item = Armor(mountpoint, name.title(), ab, db)
+                item = Armor(mountpoint, name=name.title(), attackbonus=ab, defensebonus=db)
 
                 value = (ab * 3) + (db * 2)
                 value *= value_mult
@@ -478,7 +448,7 @@ class Dungeon:
                 db = self.dice.roll()
                 dn = self.dice.roll()
                 ds = self.dice.roll()
-                item = Weapon(name.title(), cr, cm, ab, db, "%dd%d" % (dn, ds))
+                item = Weapon(name.title(), cr, cm, ab, db, f"{dn}d{ds}")
 
                 value = (((dn * ds) + cr) * cm) + (ab * 3) + (db * 2)
                 value *= value_mult
@@ -497,6 +467,8 @@ class Dungeon:
         self.shop_weapons = self.generated_weapons[:5]
 
     def kill(self):
+        """Ends the game."""
+
         if self._modal is not None:
             self._modal.kill()
 
@@ -505,7 +477,9 @@ class Dungeon:
 
         self.container.kill()
 
-    def handle_attack(self, mob):
+    def handle_attack(self, mob: Creature):
+        """Handles an attack on the player from the given mob."""
+
         # drop the attack if we're already busy
         if self._modal is not None:
             return
@@ -522,7 +496,9 @@ class Dungeon:
         )
         self._inventory_button.visible = False
 
-    def walkable(self, pos):
+    def walkable(self, pos: Position) -> bool:
+        """Returns True if the given position can be walked on."""
+
         cell = self.worldmap.cell_at(*pos)
         if not cell.is_passable():
             return False
@@ -540,7 +516,9 @@ class Dungeon:
 
         return True
 
-    def move_player(self, new_player_pos):
+    def move_player(self, new_player_pos: Position):
+        """Attempts to move the player to the given position."""
+
         attacked_creature = None
         opened_chest = None
 
@@ -587,7 +565,9 @@ class Dungeon:
 
         self.should_think = True
 
-    def handle_event(self, event):
+    def handle_event(self, event: pygame.event.Event):
+        """Handles pygame events."""
+
         # forward events while we have a modal open
         if self._modal is not None:
             self._modal.handle_event(event)
@@ -595,7 +575,8 @@ class Dungeon:
 
         if event.type == pygame.QUIT:
             raise SystemExit()
-        elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self._inventory_button:
                 self._modal = InventoryModal(self.ui, self.player, self.surface)
             elif event.ui_element == self._shop_button:
@@ -630,6 +611,8 @@ class Dungeon:
                 self.should_think = True
 
     def draw_map(self):
+        """Draws the map to the screen."""
+
         for cell in self.worldmap.cells:
             if cell.pos[1] >= self.bottom_y:
                 # no more cells will be rendered, we're at the bottom of the screen
@@ -647,6 +630,8 @@ class Dungeon:
             )
 
     def draw_player(self):
+        """Draws the player to the screen."""
+
         self.surface.blit(
             self.spriteset.get_player(),
             (HALF_TILES_W * 32, HALF_TILES_H * 32),
@@ -654,6 +639,8 @@ class Dungeon:
         )
 
     def draw_creatures(self):
+        """Draws creatures to the screen."""
+
         for creature in self.creatures:
             if not is_visible(
                 *creature.position, self.left_x, self.right_x, self.top_y, self.bottom_y
@@ -679,6 +666,8 @@ class Dungeon:
             )
 
     def draw_containers(self):
+        """Draws chests to the screen."""
+
         for chest in self.containers:
             if not is_visible(
                 *chest.position, self.left_x, self.right_x, self.top_y, self.bottom_y
@@ -706,30 +695,32 @@ class Dungeon:
             )
 
     def draw_info_section(self):
+        """Draws the info panel and log to the screen."""
+
         pygame.draw.rect(
             self.surface,
             (0, 0, 0),
             pygame.Rect(0, LOG_Y, WINDOW_W, LOG_H),
         )
 
-        for y, entry in enumerate(self.game.get_log(max=LOG_ENTRIES)):
+        for y, entry in enumerate(self.game.get_log(entries=LOG_ENTRIES)):
             self.font.render_to(
                 self.surface,
                 (LOG_X, LOG_Y + (y * LOG_PIXELS)),
-                "> " + entry,
+                f"> {entry}",
                 (255, 255, 255),
                 (0, 0, 0),
             )
 
         # print info pane
         hp_text, hp_text_rect = self.font.render(
-            "HP %d / %d" % (self.player.hitpoints, self.player.maxhitpoints),
+            f"HP {self.player.hitpoints} / {self.player.maxhitpoints}",
             (0, 0, 0),
             (0, 0, 0, 0),
         )
 
         xp_text, xp_text_rect = self.font.render(
-            "XP %d / %d" % (self.player.xp, self.player.next_level_xp),
+            f"XP {self.player.xp} / {self.player.next_level_xp}",
             (255, 255, 255),
             (0, 0, 0, 0),
         )
@@ -762,7 +753,7 @@ class Dungeon:
         self.font.render_to(
             self.surface,
             (0, WINDOW_H - LOG_PIXELS * 3),
-            "Gold %d" % (self.player.gold,),
+            f"Gold {self.player.gold}",
             (255, 255, 255),
             (0, 0, 0),
         )
@@ -770,7 +761,7 @@ class Dungeon:
         self.font.render_to(
             self.surface,
             (0, WINDOW_H - LOG_PIXELS * 2),
-            "Level %d" % (self.player.level,),
+            f"Level {self.player.level}",
             (255, 255, 255),
             (0, 0, 0),
         )
@@ -778,12 +769,14 @@ class Dungeon:
         self.font.render_to(
             self.surface,
             (0, WINDOW_H - LOG_PIXELS),
-            "Seed %d" % (self.game.seed,),
+            f"Seed {self.game.seed}",
             (255, 255, 255),
             (0, 0, 0),
         )
 
-    def tick(self, dt):
+    def tick(self, dt: float) -> bool:
+        """Processes an iteration of game logic."""
+
         if self._pause_window is not None:
             return True
 
@@ -843,7 +836,7 @@ class Dungeon:
             self.player.think()
 
             if not self.player.alive:
-                self.game.set_state(Game.STATE_DEAD)
+                self.game.set_state(GameState.STATE_DEAD)
                 self.container.kill()
 
             for creature in self.creatures:
@@ -863,7 +856,7 @@ class Dungeon:
 
             # dungeon cleared?
             if self.player.alive and not self.creatures:
-                self.game.set_state(Game.STATE_WIN)
+                self.game.set_state(GameState.STATE_WIN)
                 self.container.kill()
 
             self.should_think = False
@@ -871,6 +864,8 @@ class Dungeon:
         return True
 
     def render(self):
+        """Renders the game to the screen."""
+
         self.surface.fill(0)
 
         self.left_x = self.player.position[0] - HALF_TILES_W
@@ -887,7 +882,19 @@ class Dungeon:
         self.draw_info_section()
 
 
-def sprite_at(surface, sprite, cell, x, y, left_x, right_x, top_y, bottom_y):
+def sprite_at(
+    surface: pygame.Surface,
+    sprite: pygame.Surface,
+    cell: Cell,
+    x: int,
+    y: int,
+    left_x: int,
+    right_x: int,
+    top_y: int,
+    bottom_y: int,
+):
+    """Renders a sprite onto the given surface at the given location."""
+
     # don't overdraw
     if x < left_x or x > right_x:
         return
@@ -908,7 +915,18 @@ def sprite_at(surface, sprite, cell, x, y, left_x, right_x, top_y, bottom_y):
             surface.blit(explored_overlay, dest, (0, 0, *sprite_size))
 
 
-def draw_cell(surface, spriteset, worldmap, cell, left_x, right_x, top_y, bottom_y):
+def draw_cell(
+    surface: pygame.Surface,
+    spriteset: SpriteSet,
+    worldmap: Map,
+    cell: Cell,
+    left_x: int,
+    right_x: int,
+    top_y: int,
+    bottom_y: int,
+):
+    """Renders a map cell onto the given surface at the given location."""
+
     if cell.cell_type == Cell.TYPE_ROOM:
         sprite = spriteset.get_floor()
     elif cell.cell_type == Cell.TYPE_HALL:
@@ -1013,5 +1031,7 @@ def draw_cell(surface, spriteset, worldmap, cell, left_x, right_x, top_y, bottom
             )
 
 
-def is_visible(x, y, left_x, right_x, top_y, bottom_y):
-    return x >= left_x and x < right_x and y >= top_y and y < bottom_y
+def is_visible(x: int, y: int, left_x: int, right_x: int, top_y: int, bottom_y: int):
+    """Returns True if the given coordinate is inside the visible area."""
+
+    return left_x <= x < right_x and top_y <= y < bottom_y
