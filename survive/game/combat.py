@@ -46,6 +46,7 @@ class Combat:
         armor_class = (
             10 + armor_bonus + shield_bonus + defender.attributes.get_modifier("dex")
         )
+        armor_class = int(math.ceil(armor_class))
 
         attack_roll = self.dice.roll()
         attack_bonus = attacker.attack_bonus + defender.attributes.get_modifier("str")
@@ -64,7 +65,7 @@ class Combat:
                 game().log(
                     (
                         f"... rolled {crit_roll} on d20 + "
-                        "atk bonus {attack_bonus} beats AC {armor_class}"
+                        f"atk bonus {attack_bonus} beats AC {armor_class}"
                     )
                 )
                 attack_damage_multiplier = attacker.get_weapon_critical_multiplier()
@@ -89,8 +90,9 @@ class Combat:
             damroll = self.dice.rollnamed(dam)
             damroll *= attack_damage_multiplier * atkmult
 
+            damroll = int(math.ceil(damroll))
             game().log(f"{attacker.name} hits for {damroll} damage (rolled {dam})!")
-            defender.hitpoints -= int(math.ceil(damroll))
+            defender.hitpoints -= damroll
 
         return not (attacker.alive and defender.alive)
 

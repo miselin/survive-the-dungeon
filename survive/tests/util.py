@@ -22,9 +22,9 @@ class TestDice(Dice):
         """Add a result to the queue."""
         self._results.append(result)
 
-    def queue_results(self, *args: Iterable[int]):
+    def queue_results(self, *args: int):
         """Add multiple results at once."""
-        self._results.extend(*args)
+        self._results.extend(args)
 
     def roll(self, _: int = 1, __: int = 20) -> int:
         return self._results.pop(0)

@@ -40,6 +40,7 @@ LOG_Y = WINDOW_H - LOG_H
 LOG_X = 192
 
 MS_PER_TILE_MOVE = 125
+MS_PER_AI_MOVE = 500
 
 TILES_W = int(math.floor(WINDOW_W / 32))
 TILES_H = int(math.ceil((WINDOW_H - LOG_H) / 32))
@@ -263,6 +264,7 @@ class Dungeon:
                 mob = Creature(mob_sprite, room.room_to_world(pos), "Goblin")
                 mob.rollforattrs()
                 mob.roll_mob_attrs()
+                mob.mob = True
 
                 # give better weapons to mobs deeper in the dungeon
                 scale_factor = max(0.0, 1.0 - scaled)
@@ -367,6 +369,7 @@ class Dungeon:
         self._shop: Optional[Shop] = None
 
         self._time_accum = 0.0
+        self._ai_time_accum = 0.0
         self._x_delta = 0
         self._y_delta = 0
 
@@ -801,6 +804,7 @@ class Dungeon:
             self.first_loop = False
 
         self._time_accum += dt
+        self._ai_time_accum += dt
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
@@ -814,10 +818,6 @@ class Dungeon:
 
         # use accumulator to increase time it takes to move one tile
         if self._time_accum >= MS_PER_TILE_MOVE:
-            # even if the player doesn't move, let the world simulate
-            # this makes AIs move even when the player doesn't
-            self.should_think = True
-
             if self._x_delta != 0 or self._y_delta != 0:
                 new_player_pos = (
                     self.player.position[0] + self._x_delta,
@@ -830,6 +830,13 @@ class Dungeon:
                 self._y_delta = 0
 
             self._time_accum -= MS_PER_TILE_MOVE
+
+        if self._ai_time_accum >= MS_PER_AI_MOVE:
+            # even if the player doesn't move, let the world simulate
+            # this makes AIs move even when the player doesn't
+            self.should_think = True
+
+            self._ai_time_accum -= MS_PER_AI_MOVE
 
         # update game logic
         if self.should_think:

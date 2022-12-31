@@ -118,6 +118,9 @@ class Creature:
         # Creatures can be controlled by an AI that needs to think, too.
         self.ai: Optional["AIInstance"] = None
 
+        # Are we a mob?
+        self.mob = False
+
     def rollforattrs(self):
         """Rolls dice for the attributes of this creature."""
 
@@ -160,7 +163,12 @@ class Creature:
         if self.wieldpoints["hands"] is None:
             return 20
 
-        return self.wieldpoints["hands"].critical_range()
+        critrange = self.wieldpoints["hands"].critical_range()
+        if self.mob:
+            # Mobs become deeply overpowered if their crit range goes too low.
+            # Let the player be OP, but restrict mob power.
+            critrange = max(17, critrange)
+        return critrange
 
     def get_weapon_critical_multiplier(self):
         """Gets the critical multiplier of the weapon currently wielded."""
