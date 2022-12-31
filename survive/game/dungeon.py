@@ -17,6 +17,7 @@ from .game import Game, GameState
 from .inventoryui import InventoryModal
 from .item import Armor, Chest, Gold, InstantEffectItem, Weapon
 from .mapgen import Cell, generate_map
+from .procgen import NAMES, NameGenerator, creature_at_level
 from .shopui import Shop
 from .sprites import SpriteSet
 from .transferui import InventoryTransferModal
@@ -103,6 +104,8 @@ class Dungeon:
         self.bottom_y = 0
 
         self.worldmap = generate_map(game.random())
+
+        self._name_generator = NameGenerator(game.random())
 
         self.current_room: Optional[Room] = self.worldmap.rooms[0]
 
@@ -261,53 +264,20 @@ class Dungeon:
                 )
             )
 
-            # give better weapons to mobs deeper in the dungeon
-            scale_factor = min(1.0, max(0.0, 1.0 - scaled))
-            room_scale_factor = room_nth / len(self.worldmap.rooms)
-            min_weapon = int(math.ceil(len(self.generated_weapons) * scale_factor)) + 15
-            min_armor = int(math.ceil(len(self.generated_armors) * scale_factor)) + 15
+            # increase challenge level as we get further from the start room
+            # ignore the boss room though
+            room_scale_factor = room_nth / (len(self.worldmap.rooms) - 1)
 
-            max_damage = room_scale_factor * 300
-            max_bonus = room_scale_factor * 75
-
-            weapon_window = self.generated_weapons[min_weapon:]
-            armor_window = self.generated_armors[min_armor:]
+            challenge_level = int(math.floor(room_scale_factor * 10))
 
             for pos in mob_positions:
-                mob = Creature(mob_sprite, room.room_to_world(pos), "Goblin")
-                mob.rollforattrs()
+                mob = creature_at_level(
+                    challenge_level, self._name_generator, self.game.random()
+                )
                 mob.roll_mob_attrs()
+                mob.position = room.room_to_world(pos)
+                mob.sprite = mob_sprite
                 mob.mob = True
-
-                # for weapons specifically we make sure we don't let the mob get too OP
-                candidates = self.game.random().sample(weapon_window, 15)
-                mob_weapon = None
-                attempts = 0
-                for weapon in candidates:
-                    _, dam_max = self.dice.minmax(weapon.dam)
-                    if dam_max < max_damage:
-                        # print(f'after {attempts} attempts, gave {mob.name} {weapon.name} with damage {weapon.dam}')
-                        mob_weapon = weapon
-                        break
-                    attempts += 1
-                if mob_weapon is None:
-                    mob_weapon = weapon_window[-1]
-                    # print(f'after {attempts} attempts, gave up and gave {mob.name} {mob_weapon.name} with damage {mob_weapon.dam}')
-
-                # avoid giving a too-bonused armor to a mob
-                candidates = self.game.random().sample(armor_window, 15)
-                mob_armor = None
-                attempts = 0
-                for armor in candidates:
-                    if armor.attackbonus < max_bonus and armor.defensebonus < max_bonus:
-                        mob_armor = armor
-                        break
-                    attempts += 1
-                if mob_armor is None:
-                    mob_armor = armor_window[-1]
-
-                mob.wield(mob_weapon.wields_at(), mob_weapon)
-                mob.wield(mob_armor.wields_at(), mob_armor)
 
                 self.creatures.append(mob)
                 self.ai.attach(mob)
@@ -405,60 +375,16 @@ class Dungeon:
         self.generated_weapons: List[Weapon] = []
         self.generated_armors: List[Armor] = []
 
-        names = {
-            "Helmet": "head",
-            "Cap": "head",
-            "Chestplate": "chest",
-            "Shirt": "chest",
-            "Leggings": "legs",
-            "Greaves": "legs",
-            "Boots": "feet",
-            "Shoes": "feet",
-            "Sandals": "feet",
-            "Gauntlets": "arms",
-            "Vambraces": "arms",
-            "Sleeves": "arms",
-            "Sword": "hands",
-            "Dagger": "hands",
-            "Stick": "hands",
-            "Bat": "hands",
-            "Longsword": "hands",
-            "Shiv": "hands",
-        }
-
-        names_list = list(names.items())
-
-        used_names = set()
-
         for _ in range(1250):
             value_mult = 1
 
-            adverb = ""
-            adj = ""
-
-            if self.dice.roll() >= 19:
+            special = self.dice.roll() >= 19
+            if special:
                 value_mult += 2
-                adverb = random_adverb()
 
-            adj = random_adjective()
+            mountpoint = self.game.random().choice(list(NAMES.values()))
 
-            while True:
-                base_item = self.game.random().choice(names_list)
-                name, mountpoint = base_item
-                if adverb and adj:
-                    name = f"The {adverb} {adj} {name}"
-                elif adj:
-                    name = f"The {adj} {name}"
-
-                if name in used_names:
-                    if adverb:
-                        adverb = random_adverb()
-                    if adj:
-                        adj = random_adjective()
-                    continue
-
-                used_names.add(name)
-                break
+            name = self._name_generator.generate_name(mountpoint, special)
 
             if mountpoint != "hands":
                 ab = self.dice.roll()
