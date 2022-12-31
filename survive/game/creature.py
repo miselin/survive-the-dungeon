@@ -177,7 +177,12 @@ class Creature:
         if self.wieldpoints["hands"] is None:
             return 2
 
-        return self.wieldpoints["hands"].critical_multiplier()
+        critmult = self.wieldpoints["hands"].critical_multiplier()
+        if self.mob:
+            # Mobs with a crit multiplier that's too high can one-shot players.
+            # Let's limit the multiplier for now to mitigate that.
+            critmult = min(3, critmult)
+        return critmult
 
     def wield(self, point: Wieldpoint, item: WieldableItem):
         """Wields the given item at the given mount point."""

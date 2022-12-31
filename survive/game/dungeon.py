@@ -198,7 +198,11 @@ class Dungeon:
         )
 
         # generate some mobs and stuff
-        for room in self.worldmap.rooms:
+        for room_nth, room in enumerate(self.worldmap.rooms):
+            dist = room.distance_to(starting_room)
+            scaled = dist / diag
+
+            # print(f'processing room at {room.pos}, distance to start is {dist} ({scaled})')
             if room.attrs & Room.ATTR_SHOP_ROOM:
                 # splat some props into the room, make it look different
                 room_squares = room.dims[0] * room.dims[1]
@@ -240,9 +244,6 @@ class Dungeon:
 
                 continue
 
-            dist = room.distance_to(starting_room)
-            scaled = dist / diag
-
             if room.attrs & Room.ATTR_STARTING_ROOM:
                 mob_positions = []
             else:
@@ -260,24 +261,41 @@ class Dungeon:
                 )
             )
 
+            # give better weapons to mobs deeper in the dungeon
+            scale_factor = min(1.0, max(0.0, 1.0 - scaled))
+            room_scale_factor = room_nth / len(self.worldmap.rooms)
+            min_weapon = (
+                int(math.ceil(len(self.generated_weapons) * scale_factor)) + 15
+            )
+            min_armor = (
+                int(math.ceil(len(self.generated_armors) * scale_factor)) + 15
+            )
+
+            max_damage = room_scale_factor * 300
+
+            weapon_window = self.generated_weapons[min_weapon:]
+
             for pos in mob_positions:
                 mob = Creature(mob_sprite, room.room_to_world(pos), "Goblin")
                 mob.rollforattrs()
                 mob.roll_mob_attrs()
                 mob.mob = True
 
-                # give better weapons to mobs deeper in the dungeon
-                scale_factor = max(0.0, 1.0 - scaled)
-                min_weapon = (
-                    int(math.ceil(len(self.generated_weapons) * scale_factor)) + 15
-                )
-                min_armor = (
-                    int(math.ceil(len(self.generated_armors) * scale_factor)) + 15
-                )
+                # for weapons specifically we make sure we don't let the mob get too OP
+                candidates = self.game.random().sample(weapon_window, 15)
+                mob_weapon = None
+                attempts = 0
+                for weapon in candidates:
+                    _, dam_max = self.dice.minmax(weapon.dam)
+                    if dam_max < max_damage:
+                        # print(f'after {attempts} attempts, gave {mob.name} {weapon.name} with damage {weapon.dam}')
+                        mob_weapon = weapon
+                        break
+                    attempts += 1
+                if mob_weapon is None:
+                    mob_weapon = weapon_window[-1]
+                    # print(f'after {attempts} attempts, gave up and gave {mob.name} {mob_weapon.name} with damage {mob_weapon.dam}')
 
-                mob_weapon = self.game.random().choice(
-                    self.generated_weapons[min_weapon : min_weapon + 15]
-                )
                 mob_armor = self.game.random().choice(
                     self.generated_armors[min_armor : min_armor + 15]
                 )
