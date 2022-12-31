@@ -6,7 +6,7 @@ from typing import Optional
 from survive.game.attributes import AttributeSet
 from survive.game.creature import Creature
 from survive.game.dice import Dice
-from survive.game.item import Armor, InstantEffectItem, Weapon
+from survive.game.item import Armor, Gold, InstantEffectItem, Weapon
 
 class TestDice(Dice):
     """A test dice that returns values from a queue instead of an RNG."""
@@ -66,3 +66,7 @@ def equip_standard(creature: Creature):
 def get_healing_item(hp: int, name: str = "Bandages") -> InstantEffectItem:
     """Get a healing item that heals the given HP."""
     return InstantEffectItem(name, hp)
+
+def create_gold(value: int) -> Gold:
+    """Create a Gold item with the given value."""
+    return Gold(value=value)

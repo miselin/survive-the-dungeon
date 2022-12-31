@@ -148,7 +148,7 @@ class Creature:
         """Gets the damage of the weapon currently wielded."""
 
         # Unarmed combat: 1-6 damage.
-        if self.wieldpoints["hands"] is not None:
+        if self.wieldpoints["hands"] is None:
             return "1d6"
 
         return self.wieldpoints["hands"].damage()
@@ -157,7 +157,7 @@ class Creature:
         """Gets the critical range of the weapon currently wielded."""
 
         # Unarmed combat is always a 5% chance of a critical
-        if self.wieldpoints["hands"] is not None:
+        if self.wieldpoints["hands"] is None:
             return 20
 
         return self.wieldpoints["hands"].critical_range()
@@ -166,7 +166,7 @@ class Creature:
         """Gets the critical multiplier of the weapon currently wielded."""
 
         # Unarmed combat will always have a 2x damage critical
-        if self.wieldpoints["hands"] is not None:
+        if self.wieldpoints["hands"] is None:
             return 2
 
         return self.wieldpoints["hands"].critical_multiplier()
