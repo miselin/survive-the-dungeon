@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Optional
 import pygame
 
 from .attributes import AttributeSet
+from .constants import PLAYER_INITIAL_HP
 from .dice import Dice
 from .game import game
 from .item import Buff, Container, Gold, Item, Poison, WieldableItem
@@ -44,11 +45,11 @@ class Creature:
         # Creature's hitpoints. Can be increased by any number of means.
         # Can only be increased past the maximum hitpoints by a buff from a
         # power or armor piece.
-        self.hitpoints = 30
+        self.hitpoints = PLAYER_INITIAL_HP
 
         # Creature's maximum hitpoints. Can only be increased by specific
         # powers, or by levelling up.
-        self.maxhitpoints = 30
+        self.maxhitpoints = PLAYER_INITIAL_HP
 
         # Buffs applied to the creature at this point in time.
         self.buffs: List[Buff] = []

@@ -264,12 +264,8 @@ class Dungeon:
             # give better weapons to mobs deeper in the dungeon
             scale_factor = min(1.0, max(0.0, 1.0 - scaled))
             room_scale_factor = room_nth / len(self.worldmap.rooms)
-            min_weapon = (
-                int(math.ceil(len(self.generated_weapons) * scale_factor)) + 15
-            )
-            min_armor = (
-                int(math.ceil(len(self.generated_armors) * scale_factor)) + 15
-            )
+            min_weapon = int(math.ceil(len(self.generated_weapons) * scale_factor)) + 15
+            min_armor = int(math.ceil(len(self.generated_armors) * scale_factor)) + 15
 
             max_damage = room_scale_factor * 300
             max_bonus = room_scale_factor * 75
@@ -403,10 +399,10 @@ class Dungeon:
         self._x_delta = 0
         self._y_delta = 0
 
-    def generate_items(self):
+    def generate_items(self) -> None:
         """Generates items to use throughout the dungeon."""
 
-        self.generated_weapons: List[Armor] = []
+        self.generated_weapons: List[Weapon] = []
         self.generated_armors: List[Armor] = []
 
         names = {
@@ -441,7 +437,7 @@ class Dungeon:
             adj = ""
 
             if self.dice.roll() >= 19:
-                value_mult += 2.0
+                value_mult += 2
                 adverb = random_adverb()
 
             adj = random_adjective()
@@ -467,15 +463,15 @@ class Dungeon:
             if mountpoint != "hands":
                 ab = self.dice.roll()
                 db = self.dice.roll()
-                item = Armor(
+                armor = Armor(
                     mountpoint, name=name.title(), attackbonus=ab, defensebonus=db
                 )
 
                 value = (ab * 3) + (db * 2)
                 value *= value_mult
-                item.value = int(value)
+                armor.value = int(value)
 
-                self.generated_armors.append(item)
+                self.generated_armors.append(armor)
             else:
                 cr = self.dice.roll(15, 20)
                 cm = self.dice.roll(1, 6)
@@ -483,13 +479,13 @@ class Dungeon:
                 db = self.dice.roll()
                 dn = self.dice.roll()
                 ds = self.dice.roll()
-                item = Weapon(name.title(), cr, cm, ab, db, f"{dn}d{ds}")
+                weapon = Weapon(name.title(), cr, cm, ab, db, f"{dn}d{ds}")
 
                 value = (((dn * ds) + cr) * cm) + (ab * 3) + (db * 2)
                 value *= value_mult
-                item.value = int(value)
+                weapon.value = int(value)
 
-                self.generated_weapons.append(item)
+                self.generated_weapons.append(weapon)
 
         self.generated_armors = list(
             sorted(self.generated_armors, key=lambda k: k.value, reverse=True)

@@ -8,7 +8,7 @@ import pygame_gui
 
 from .creature import Creature
 from .game import game
-from .item import Armor, InstantEffectItem, Item, WieldableItem
+from .item import Armor, InstantEffectItem, Item, Weapon
 
 
 class Shop(pygame_gui.elements.UIWindow):
@@ -18,7 +18,7 @@ class Shop(pygame_gui.elements.UIWindow):
         self,
         player: Creature,
         consumables: List[InstantEffectItem],
-        weapons: List[WieldableItem],
+        weapons: List[Weapon],
         armors: List[Armor],
         *args,
         **kwargs,

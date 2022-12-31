@@ -2,7 +2,7 @@
 
 import abc
 import typing
-from typing import List
+from typing import Any, List
 
 from .dice import Dice
 from .types import Position, Wieldpoint
@@ -145,6 +145,18 @@ Defense Bonus: {render_inequality(self.defensebonus, other.defensebonus)}
 Wields At: {self.wieldpoint}
 """
 
+    def serialize(self) -> Any:
+        return {
+            "name": self.name,
+            "wieldpoint": self.wieldpoint,
+            "attackbonus": self.attackbonus,
+            "defensebonus": self.defensebonus,
+        }
+
+    @classmethod
+    def deserialize(self, obj: Any) -> "Weapon":
+        return Weapon(**obj)
+
 
 class Weapon(WieldableItem):
     """Defines a weapon."""
@@ -205,6 +217,20 @@ Damage roll: {self.dam} vs {other.dam}
   ... minimum damage {render_inequality(dam_min, other_dam_min)}
   ... maximum damage {render_inequality(dam_max, other_dam_max)}
 """
+
+    def serialize(self) -> Any:
+        return {
+            "name": self.name,
+            "critrange": self.critrange,
+            "critmult": self.critmult,
+            "dam": self.dam,
+            "attackbonus": self.attackbonus,
+            "defensebonus": self.defensebonus,
+        }
+
+    @classmethod
+    def deserialize(self, obj: Any) -> "Weapon":
+        return Weapon(**obj)
 
 
 class InstantEffectItem(Item):
