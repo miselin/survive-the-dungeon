@@ -10,6 +10,10 @@ from .ai import AI
 from .attributes import AttributeSet
 from .battle import Battle
 from .combat import Combat
+from .constants import (BOSS_CHALLENGE_LEVEL, CREATURE_XP_MULTIPLIER,
+                        MAXIMUM_CHALLENGE_LEVEL, MS_PER_AI_MOVE,
+                        MS_PER_TILE_MOVE, PLAYER_CRIT_MAXIMUM_MULTIPLIER,
+                        PLAYER_CRIT_MINIMUM_ROLL)
 from .creature import Creature
 from .dice import Dice
 from .env import ON_REPLIT
@@ -22,7 +26,6 @@ from .shopui import Shop
 from .sprites import SpriteSet
 from .transferui import InventoryTransferModal
 from .types import Position
-from .words import random_adjective, random_adverb
 from .worldmap import Map, Room
 
 if ON_REPLIT:
@@ -39,9 +42,6 @@ LOG_H = LOG_ENTRIES * LOG_PIXELS
 LOG_Y = WINDOW_H - LOG_H
 
 LOG_X = 192
-
-MS_PER_TILE_MOVE = 125
-MS_PER_AI_MOVE = 500
 
 TILES_W = int(math.floor(WINDOW_W / 32))
 TILES_H = int(math.ceil((WINDOW_H - LOG_H) / 32))
@@ -166,11 +166,8 @@ class Dungeon:
         self.player.wield("chest", cloth)
         self.player.wield("feet", leather_boots)
 
-        self.player.give(bandages)
-        self.player.give(bandages)
-        self.player.give(bandages)
-        self.player.give(bandages)
-        self.player.give(bandages)
+        for _ in range(5):
+            self.player.give(bandages)
         self.player.give(health_potion)
 
         self.creatures = []
@@ -186,6 +183,9 @@ class Dungeon:
 
         self.dice = Dice()
         self.combat = Combat(self.dice)
+
+        self.generated_weapons: List[Weapon] = []
+        self.generated_armors: List[Armor] = []
 
         self.generate_items()
 
@@ -222,40 +222,21 @@ class Dungeon:
 
                 continue
 
-            if room.attrs & Room.ATTR_BOSS_ROOM:
-                # generate a boss
-                mob = Creature(
-                    mob_sprite,
-                    room.room_to_world((4, 4)),
-                    "Dungeon Boss",
-                    attribute_override=boss_attribs,
-                )
-                mob.hitpoints = 500
-                mob.roll_mob_attrs()
-
-                # choose from the mid-top highest value weapons
-                boss_weapon = self.game.random().choice(self.generated_weapons[15:25])
-                boss_armor_1 = self.game.random().choice(self.generated_armors[15:25])
-                boss_armor_2 = self.game.random().choice(self.generated_armors[15:25])
-                boss_armor_3 = self.game.random().choice(self.generated_armors[15:25])
-                mob.wield(boss_weapon.wields_at(), boss_weapon)
-                mob.wield(boss_armor_1.wields_at(), boss_armor_1)
-                mob.wield(boss_armor_2.wields_at(), boss_armor_2)
-                mob.wield(boss_armor_3.wields_at(), boss_armor_3)
-                self.creatures.append(mob)
-                self.ai.attach(mob)
-
-                continue
-
             if room.attrs & Room.ATTR_STARTING_ROOM:
                 mob_positions = []
             else:
+                if boss:
+                    count = self.dice.roll(1, int(math.ceil(6 * scaled)))
+                else:
+                    count = 1
+
                 mob_positions = list(
                     room.generate_random_positions(
                         self.game.random(),
-                        self.dice.roll(1, int(math.ceil(6 * scaled))),
+                        count,
                     )
                 )
+
             chest_positions = list(
                 room.generate_random_positions(
                     self.game.random(),
@@ -268,12 +249,23 @@ class Dungeon:
             # ignore the boss room though
             room_scale_factor = room_nth / (len(self.worldmap.rooms) - 1)
 
-            challenge_level = int(math.floor(room_scale_factor * 10))
+            challenge_level = int(
+                math.floor(room_scale_factor * MAXIMUM_CHALLENGE_LEVEL)
+            )
+
+            boss: bool = (room.attrs & Room.ATTR_BOSS_ROOM) == Room.ATTR_BOSS_ROOM
+            if boss:
+                challenge_level = BOSS_CHALLENGE_LEVEL
 
             for pos in mob_positions:
                 mob = creature_at_level(
                     challenge_level, self._name_generator, self.game.random()
                 )
+
+                if boss:
+                    mob.attributes = boss_attribs
+                    mob.name = "Dungeon Boss"
+
                 mob.roll_mob_attrs()
                 mob.position = room.room_to_world(pos)
                 mob.sprite = mob_sprite
@@ -370,10 +362,7 @@ class Dungeon:
         self._y_delta = 0
 
     def generate_items(self) -> None:
-        """Generates items to use throughout the dungeon."""
-
-        self.generated_weapons: List[Weapon] = []
-        self.generated_armors: List[Armor] = []
+        """Generate items to use throughout the dungeon."""
 
         for _ in range(1250):
             value_mult = 1
@@ -399,8 +388,8 @@ class Dungeon:
 
                 self.generated_armors.append(armor)
             else:
-                cr = self.dice.roll(15, 20)
-                cm = self.dice.roll(1, 6)
+                cr = self.dice.roll(PLAYER_CRIT_MINIMUM_ROLL, 20)
+                cm = self.dice.roll(1, PLAYER_CRIT_MAXIMUM_MULTIPLIER)
                 ab = self.dice.roll()
                 db = self.dice.roll()
                 dn = self.dice.roll()
@@ -805,7 +794,7 @@ class Dungeon:
 
                 if not creature.alive:
                     creature.ai_release()
-                    self.player.give_xp(creature.maxhitpoints * 2)
+                    self.player.give_xp(creature.maxhitpoints * CREATURE_XP_MULTIPLIER)
                     self.player.give(Gold(value=creature.gold))
                     self.game.log(f"{creature.name} is dead. RIP.")
                     self.game.log(

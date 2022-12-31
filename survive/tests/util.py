@@ -1,6 +1,6 @@
 """This module provides common utilities for tests to use."""
 
-from typing import Iterable, List
+from typing import List
 
 from game.attributes import AttributeSet
 from game.creature import Creature

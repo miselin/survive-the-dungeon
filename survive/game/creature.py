@@ -7,7 +7,8 @@ from typing import Dict, Iterable, List, Optional
 import pygame
 
 from .attributes import AttributeSet
-from .constants import PLAYER_INITIAL_HP
+from .constants import (CREATURE_GOLD_MULTIPLIER, CREATURE_GOLD_SCALER,
+                        PLAYER_INITIAL_HP)
 from .dice import Dice
 from .game import game
 from .item import Buff, Container, Gold, Item, Poison, WieldableItem
@@ -143,10 +144,12 @@ class Creature:
 
         dice = Dice()
         # scale gold based on HP of the creature
-        count = int(math.ceil(self.maxhitpoints / 15))
+        count = int(math.ceil(self.maxhitpoints / CREATURE_GOLD_SCALER))
         if count <= 0:
             count = 1
-        self.gold = dice.rollnamed(f"{count}d20") * 3
+        self.gold = int(
+            math.floor(dice.rollnamed(f"{count}d20") * CREATURE_GOLD_MULTIPLIER)
+        )
 
     def get_weapon_damage(self):
         """Gets the damage of the weapon currently wielded."""

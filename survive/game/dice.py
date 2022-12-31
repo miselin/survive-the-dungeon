@@ -14,7 +14,7 @@ class Dice:
     def roll(self, low: int = 1, high: int = 20) -> int:
         """roll rolls a single die with the given range"""
         low = max(low, 1)
-        return int(game().random().uniform(low, high + 1))
+        return game().random().randint(low, high)
 
     def rollnamed(self, name: str) -> int:
         """rollnamed rolls a named set of dice, e.g. '3d6' will roll 3 6-sided dice"""
