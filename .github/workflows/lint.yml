@@ -1,6 +1,10 @@
 name: Lint Python Code
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   lint:
@@ -11,11 +15,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
-    - name: Install dependencies
+    - name: Install Poetry
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        python -m poetry install
+        python -m pip install -r requirements.txt
+    - name: Install Dependencies
+      run: python -m poetry install
     - name: Scan for code quality
       run: |
         python -m black --check survive
