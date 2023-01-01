@@ -123,6 +123,7 @@ class InventoryTransferModal:
             if self._player.give(item):
                 self._container.take_item(item)
             else:
+                # don't break here, because gold still transfers to a full inventory
                 inventory_filled = True
 
         if inventory_filled:
@@ -137,6 +138,7 @@ class InventoryTransferModal:
             if self._player.give(item):
                 self._container.take_item(item)
             else:
+                # don't break here, because gold still transfers to a full inventory
                 inventory_filled = True
 
         if inventory_filled:

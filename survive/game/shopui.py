@@ -168,8 +168,11 @@ class Shop(pygame_gui.elements.UIWindow):
                     )
                 else:
                     # purchase it!
-                    self.player.gold -= item.value
-                    self.player.give(item)
-                    game().log("You purchased %s." % (item.name,))
+                    if self.player.give(item):
+                        self.player.gold -= item.value
+                        game().log("You purchased %s." % (item.name,))
+                        game().stats().gold_spent += item.value
+                    else:
+                        game().log("Your inventory is full!")
 
         return consumed

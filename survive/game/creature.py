@@ -282,6 +282,7 @@ class Creature:
 
         if isinstance(item, Gold):
             self.gold += item.value
+            game().stats().gold_earned += item.value
             return True
 
         return self.inventory.add_item(item)
@@ -290,6 +291,8 @@ class Creature:
         """Gives the creature XP."""
 
         self.xp += xp
+        game().stats().xp_gained += xp
+
         if self.xp >= self.next_level_xp:
             self.next_level_xp *= PLAYER_XP_GOAL_MULTIPLIER
             self.level += 1

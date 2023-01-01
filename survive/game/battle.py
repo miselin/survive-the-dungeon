@@ -9,6 +9,7 @@ from .combat import Combat, CombatState
 from .creature import Creature
 from .dice import Dice
 from .item import InstantEffectItem
+from .game import game
 
 
 class Battle(pygame_gui.elements.UIWindow):
@@ -65,6 +66,9 @@ class Battle(pygame_gui.elements.UIWindow):
 
     def end_battle(self):
         """end_battle ends the battle between the two combatants"""
+        if self._player.alive and not self._defender.alive:
+            game().stats().vanquished += 1
+
         self._player.in_battle = False
         self._defender.in_battle = False
         self.kill()

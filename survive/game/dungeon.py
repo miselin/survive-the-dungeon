@@ -205,6 +205,10 @@ class Dungeon:
             dist = room.distance_to(starting_room)
             scaled = dist / diag
 
+            boss: bool = (room.attrs & Room.ATTR_BOSS_ROOM) == Room.ATTR_BOSS_ROOM
+            if boss:
+                challenge_level = BOSS_CHALLENGE_LEVEL
+
             # print(f'processing room at {room.pos}, distance to start is {dist} ({scaled})')
             if room.attrs & Room.ATTR_SHOP_ROOM:
                 # splat some props into the room, make it look different
@@ -254,10 +258,6 @@ class Dungeon:
             challenge_level = int(
                 math.floor(room_scale_factor * MAXIMUM_CHALLENGE_LEVEL)
             )
-
-            boss: bool = (room.attrs & Room.ATTR_BOSS_ROOM) == Room.ATTR_BOSS_ROOM
-            if boss:
-                challenge_level = BOSS_CHALLENGE_LEVEL
 
             for pos in mob_positions:
                 mob = creature_at_level(
@@ -798,8 +798,9 @@ class Dungeon:
             self.player.think()
 
             if not self.player.alive:
-                self.game.set_state(GameState.STATE_DEAD)
-                self.container.kill()
+                self.end_game(GameState.STATE_DEAD)
+
+            creature_died = False
 
             for creature in self.creatures:
                 creature.think()
@@ -813,17 +814,38 @@ class Dungeon:
                         f"Looted {creature.gold} gold and gained {creature.maxhitpoints} XP"
                     )
 
+                    creature_died = True
+
             # clear out dead creatures
             self.creatures = list(filter(lambda c: c.alive, self.creatures))
+            if self.creatures and creature_died:
+                self.game.log(f'{len(self.creatures)} enemies still remain in the dungeon.')
 
             # dungeon cleared?
             if self.player.alive and not self.creatures:
-                self.game.set_state(GameState.STATE_WIN)
-                self.container.kill()
+                self.end_game(GameState.STATE_WIN)
 
             self.should_think = False
 
         return True
+
+    def end_game(self, new_state: GameState):
+        """End the game, moving into the given state."""
+        self.game.stats().inventory_value = sum(item.value for item in self.player.inventory.items()) + sum(item.value for item in self.player.wieldpoints.values() if item is not None)
+        self.game.stats().gold_left_behind = self.sum_gold_in_chests()
+        self.game.stats().level = self.player.level
+        self.game.set_state(new_state)
+        self.container.kill()
+
+    def sum_gold_in_chests(self) -> int:
+        """Get the total amount of gold in chests in the dungeon."""
+        total = 0
+        for chest in self.containers:
+            for item in chest.items():
+                if isinstance(item, Gold):
+                    total += item.value
+
+        return total
 
     def render(self):
         """Renders the game to the screen."""

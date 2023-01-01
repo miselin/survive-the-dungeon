@@ -6,10 +6,7 @@ import pygame_gui
 from .game import GameState, game
 
 YOU_WON = "Dungeon cleared!"
-YOU_WON_SUBTITLE = "todo: submit your score here!"
 YOU_LOST = "The dungeon consumed you."
-YOU_LOST_SUBTITLE = "Better luck next time!"
-
 
 class GameEndedScreen:
     """Handles all the logic for the end-of-game popup."""
@@ -48,7 +45,10 @@ class GameEndedScreen:
         self.dialog_rt = pygame.Rect(0, 0, *dialog_size)
         self.dialog_rt.center = surface_rect.center
 
-        subtitle = YOU_WON_SUBTITLE if self.won else YOU_LOST_SUBTITLE
+        if self.won:
+            subtitle = self._won_text()
+        else:
+            subtitle = self._lost_text()
 
         if not self.won:
             subtitle = (
@@ -83,3 +83,23 @@ class GameEndedScreen:
         if event.type == pygame_gui.UI_WINDOW_CLOSE:
             if event.ui_element == self.popup:
                 self.menu()
+
+    def _won_text(self) -> str:
+        """Generate the text body for a win."""
+        return f'You successfully cleared the dungeon!{self._stats_text()}'
+
+    def _lost_text(self) -> str:
+        """Generate the text body for a loss."""
+        return f'Better luck next time!{self._stats_text()}'
+
+    def _stats_text(self) -> str:
+        """Generate the text body for the player's statistics in the run."""
+        stats = game().stats()
+
+        return f'''<br><br><b>Your Stats:</b>
+You vanquished <b>{stats.vanquished}</b> enemies.
+You earned <b><font color=#FFFF64>{stats.gold_earned}</font> gold</b> and spent <b><font color=#FFFF64>{stats.gold_spent}</font></b> of it at the shop.
+You left <b><font color=#FFFF64>{stats.gold_left_behind}</font> gold</b> in chests in the dungeon.
+You held <font color=#FFFF64>{stats.inventory_value}</font> gold</b> worth of items.
+You received <b>{stats.xp_gained}</b> total XP.
+You reached <b>level {stats.level}</b>.'''
