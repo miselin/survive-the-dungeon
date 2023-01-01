@@ -7,7 +7,7 @@ import random
 from typing import Dict, List, Optional, Set
 
 from .attributes import AttributeSet
-from .constants import CHALLENGE_LEVEL_SCALE_UP_FACTOR, PLAYER_INITIAL_HP
+from .constants import CHALLENGE_LEVEL_SCALE_UP_FACTOR, CREATURE_MAX_DAMAGE_AT_LEVEL_1, CREATURE_MIN_HP_AT_LEVEL_1, CREATURE_MAX_HP_AT_LEVEL_1
 from .creature import Creature
 from .game import game
 from .item import Armor, Weapon
@@ -34,14 +34,6 @@ NAMES: Dict[str, Wieldpoint] = {
     "Longsword": "hands",
     "Shiv": "hands",
 }
-
-# We constrain the damage a weapon can do here.
-# We don't want a weapon that can one-hit the player even with a crit.
-# This doubles at every level.
-MAX_DAMAGE_AT_LEVEL_1 = int(math.floor(PLAYER_INITIAL_HP * 0.3))
-
-MAX_HP_AT_LEVEL_1 = 10
-MIN_HP_AT_LEVEL_1 = 3
 
 MOB_ATTRIBUTES = AttributeSet()
 MOB_ATTRIBUTES.modify("str", 16)
@@ -132,10 +124,10 @@ def creature_at_level(
     if rng is None:
         rng = game().random()
 
-    max_damage = MAX_DAMAGE_AT_LEVEL_1
+    max_damage = CREATURE_MAX_DAMAGE_AT_LEVEL_1
 
-    min_hp = MIN_HP_AT_LEVEL_1
-    max_hp = MAX_HP_AT_LEVEL_1
+    min_hp = CREATURE_MIN_HP_AT_LEVEL_1
+    max_hp = CREATURE_MAX_HP_AT_LEVEL_1
 
     potential_mountpoints: List[Wieldpoint] = ["chest", "arms", "feet"]
 

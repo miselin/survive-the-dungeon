@@ -1,4 +1,5 @@
 """Exports constants that can be used across the game."""
+import math
 
 # Initial HP the player has in the dungeon
 PLAYER_INITIAL_HP = 30
@@ -38,3 +39,18 @@ MS_PER_TILE_MOVE = 125
 # It should be moderately higher than the player's move speed or else
 # the player has no chance to escape an encounter before it happens.
 MS_PER_AI_MOVE = 500
+
+# The maximum damage that a creature at the base challenge level can deal.
+# We don't want a weapon that can one-hit the player even with a crit.
+# This is multiplied by CHALLENGE_LEVEL_SCALE_UP_FACTOR per challenge level.
+CREATURE_MAX_DAMAGE_AT_LEVEL_1 = int(math.floor(PLAYER_INITIAL_HP * 0.3))
+
+# Maximum HP that a creature can have at the base challenge level.
+# Too high, and the player spends too long in battles. Too low, and the
+# player can too easily complete the dungeon without too much challenge.
+# This is multiplied by CHALLENGE_LEVEL_SCALE_UP_FACTOR per challenge level.
+CREATURE_MAX_HP_AT_LEVEL_1 = 40
+
+# Maximum HP that a creature can have at the base challenge level.
+# This is multiplied by CHALLENGE_LEVEL_SCALE_UP_FACTOR per challenge level.
+CREATURE_MIN_HP_AT_LEVEL_1 = int(math.floor(CREATURE_MAX_HP_AT_LEVEL_1 * 0.5))
