@@ -5,4 +5,4 @@ venv:
 	python -m virtualenv venv
 	source venv/bin/activate
 	pip install 'poetry==1.1.13'
-	pythom -m poetry install
+	python -m poetry install

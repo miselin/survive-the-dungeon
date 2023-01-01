@@ -1,0 +1,26 @@
+name: Lint Python Code
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        python -m poetry install
+    - name: Scan for code quality
+      run: |
+        python -m black --check survive
+        python -m isort -rc survive -c --diff
+        python -m pylint survive
+        python -m pycodestyle --max-line-length=100 --exclude=gen.py survive
+        python -m flake8 survive
+        python -m mypy survive
