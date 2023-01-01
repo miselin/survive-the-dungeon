@@ -8,8 +8,8 @@ import pygame_gui
 from .combat import Combat, CombatState
 from .creature import Creature
 from .dice import Dice
-from .item import InstantEffectItem
 from .game import game
+from .item import InstantEffectItem
 
 
 class Battle(pygame_gui.elements.UIWindow):

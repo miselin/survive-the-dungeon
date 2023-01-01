@@ -106,16 +106,20 @@ class Room:
         return len(list(self.tunnel_to(room)))
 
     def generate_random_positions(
-        self, rng: random.Random, count: int, keepouts: Iterable[Position] = (), padding: int = 0,
+        self,
+        rng: random.Random,
+        count: int,
+        keepouts: Iterable[Position] = (),
+        padding: int = 0,
     ) -> Iterable[Position]:
         """Generates random locations in the room"""
 
         seen = set()
         for _ in range(count):
             for _ in range(10000):  # 10k tries to get a coord that hasn't been used yet
-                point = rng.randint(padding, self.dims[0] - 1 - (padding * 2)), rng.randint(
-                    padding, self.dims[1] - 1 - (padding * 2)
-                )
+                point = rng.randint(
+                    padding, self.dims[0] - 1 - (padding * 2)
+                ), rng.randint(padding, self.dims[1] - 1 - (padding * 2))
                 if point in seen or point in keepouts:
                     continue
 

@@ -10,9 +10,13 @@ from .ai import AI
 from .attributes import AttributeSet
 from .battle import Battle
 from .combat import Combat
-from .constants import (BANDAGES_HEAL_HP, BOSS_CHALLENGE_LEVEL, COLOSSAL_HEALTH_POTION_HEAL_HP, CREATURE_XP_MULTIPLIER, GOLD_IN_CHEST_DICE, HEALTH_POTION_HEAL_HP, HUGE_HEALTH_POTION_HEAL_HP, LARGE_HEALTH_POTION_HEAL_HP,
-                        MAXIMUM_CHALLENGE_LEVEL, MS_PER_AI_MOVE,
-                        MS_PER_TILE_MOVE, PLAYER_CRIT_MAXIMUM_MULTIPLIER,
+from .constants import (BANDAGES_HEAL_HP, BOSS_CHALLENGE_LEVEL,
+                        COLOSSAL_HEALTH_POTION_HEAL_HP, CREATURE_XP_MULTIPLIER,
+                        GOLD_IN_CHEST_DICE, HEALTH_POTION_HEAL_HP,
+                        HUGE_HEALTH_POTION_HEAL_HP,
+                        LARGE_HEALTH_POTION_HEAL_HP, MAXIMUM_CHALLENGE_LEVEL,
+                        MS_PER_AI_MOVE, MS_PER_TILE_MOVE,
+                        PLAYER_CRIT_MAXIMUM_MULTIPLIER,
                         PLAYER_CRIT_MINIMUM_ROLL)
 from .creature import Creature
 from .dice import Dice
@@ -144,11 +148,17 @@ class Dungeon:
         health_potion = InstantEffectItem("Health Potion", HEALTH_POTION_HEAL_HP)
         health_potion.value = 50
 
-        bigger_health_potion = InstantEffectItem("Large Health Potion", LARGE_HEALTH_POTION_HEAL_HP)
+        bigger_health_potion = InstantEffectItem(
+            "Large Health Potion", LARGE_HEALTH_POTION_HEAL_HP
+        )
         bigger_health_potion.value = 250
-        huge_health_potion = InstantEffectItem("Huge Health Potion", HUGE_HEALTH_POTION_HEAL_HP)
+        huge_health_potion = InstantEffectItem(
+            "Huge Health Potion", HUGE_HEALTH_POTION_HEAL_HP
+        )
         huge_health_potion.value = 750
-        biggest_health_potion = InstantEffectItem("Colossal Health Potion", COLOSSAL_HEALTH_POTION_HEAL_HP)
+        biggest_health_potion = InstantEffectItem(
+            "Colossal Health Potion", COLOSSAL_HEALTH_POTION_HEAL_HP
+        )
         biggest_health_potion.value = 1250
         instaheal = InstantEffectItem("Instaheal", 1000000000)
         instaheal.value = 15000
@@ -215,7 +225,8 @@ class Dungeon:
                 room_squares = room.dims[0] * room.dims[1]
                 clutter_positions = list(
                     room.generate_random_positions(
-                        self.game.random(), int(math.ceil(room_squares / 3)),
+                        self.game.random(),
+                        int(math.ceil(room_squares / 3)),
                     )
                 )
                 for pos in clutter_positions:
@@ -807,7 +818,9 @@ class Dungeon:
 
                 if not creature.alive:
                     creature.ai_release()
-                    self.player.give_xp(int(math.floor(creature.maxhitpoints * CREATURE_XP_MULTIPLIER)))
+                    self.player.give_xp(
+                        int(math.floor(creature.maxhitpoints * CREATURE_XP_MULTIPLIER))
+                    )
                     self.player.give(Gold(value=creature.gold))
                     self.game.log(f"{creature.name} is dead. RIP.")
                     self.game.log(
@@ -819,7 +832,9 @@ class Dungeon:
             # clear out dead creatures
             self.creatures = list(filter(lambda c: c.alive, self.creatures))
             if self.creatures and creature_died:
-                self.game.log(f'{len(self.creatures)} enemies still remain in the dungeon.')
+                self.game.log(
+                    f"{len(self.creatures)} enemies still remain in the dungeon."
+                )
 
             # dungeon cleared?
             if self.player.alive and not self.creatures:
@@ -831,7 +846,11 @@ class Dungeon:
 
     def end_game(self, new_state: GameState):
         """End the game, moving into the given state."""
-        self.game.stats().inventory_value = sum(item.value for item in self.player.inventory.items()) + sum(item.value for item in self.player.wieldpoints.values() if item is not None)
+        self.game.stats().inventory_value = sum(
+            item.value for item in self.player.inventory.items()
+        ) + sum(
+            item.value for item in self.player.wieldpoints.values() if item is not None
+        )
         self.game.stats().gold_left_behind = self.sum_gold_in_chests()
         self.game.stats().level = self.player.level
         self.game.set_state(new_state)

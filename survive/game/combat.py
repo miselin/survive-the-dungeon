@@ -4,11 +4,11 @@ import dataclasses
 import math
 from typing import Optional
 
+from .constants import MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 from .creature import Creature
 from .dice import Dice
 from .game import game
 from .item import InstantEffectItem
-from .constants import MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 
 
 @dataclasses.dataclass
@@ -81,7 +81,9 @@ class Combat:
                 log_msg = f"{attacker.name} HIT: {log_msg}"
             else:
                 log_msg = f"{attacker.name} HIT: {log_msg} (ineffective)"
-                attack_damage_multiplier *= (attack_roll / armor_class) * MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
+                attack_damage_multiplier *= (
+                    attack_roll / armor_class
+                ) * MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 
             game().log(log_msg)
 
@@ -90,7 +92,9 @@ class Combat:
         damroll *= attack_damage_multiplier * atkmult
 
         damroll = int(math.ceil(damroll))
-        game().log(f"{attacker.name} deals {damroll} damage ({dam} x {attack_damage_multiplier * atkmult:.2f})!")
+        game().log(
+            f"{attacker.name} deals {damroll} damage ({dam} x {attack_damage_multiplier * atkmult:.2f})!"
+        )
         defender.hitpoints -= damroll
 
         return not (attacker.alive and defender.alive)

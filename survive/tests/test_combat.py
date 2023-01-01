@@ -57,8 +57,8 @@ class TestCombat(unittest.TestCase):
         combat, combat_state = create_default_combat(dice)
 
         # player rolls: attack roll (crit), attack roll (hit), damage roll
-        # defender rolls: attack roll (miss)
-        dice.queue_results(20, 18, 2, 1)
+        # defender rolls: attack roll (miss), damage roll (1 damage)
+        dice.queue_results(20, 18, 2, 1, 1)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
@@ -74,7 +74,7 @@ class TestCombat(unittest.TestCase):
 
         # player rolls: attack roll (crit), attack roll (miss), damage roll
         # defender rolls: attack roll (miss)
-        dice.queue_results(20, 1, 2, 1)
+        dice.queue_results(20, 1, 2, 1, 1)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
@@ -88,25 +88,25 @@ class TestCombat(unittest.TestCase):
 
         combat, combat_state = create_default_combat(dice)
 
-        # player rolls: attack roll (miss)
-        # defender rolls: attack roll (also miss)
-        dice.queue_results(1, 1)
+        # player rolls: attack roll (miss), damage roll (ineffective)
+        # defender rolls: attack roll (also miss), damage roll (ineffective)
+        dice.queue_results(1, 1, 1, 1)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
 
         self.assertTrue(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
     def test_player_heal(self):
         dice = TestDice()
 
         combat, combat_state = create_default_combat(dice)
 
-        # player rolls: attack roll (miss)
+        # player rolls: attack roll (miss), damage (ineffective)
         # defender rolls: attack roll (hit), damage roll
-        dice.queue_results(1, 18, 2)
+        dice.queue_results(1, 1, 18, 2)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
@@ -114,11 +114,11 @@ class TestCombat(unittest.TestCase):
         self.assertTrue(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
         self.assertEqual(combat_state.player.hitpoints, 3)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
         # player does not roll
-        # defender rolls: attack roll (miss)
-        dice.queue_results(1)
+        # defender rolls: attack roll (miss), damage (ineffective)
+        dice.queue_results(1, 1)
 
         combat_state.needs_turn = True
         combat_state.player_heal = get_healing_item(5)
@@ -127,17 +127,17 @@ class TestCombat(unittest.TestCase):
 
         self.assertTrue(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
-        self.assertEqual(combat_state.player.hitpoints, 5)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.player.hitpoints, 4)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
     def test_player_dies(self):
         dice = TestDice()
 
         combat, combat_state = create_default_combat(dice)
 
-        # player rolls: attack roll (miss)
+        # player rolls: attack roll (miss), damage (ineffective)
         # defender rolls: attack roll (crit), attack roll (hit), damage
-        dice.queue_results(1, 20, 18, 5)
+        dice.queue_results(1, 1, 20, 18, 5)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
@@ -145,16 +145,16 @@ class TestCombat(unittest.TestCase):
         self.assertFalse(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
         self.assertEqual(combat_state.player.hitpoints, 0)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
     def test_do_nothing_if_dead(self):
         dice = TestDice()
 
         combat, combat_state = create_default_combat(dice)
 
-        # player rolls: attack roll (miss)
+        # player rolls: attack roll (miss), damage roll (ineffective)
         # defender rolls: attack roll (crit), attack roll (hit), damage
-        dice.queue_results(1, 20, 18, 5)
+        dice.queue_results(1, 1, 20, 18, 5)
 
         combat_state.needs_turn = True
         combat.turn(combat_state)
@@ -162,7 +162,7 @@ class TestCombat(unittest.TestCase):
         self.assertFalse(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
         self.assertEqual(combat_state.player.hitpoints, 0)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
         # no need for dice here, nothing happens
         combat_state.needs_turn = True
@@ -171,7 +171,7 @@ class TestCombat(unittest.TestCase):
         self.assertFalse(combat_state.player.alive)
         self.assertTrue(combat_state.defender.alive)
         self.assertEqual(combat_state.player.hitpoints, 0)
-        self.assertEqual(combat_state.defender.hitpoints, 5)
+        self.assertEqual(combat_state.defender.hitpoints, 4)
 
     def test_do_nothing_if_unneeded(self):
         dice = TestDice()

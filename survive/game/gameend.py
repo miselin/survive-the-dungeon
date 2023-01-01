@@ -8,6 +8,7 @@ from .game import GameState, game
 YOU_WON = "Dungeon cleared!"
 YOU_LOST = "The dungeon consumed you."
 
+
 class GameEndedScreen:
     """Handles all the logic for the end-of-game popup."""
 
@@ -86,20 +87,20 @@ class GameEndedScreen:
 
     def _won_text(self) -> str:
         """Generate the text body for a win."""
-        return f'You successfully cleared the dungeon!{self._stats_text()}'
+        return f"You successfully cleared the dungeon!{self._stats_text()}"
 
     def _lost_text(self) -> str:
         """Generate the text body for a loss."""
-        return f'Better luck next time!{self._stats_text()}'
+        return f"Better luck next time!{self._stats_text()}"
 
     def _stats_text(self) -> str:
         """Generate the text body for the player's statistics in the run."""
         stats = game().stats()
 
-        return f'''<br><br><b>Your Stats:</b>
+        return f"""<br><br><b>Your Stats:</b>
 You vanquished <b>{stats.vanquished}</b> enemies.
 You earned <b><font color=#FFFF64>{stats.gold_earned}</font> gold</b> and spent <b><font color=#FFFF64>{stats.gold_spent}</font></b> of it at the shop.
 You left <b><font color=#FFFF64>{stats.gold_left_behind}</font> gold</b> in chests in the dungeon.
 You held <font color=#FFFF64>{stats.inventory_value}</font> gold</b> worth of items.
 You received <b>{stats.xp_gained}</b> total XP.
-You reached <b>level {stats.level}</b>.'''
+You reached <b>level {stats.level}</b>."""

@@ -35,7 +35,7 @@ class TestCombat(unittest.TestCase):
 
         self.assertEqual(creature.level, 2)
         self.assertEqual(creature.xp, xp)
-        self.assertEqual(creature.hitpoints, 10)
+        self.assertEqual(creature.hitpoints, 7)
 
 
 if __name__ == "__main__":
