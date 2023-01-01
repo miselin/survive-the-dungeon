@@ -54,3 +54,41 @@ CREATURE_MAX_HP_AT_LEVEL_1 = 40
 # Maximum HP that a creature can have at the base challenge level.
 # This is multiplied by CHALLENGE_LEVEL_SCALE_UP_FACTOR per challenge level.
 CREATURE_MIN_HP_AT_LEVEL_1 = int(math.floor(CREATURE_MAX_HP_AT_LEVEL_1 * 0.5))
+
+# Maximum damage multiplier when an attack fails to exceed the defender's armor class.
+# This is used to still do a little damage on every attack turn.
+# Scaled based on the percentage of the armor class that the attack roll made.
+# e.g. AR 20 vs AC 20 is an ineffective attack with 1x scale of this multiplier
+# e.g. AR 1 vs AC 20 is an ineffective attack with 0.05x scale of this multiplier
+MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER = 0.5
+
+# HP increase multiplier per player level
+PLAYER_HP_PER_LEVEL_MULTIPLIER = 1.5
+
+# Percentage of HP to heal on level-up.
+PLAYER_HP_HEAL_ON_LEVEL_UP = 0.75
+
+# XP to level 2 for the player. At each level the next XP is multiplied by
+# PLAYER_XP_GOAL_MULTIPLIER.
+PLAYER_XP_FOR_LEVEL_2 = 128
+
+# XP goal multiplier per level
+PLAYER_XP_GOAL_MULTIPLIER = 4
+
+# Named dice for the amount of gold to put in a chest.
+GOLD_IN_CHEST_DICE = "6d20"
+
+# Amount of HP that bandages heal
+BANDAGES_HEAL_HP = 5
+
+# Amount of HP that a health potion heals
+HEALTH_POTION_HEAL_HP = BANDAGES_HEAL_HP * 5
+
+# Amount of HP that a large health potion heals
+LARGE_HEALTH_POTION_HEAL_HP = HEALTH_POTION_HEAL_HP * 2
+
+# Amount of HP that a huge health potion heals
+HUGE_HEALTH_POTION_HEAL_HP = HEALTH_POTION_HEAL_HP * 4
+
+# Amount of HP that a colossal health potion heals
+COLOSSAL_HEALTH_POTION_HEAL_HP = HEALTH_POTION_HEAL_HP * 10

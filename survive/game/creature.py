@@ -7,8 +7,8 @@ from typing import Dict, Iterable, List, Optional
 import pygame
 
 from .attributes import AttributeSet
-from .constants import (CREATURE_GOLD_MULTIPLIER, CREATURE_GOLD_SCALER,
-                        PLAYER_INITIAL_HP)
+from .constants import (CREATURE_GOLD_MULTIPLIER, CREATURE_GOLD_SCALER, PLAYER_HP_HEAL_ON_LEVEL_UP, PLAYER_HP_PER_LEVEL_MULTIPLIER,
+                        PLAYER_INITIAL_HP, PLAYER_XP_FOR_LEVEL_2, PLAYER_XP_GOAL_MULTIPLIER)
 from .dice import Dice
 from .game import game
 from .item import Buff, Container, Gold, Item, Poison, WieldableItem
@@ -62,7 +62,7 @@ class Creature:
         self.xp = 0
 
         # Next level experience points
-        self.next_level_xp = 64
+        self.next_level_xp = PLAYER_XP_FOR_LEVEL_2
 
         # Current level
         self.level = 1
@@ -291,10 +291,11 @@ class Creature:
 
         self.xp += xp
         if self.xp >= self.next_level_xp:
-            self.next_level_xp *= 2
+            self.next_level_xp *= PLAYER_XP_GOAL_MULTIPLIER
             self.level += 1
-            self.maxhitpoints *= 2
-            self.hitpoints = self.maxhitpoints  # player heals on level-up
+            self.maxhitpoints = int(math.floor(self.maxhitpoints * PLAYER_HP_PER_LEVEL_MULTIPLIER))
+            heal = int(math.floor(self.maxhitpoints * PLAYER_HP_HEAL_ON_LEVEL_UP))
+            self.hitpoints = min(self.maxhitpoints, self.hitpoints + heal)  # player heals on level-up
             game().log(f"Welcome to level {self.level}")
 
     def describe_wields(self) -> str:

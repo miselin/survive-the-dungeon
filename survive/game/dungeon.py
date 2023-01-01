@@ -10,7 +10,7 @@ from .ai import AI
 from .attributes import AttributeSet
 from .battle import Battle
 from .combat import Combat
-from .constants import (BOSS_CHALLENGE_LEVEL, CREATURE_XP_MULTIPLIER,
+from .constants import (BANDAGES_HEAL_HP, BOSS_CHALLENGE_LEVEL, COLOSSAL_HEALTH_POTION_HEAL_HP, CREATURE_XP_MULTIPLIER, GOLD_IN_CHEST_DICE, HEALTH_POTION_HEAL_HP, HUGE_HEALTH_POTION_HEAL_HP, LARGE_HEALTH_POTION_HEAL_HP,
                         MAXIMUM_CHALLENGE_LEVEL, MS_PER_AI_MOVE,
                         MS_PER_TILE_MOVE, PLAYER_CRIT_MAXIMUM_MULTIPLIER,
                         PLAYER_CRIT_MINIMUM_ROLL)
@@ -139,16 +139,16 @@ class Dungeon:
         cloth = Armor("chest", name="Cloth Armor", defensebonus=1)
         leather_boots = Armor("feet", name="Leather Boots", defensebonus=1)
 
-        bandages = InstantEffectItem("Bandages", 5)
+        bandages = InstantEffectItem("Bandages", BANDAGES_HEAL_HP)
         bandages.value = 10
-        health_potion = InstantEffectItem("Health Potion", 25)
+        health_potion = InstantEffectItem("Health Potion", HEALTH_POTION_HEAL_HP)
         health_potion.value = 50
 
-        bigger_health_potion = InstantEffectItem("Large Health Potion", 50)
+        bigger_health_potion = InstantEffectItem("Large Health Potion", LARGE_HEALTH_POTION_HEAL_HP)
         bigger_health_potion.value = 250
-        huge_health_potion = InstantEffectItem("Huge Health Potion", 100)
+        huge_health_potion = InstantEffectItem("Huge Health Potion", HUGE_HEALTH_POTION_HEAL_HP)
         huge_health_potion.value = 750
-        biggest_health_potion = InstantEffectItem("Colossal Health Potion", 250)
+        biggest_health_potion = InstantEffectItem("Colossal Health Potion", COLOSSAL_HEALTH_POTION_HEAL_HP)
         biggest_health_potion.value = 1250
         instaheal = InstantEffectItem("Instaheal", 1000000000)
         instaheal.value = 15000
@@ -211,7 +211,7 @@ class Dungeon:
                 room_squares = room.dims[0] * room.dims[1]
                 clutter_positions = list(
                     room.generate_random_positions(
-                        self.game.random(), int(math.ceil(room_squares / 3))
+                        self.game.random(), int(math.ceil(room_squares / 3)),
                     )
                 )
                 for pos in clutter_positions:
@@ -226,9 +226,9 @@ class Dungeon:
                 mob_positions = []
             else:
                 if boss:
-                    count = self.dice.roll(1, int(math.ceil(6 * scaled)))
-                else:
                     count = 1
+                else:
+                    count = self.dice.roll(1, int(math.ceil(6 * scaled)))
 
                 mob_positions = list(
                     room.generate_random_positions(
@@ -237,11 +237,13 @@ class Dungeon:
                     )
                 )
 
+            # add one tile of padding to chests so they can never block doorways
             chest_positions = list(
                 room.generate_random_positions(
                     self.game.random(),
                     self.dice.roll(1, int(math.ceil(8 * scaled))),
                     keepouts=mob_positions,
+                    padding=1,
                 )
             )
 
@@ -285,14 +287,24 @@ class Dungeon:
                     self.generated_armors.remove(armor)
                     chest.add_item(armor)
                 if self.dice.roll(1, 20) > 7:
-                    gold = self.dice.rollnamed("3d20")
+                    gold = self.dice.rollnamed(GOLD_IN_CHEST_DICE)
                     chest.add_item(Gold(value=gold))
                 if self.dice.roll(1, 20) >= 20:
                     chest.add_item(bigger_health_potion)
                 elif self.dice.roll(1, 20) >= 19:
-                    chest.add_item(health_potion)
+                    # make sure the high level rooms have hefty heals
+                    if challenge_level >= 8:
+                        chest.add_item(bigger_health_potion)
+                    else:
+                        chest.add_item(health_potion)
                 elif self.dice.roll(1, 20) >= 18:
-                    chest.add_item(bandages)
+                    # don't put bandages in high-level rooms
+                    if challenge_level >= 8:
+                        chest.add_item(bigger_health_potion)
+                    elif challenge_level >= 5:
+                        chest.add_item(health_potion)
+                    else:
+                        chest.add_item(bandages)
 
                 # don't add empty chests to the world
                 if chest.empty():
@@ -794,7 +806,7 @@ class Dungeon:
 
                 if not creature.alive:
                     creature.ai_release()
-                    self.player.give_xp(creature.maxhitpoints * CREATURE_XP_MULTIPLIER)
+                    self.player.give_xp(int(math.floor(creature.maxhitpoints * CREATURE_XP_MULTIPLIER)))
                     self.player.give(Gold(value=creature.gold))
                     self.game.log(f"{creature.name} is dead. RIP.")
                     self.game.log(

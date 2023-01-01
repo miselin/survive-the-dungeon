@@ -8,6 +8,7 @@ from .creature import Creature
 from .dice import Dice
 from .game import game
 from .item import InstantEffectItem
+from .constants import MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 
 
 # TODO(miselin): this should be in Combat
@@ -80,19 +81,18 @@ class Combat:
             if hit:
                 log_msg = f"{attacker.name} HIT: {log_msg}"
             else:
-                log_msg = f"{attacker.name} MISS: {log_msg}"
+                log_msg = f"{attacker.name} HIT: {log_msg} (ineffective)"
+                attack_damage_multiplier *= (attack_roll / armor_class) * MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 
             game().log(log_msg)
 
-        # Did we score a hit?
-        if hit:
-            # Roll for damage.
-            damroll = self.dice.rollnamed(dam)
-            damroll *= attack_damage_multiplier * atkmult
+        # Roll for damage.
+        damroll = self.dice.rollnamed(dam)
+        damroll *= attack_damage_multiplier * atkmult
 
-            damroll = int(math.ceil(damroll))
-            game().log(f"{attacker.name} hits for {damroll} damage (rolled {dam})!")
-            defender.hitpoints -= damroll
+        damroll = int(math.ceil(damroll))
+        game().log(f"{attacker.name} deals {damroll} damage ({dam} x {attack_damage_multiplier * atkmult:.2f})!")
+        defender.hitpoints -= damroll
 
         return not (attacker.alive and defender.alive)
 
