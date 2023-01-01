@@ -12,6 +12,8 @@ class TestDice(Dice):
     """A test dice that returns values from a queue instead of an RNG."""
 
     def __init__(self) -> None:
+        super().__init__()
+
         self._results: List[int] = []
 
     def set_results(self, results: List[int]):
