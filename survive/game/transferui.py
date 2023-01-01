@@ -51,8 +51,19 @@ class InventoryTransferModal:
         )
 
         self.done_button = pygame_gui.elements.UIButton(
-            pygame.Rect(0, -48, 192, 32),
-            "Loot",
+            pygame.Rect(-104, -48, 192, 32),
+            "Loot Selected",
+            manager=self.ui,
+            container=self.window,
+            anchors={
+                "centerx": "centerx",
+                "bottom": "bottom",
+            },
+        )
+
+        self.loot_all_button = pygame_gui.elements.UIButton(
+            pygame.Rect(104, -48, 192, 32),
+            "Loot All",
             manager=self.ui,
             container=self.window,
             anchors={
@@ -118,6 +129,20 @@ class InventoryTransferModal:
             game().log("Your inventory is full!")
             game().log("Some items were not transferred.")
 
+    def transfer_all_to_player(self):
+        """Transfer all items to the player."""
+
+        inventory_filled = False
+        for item in self._container.items():
+            if self._player.give(item):
+                self._container.take_item(item)
+            else:
+                inventory_filled = True
+
+        if inventory_filled:
+            game().log("Your inventory is full!")
+            game().log("Some items were not transferred.")
+
     def handle_event(self, event):
         """Handle pygame events."""
 
@@ -126,4 +151,7 @@ class InventoryTransferModal:
         elif event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.done_button:
                 self.transfer_to_player()
+                self.window.kill()
+            elif event.ui_element == self.loot_all_button:
+                self.transfer_all_to_player()
                 self.window.kill()
