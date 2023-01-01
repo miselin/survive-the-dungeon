@@ -23,7 +23,7 @@ class MainMenu(object):
     """Handles all of the main menu of the game."""
 
     STATE_MAIN = 0
-    STATE_CHOOSE_SEED = 1  # todo
+    STATE_CHOOSE_SEED = 1
     STATE_HIGH_SCORES = 2  # todo
 
     def __init__(self, ui, surface):
@@ -179,7 +179,7 @@ class MainMenu(object):
 
     def start_daily_dungeon(self):
         """Starts a daily dungeon game."""
-        self.start_with_seed(todays_seed())  # TODO: bring this in from a remote source
+        self.start_with_seed(todays_seed())
 
     def start_with_seed(self, seed: int):
         """Starts a dungeon game with a user-selected seed."""

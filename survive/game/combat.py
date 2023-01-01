@@ -11,7 +11,6 @@ from .item import InstantEffectItem
 from .constants import MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER
 
 
-# TODO(miselin): this should be in Combat
 @dataclasses.dataclass
 class CombatState:
     """CombatState encapsulates key state for a battle"""
