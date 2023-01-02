@@ -93,7 +93,8 @@ class Combat:
 
         damroll = int(math.ceil(damroll))
         game().log(
-            f"{attacker.name} deals {damroll} damage ({dam} x {attack_damage_multiplier * atkmult:.2f})!"
+            f"{attacker.name} deals {damroll} damage "
+            f"({dam} x {attack_damage_multiplier * atkmult:.2f})!"
         )
         defender.hitpoints -= damroll
 

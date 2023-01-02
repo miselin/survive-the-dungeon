@@ -1,3 +1,6 @@
+"""Tests for the creature implementation"""
+# pylint: disable=missing-docstring
+
 import unittest
 
 from game.game import Game, set_game

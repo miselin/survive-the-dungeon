@@ -72,7 +72,6 @@ hp_red.fill((255, 64, 64))
 xp_bar = pygame.Surface((LOG_X, LOG_PIXELS), 24)
 xp_bar.fill((255, 255, 64))
 
-# todo: player should be able to choose these?
 player_attribs = AttributeSet()
 player_attribs.modify("str", 16)
 player_attribs.modify("dex", 14)

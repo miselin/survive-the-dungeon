@@ -99,7 +99,8 @@ class GameEndedScreen:
 
         return f"""<br><br><b>Your Stats:</b>
 You vanquished <b>{stats.vanquished}</b> enemies.
-You earned <b><font color=#FFFF64>{stats.gold_earned}</font> gold</b> and spent <b><font color=#FFFF64>{stats.gold_spent}</font></b> of it at the shop.
+You earned <b><font color=#FFFF64>{stats.gold_earned}</font> gold</b>.
+You spent <b><font color=#FFFF64>{stats.gold_spent}</font></b> of your earned gold at the shop.
 You left <b><font color=#FFFF64>{stats.gold_left_behind}</font> gold</b> in chests in the dungeon.
 You held <font color=#FFFF64>{stats.inventory_value}</font> gold</b> worth of items.
 You received <b>{stats.xp_gained}</b> total XP.

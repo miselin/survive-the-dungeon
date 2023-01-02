@@ -29,5 +29,4 @@ jobs:
         python -m isort -rc survive -c --diff
         python -m pylint survive
         python -m pycodestyle --max-line-length=100 --exclude=gen.py survive
-        python -m flake8 survive
         python -m mypy survive

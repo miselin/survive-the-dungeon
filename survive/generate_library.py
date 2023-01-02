@@ -18,6 +18,8 @@ from game.procgen import NameGenerator, creature_at_level
 
 
 def main() -> None:
+    """Entry point for the library generator."""
+
     seed = int(math.floor(time.time()))
     rng = random.Random(seed)
 

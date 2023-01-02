@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-from tcod import gold
-
 
 class GameState(Enum):
     """GameState holds all possible states for the game to be in"""
@@ -19,6 +17,8 @@ class GameState(Enum):
 
 @dataclass
 class GameStats:
+    """GameStats holds statistics for an active game"""
+
     vanquished: int
     gold_earned: int
     gold_spent: int
