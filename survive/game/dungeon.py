@@ -10,14 +10,21 @@ from .ai import AI
 from .attributes import AttributeSet
 from .battle import Battle
 from .combat import Combat
-from .constants import (BANDAGES_HEAL_HP, BOSS_CHALLENGE_LEVEL,
-                        COLOSSAL_HEALTH_POTION_HEAL_HP, CREATURE_XP_MULTIPLIER,
-                        GOLD_IN_CHEST_DICE, HEALTH_POTION_HEAL_HP,
-                        HUGE_HEALTH_POTION_HEAL_HP,
-                        LARGE_HEALTH_POTION_HEAL_HP, MAXIMUM_CHALLENGE_LEVEL,
-                        MS_PER_AI_MOVE, MS_PER_TILE_MOVE,
-                        PLAYER_CRIT_MAXIMUM_MULTIPLIER,
-                        PLAYER_CRIT_MINIMUM_ROLL)
+from .constants import (
+    BANDAGES_HEAL_HP,
+    BOSS_CHALLENGE_LEVEL,
+    COLOSSAL_HEALTH_POTION_HEAL_HP,
+    CREATURE_XP_MULTIPLIER,
+    GOLD_IN_CHEST_DICE,
+    HEALTH_POTION_HEAL_HP,
+    HUGE_HEALTH_POTION_HEAL_HP,
+    LARGE_HEALTH_POTION_HEAL_HP,
+    MAXIMUM_CHALLENGE_LEVEL,
+    MS_PER_AI_MOVE,
+    MS_PER_TILE_MOVE,
+    PLAYER_CRIT_MAXIMUM_MULTIPLIER,
+    PLAYER_CRIT_MINIMUM_ROLL,
+)
 from .creature import Creature
 from .dice import Dice
 from .env import ON_REPLIT

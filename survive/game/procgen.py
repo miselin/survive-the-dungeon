@@ -7,9 +7,12 @@ import random
 from typing import Dict, List, Optional, Set
 
 from .attributes import AttributeSet
-from .constants import (CHALLENGE_LEVEL_SCALE_UP_FACTOR,
-                        CREATURE_MAX_DAMAGE_AT_LEVEL_1,
-                        CREATURE_MAX_HP_AT_LEVEL_1, CREATURE_MIN_HP_AT_LEVEL_1)
+from .constants import (
+    CHALLENGE_LEVEL_SCALE_UP_FACTOR,
+    CREATURE_MAX_DAMAGE_AT_LEVEL_1,
+    CREATURE_MAX_HP_AT_LEVEL_1,
+    CREATURE_MIN_HP_AT_LEVEL_1,
+)
 from .creature import Creature
 from .game import game
 from .item import Armor, Weapon
