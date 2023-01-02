@@ -7,6 +7,7 @@ import pygame
 import pygame_gui
 
 from .customseed import CustomSeed
+from .env import IS_TESTING
 
 GAME_TITLE = "Survive the Dungeon"
 GAME_SUBTITLE = "Infinite procedural dungeons. Survival is not guaranteed."
@@ -19,12 +20,12 @@ def todays_seed() -> int:
     return t
 
 
-class MainMenu(object):
+class MainMenu:
     """Handles all of the main menu of the game."""
 
     STATE_MAIN = 0
     STATE_CHOOSE_SEED = 1
-    STATE_HIGH_SCORES = 2  # todo
+    STATE_HIGH_SCORES = 2
 
     def __init__(self, ui, surface):
         self.seed = 0
@@ -118,20 +119,19 @@ class MainMenu(object):
             tool_tip_text="Play a randomly generated dungeon using a specific seed.",
         )
 
-        """
-        self.high_scores = pygame_gui.elements.UIButton(
-            pygame.Rect(0, 16, 192, 32),
-            "High Scores",
-            manager=self.ui,
-            container=self.container,
-            anchors={"top_target": self.custom_seed, "centerx": "centerx"},
-            object_id=pygame_gui.core.ObjectID(
-                class_id="@mainmenu_buttons",
-                object_id="#mainmenu3",
-            ),
-            tool_tip_text="View high scores.",
-        )
-        """
+        if IS_TESTING:
+            self.high_scores = pygame_gui.elements.UIButton(
+                pygame.Rect(0, 16, 192, 32),
+                "High Scores",
+                manager=self.ui,
+                container=self.container,
+                anchors={"top_target": self.custom_seed, "centerx": "centerx"},
+                object_id=pygame_gui.core.ObjectID(
+                    class_id="@mainmenu_buttons",
+                    object_id="#mainmenu3",
+                ),
+                tool_tip_text="View high scores.",
+            )
 
         self.quit_button = pygame_gui.elements.UIButton(
             pygame.Rect(0, 16, 192, 32),
@@ -155,7 +155,7 @@ class MainMenu(object):
         if event.type == pygame.QUIT:
             raise SystemExit()
 
-        elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.quit_button:
                 self.quit()
             elif event.ui_element == self.random_dungeon:
@@ -199,8 +199,7 @@ class MainMenu(object):
         )
 
     def start_high_scores(self):
-        """Currentl unused. Will show high score table."""
-        pass
+        """Currently unused. Will show high score table."""
 
     def quit(self):
         """Quits the game."""

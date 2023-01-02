@@ -130,6 +130,8 @@ class Shop(pygame_gui.elements.UIWindow):
 
         self.shop_container.update(0.0)
 
+        self.popup: pygame_gui.windows.UIConfirmationDialog = None
+
     def process_event(self, event: pygame.event.Event) -> bool:
         consumed = super().process_event(event)
 

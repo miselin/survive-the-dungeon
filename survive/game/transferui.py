@@ -150,7 +150,8 @@ class InventoryTransferModal:
 
         if event.type == pygame.QUIT:
             raise SystemExit()
-        elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.done_button:
                 self.transfer_to_player()
                 self.window.kill()

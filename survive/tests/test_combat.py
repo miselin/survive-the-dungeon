@@ -1,3 +1,6 @@
+"""Tests for the combat system"""
+# pylint: disable=missing-docstring
+
 import unittest
 from typing import Tuple
 
@@ -30,6 +33,8 @@ def create_default_combat(dice: TestDice) -> Tuple[Combat, CombatState]:
 
 
 class TestCombat(unittest.TestCase):
+    """Main test harness for testing the combat system"""
+
     def setUp(self) -> None:
         # every test may need a game object to exist
         game = Game()

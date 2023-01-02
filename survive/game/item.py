@@ -110,7 +110,7 @@ class WieldableItem(Item):
 class Armor(WieldableItem):
     """Defines an Armor item."""
 
-    def __init__(self, wields_at: Wieldpoint, name="Unknown Armor", *args, **kwargs):
+    def __init__(self, wields_at: Wieldpoint, *args, name="Unknown Armor", **kwargs):
         kwargs["name"] = name
         super().__init__(*args, **kwargs)
         self.wieldpoint = wields_at
@@ -146,6 +146,7 @@ Wields At: {self.wieldpoint}
 """
 
     def serialize(self) -> Any:
+        """Serializes the armor to a dict."""
         return {
             "name": self.name,
             "wieldpoint": self.wieldpoint,
@@ -154,7 +155,8 @@ Wields At: {self.wieldpoint}
         }
 
     @classmethod
-    def deserialize(self, obj: Any) -> "Weapon":
+    def deserialize(cls, obj: Any) -> "Weapon":
+        """Deserializes the armor from a serialized dict."""
         return Weapon(**obj)
 
 
@@ -219,6 +221,7 @@ Damage roll: {self.dam} vs {other.dam}
 """
 
     def serialize(self) -> Any:
+        """Serializes the weapon to a dict."""
         return {
             "name": self.name,
             "critrange": self.critrange,
@@ -229,7 +232,8 @@ Damage roll: {self.dam} vs {other.dam}
         }
 
     @classmethod
-    def deserialize(self, obj: Any) -> "Weapon":
+    def deserialize(cls, obj: Any) -> "Weapon":
+        """Deserializes the weapon from a serialized dict."""
         return Weapon(**obj)
 
 
@@ -291,6 +295,9 @@ class TurnBasedEffectItem(Item):
     def get_lifetime(self):
         """Get the item's lifetime."""
         return self.lifetime
+
+    def describe(self):
+        return f"Item {self.name} does nothing per turn for {self.lifetime} turns"
 
 
 class Poison(TurnBasedEffectItem):

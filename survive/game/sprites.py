@@ -69,28 +69,36 @@ class SpriteSet:
         self.hall_clutter = hall_clutter
 
     def get_player(self) -> pygame.Surface:
+        """Get the sprite for the player"""
         return self.player
 
     def get_mob(self, n) -> pygame.Surface:
+        """Get the sprite for nth mob in the set"""
         return self.mobs[n]
 
     def get_wall(self, n) -> pygame.Surface:
+        """Get the sprite for a wall"""
         return self.walls[n]
 
     def get_floor(self) -> pygame.Surface:
+        """Get the sprite for the floor"""
         return self.floor
 
     def get_hall_floor(self) -> pygame.Surface:
+        """Get the sprite for the hallway floor"""
         return self.hall_floor
 
     def get_chest(self, empty=False) -> pygame.Surface:
+        """Get the sprite for a chest based on its emptiness"""
         if empty:
             return self.chest[1]
-        else:
-            return self.chest[0]
+
+        return self.chest[0]
 
     def get_clutter(self) -> List[pygame.Surface]:
+        """Get the sprites for clutter"""
         return self.clutter
 
     def get_hall_clutter(self) -> List[pygame.Surface]:
+        """Get the sprites for hallway clutter"""
         return self.hall_clutter
