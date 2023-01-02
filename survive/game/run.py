@@ -94,6 +94,7 @@ def run():
                     font,
                     window,
                     spriteset,
+                    main_menu.attributes,
                 )
                 main_menu.ack_done()
 

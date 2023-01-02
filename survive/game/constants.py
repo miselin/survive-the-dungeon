@@ -4,6 +4,9 @@ import math
 # Initial HP the player has in the dungeon
 PLAYER_INITIAL_HP = 30
 
+# HP bonus/penalty per level of constitution modifier
+PLAYER_CONSTITUTION_BONUS = 5
+
 # Factor to scale up for every increase in challenge level
 CHALLENGE_LEVEL_SCALE_UP_FACTOR = 1.3
 
@@ -92,3 +95,9 @@ HUGE_HEALTH_POTION_HEAL_HP = HEALTH_POTION_HEAL_HP * 4
 
 # Amount of HP that a colossal health potion heals
 COLOSSAL_HEALTH_POTION_HEAL_HP = HEALTH_POTION_HEAL_HP * 10
+
+# Discount per level of charisma modifier in the shop.
+SHOP_DISCOUNT_FOR_CHARISMA = 0.05
+
+# Number of ability points for point buy character creation.
+POINT_BUY_POOL_COUNT = 27

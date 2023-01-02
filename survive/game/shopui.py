@@ -1,11 +1,13 @@
 """This module handles the in-dungeon shop."""
 
 import itertools
+import math
 from typing import Dict, List
 
 import pygame
 import pygame_gui
 
+from .constants import SHOP_DISCOUNT_FOR_CHARISMA
 from .creature import Creature
 from .game import game
 from .item import Armor, InstantEffectItem, Item, Weapon
@@ -87,7 +89,7 @@ class Shop(pygame_gui.elements.UIWindow):
 
             pygame_gui.elements.UITextBox(
                 relative_rect=pygame.Rect(8, 0, inventory_rt.width - 112, 48),
-                html_text=f"{item.name} for <font color=#FFFF64>{item.value} gold</font>",
+                html_text=f"{item.name} for <font color=#FFFF64>{self.real_cost(item)} gold</font>",
                 manager=self.ui_manager,
                 container=container,
                 anchors={"left": "left", "centery": "centery"},
@@ -161,7 +163,7 @@ class Shop(pygame_gui.elements.UIWindow):
         if event.type == pygame_gui.UI_CONFIRMATION_DIALOG_CONFIRMED:
             item = self.confirms.get(event.ui_element)
             if item is not None:
-                if self.player.gold < item.value:
+                if self.player.gold < self.real_cost(item):
                     pygame_gui.windows.UIMessageWindow(
                         self.dialog_rt,
                         "You don't have enough gold.",
@@ -171,10 +173,16 @@ class Shop(pygame_gui.elements.UIWindow):
                 else:
                     # purchase it!
                     if self.player.give(item):
-                        self.player.gold -= item.value
+                        self.player.gold -= self.real_cost(item)
                         game().log("You purchased %s." % (item.name,))
-                        game().stats().gold_spent += item.value
+                        game().stats().gold_spent += self.real_cost(item)
                     else:
                         game().log("Your inventory is full!")
 
         return consumed
+
+    def real_cost(self, item: Item) -> int:
+        """Gets the real cost of the given item given modifiers."""
+        modifier = self.player.attributes.get_modifier("chr")
+        discount = SHOP_DISCOUNT_FOR_CHARISMA * modifier
+        return int(math.floor(item.value - (discount * item.value)))

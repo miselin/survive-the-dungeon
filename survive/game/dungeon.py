@@ -22,6 +22,7 @@ from .constants import (
     MAXIMUM_CHALLENGE_LEVEL,
     MS_PER_AI_MOVE,
     MS_PER_TILE_MOVE,
+    PLAYER_CONSTITUTION_BONUS,
     PLAYER_CRIT_MAXIMUM_MULTIPLIER,
     PLAYER_CRIT_MINIMUM_ROLL,
 )
@@ -72,14 +73,6 @@ hp_red.fill((255, 64, 64))
 xp_bar = pygame.Surface((LOG_X, LOG_PIXELS), 24)
 xp_bar.fill((255, 255, 64))
 
-player_attribs = AttributeSet()
-player_attribs.modify("str", 16)
-player_attribs.modify("dex", 14)
-player_attribs.modify("con", 12)
-player_attribs.modify("int", 12)
-player_attribs.modify("wis", 13)
-player_attribs.modify("chr", 10)
-
 boss_attribs = AttributeSet()
 boss_attribs.modify("str", 18)
 boss_attribs.modify("dex", 14)
@@ -99,6 +92,7 @@ class Dungeon:
         font: pygame.font.Font,
         surface: pygame.Surface,
         spriteset: SpriteSet,
+        player_attributes: AttributeSet,
     ):
         self.font = font
 
@@ -142,7 +136,11 @@ class Dungeon:
             self.spriteset.get_player(),
             (4, 4),
             "Player",
-            attribute_override=player_attribs,
+            attribute_override=player_attributes,
+        )
+
+        self.player.maxhitpoints = self.player.hitpoints = self.player.maxhitpoints + (
+            self.player.attributes.get_modifier("con") * PLAYER_CONSTITUTION_BONUS
         )
 
         fists = Weapon("Fists", 19, 3, dam="1d10")

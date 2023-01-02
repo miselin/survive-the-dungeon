@@ -1,11 +1,13 @@
 """This module exports AttributeSet to handle character attributes."""
 
 import math
-from typing import Dict, Literal, Tuple
+from typing import Dict, List, Literal, Tuple
 
 from .dice import Dice
 
 Attribute = Literal["str", "dex", "con", "int", "wis", "chr"]
+
+ATTRIBUTES: List[Attribute] = ["str", "dex", "con", "int", "wis", "chr"]
 
 
 class AttributeSet:
@@ -64,3 +66,22 @@ class AttributeSet:
 
     def __str__(self):
         return " ".join([f"{self.labels[k]}: {v}" for k, v in self.attrs.items()])
+
+    def describe(self, attribute: Attribute) -> str:
+        """Describe the given attribute."""
+        if attribute == "str":
+            return "The <b>Strength</b> modifier makes your attacks more likely to hit."
+        if attribute == "dex":
+            return (
+                "The <b>Dexterity</b> modifier makes enemy attacks less likely to hit."
+            )
+        if attribute == "con":
+            return "The <b>Constitution</b> modifier sets your initial HP."
+        if attribute == "int":
+            return "The <b>Intelligence</b> modifier doesn't do anything yet."
+        if attribute == "wis":
+            return "The <b>Wisdom</b> modifier doesn't do anything yet."
+        if attribute == "chr":
+            return "The <b>Charisma</b> modifier changes the cost of goods in the shop."
+
+        raise ValueError("unknown attribute")

@@ -47,6 +47,12 @@
     },
     "text_box":
     {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "0"
+        },
         "font": {
             "name": "courier_prime",
             "size": "12"
@@ -294,6 +300,42 @@
         "font": {
             "name": "courier_prime",
             "size": "12"
+        }
+    },
+    "@dialog_centered":
+    {
+        "misc": {
+            "border_width": "0",
+            "text_horiz_alignment": "center",
+            "text_vert_alignment": "center"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "@attribute_updown":
+     {
+        "misc":
+        {
+            "shape": "rectangle",
+            "border_width": "0",
+            "shadow_width": "2"
+        },
+        "font": {
+            "name": "courier_prime",
+            "size": "12"
+        }
+    },
+    "@attribute_value":
+    {
+        "misc": {
+            "border_width": "0",
+            "text_horiz_alignment": "center",
+            "text_vert_alignment": "center"
+        },
+        "colours": {
+            "dark_bg": "#55595e"
         }
     }
 }

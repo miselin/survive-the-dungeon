@@ -2,10 +2,13 @@
 
 import math
 import time
+from typing import Optional
 
 import pygame
 import pygame_gui
 
+from .attributes import AttributeSet
+from .attributeui import CharacterCustomization
 from .customseed import CustomSeed
 from .env import IS_TESTING
 
@@ -27,14 +30,16 @@ class MainMenu:
     STATE_CHOOSE_SEED = 1
     STATE_HIGH_SCORES = 2
 
-    def __init__(self, ui, surface):
+    def __init__(self, ui, surface) -> None:
         self.seed = 0
         self.ui = ui
         self.surface = surface
         self.dirty = True
         self._done = False
         self.container = None
-        self.custom_seed_window = None
+        self.custom_seed_window: Optional[CustomSeed] = None
+        self.character_attribute_window: Optional[CharacterCustomization] = None
+        self.attributes: Optional[AttributeSet] = None
 
         self.rebuild()
 
@@ -50,6 +55,10 @@ class MainMenu:
         dialog_size = (parent_size[0] * 0.90, parent_size[1] * 0.4)
         self.dialog_rt = pygame.Rect(0, 0, *dialog_size)
         self.dialog_rt.center = surface_rect.center
+
+        modal_size = (parent_size[0] * 0.90, parent_size[1] * 0.90)
+        self.modal_rt = pygame.Rect(0, 0, *modal_size)
+        self.modal_rt.center = surface_rect.center
 
         self.container = pygame_gui.core.UIContainer(
             pygame.Rect(0, 0, surface_rect.width, surface_rect.height),
@@ -169,6 +178,9 @@ class MainMenu:
             if event.ui_element == self.custom_seed_window:
                 if self.custom_seed_window.seed() is not None:
                     self.start_with_seed(self.custom_seed_window.seed())
+            elif event.ui_element == self.character_attribute_window:
+                self.attributes = self.character_attribute_window.attributes()
+                self.start_game()
 
     def tick(self, dt):
         """Unused. Here for compatibility."""
@@ -184,8 +196,17 @@ class MainMenu:
     def start_with_seed(self, seed: int):
         """Starts a dungeon game with a user-selected seed."""
         self.seed = seed
-        self._done = True
 
+        self.character_attribute_window = CharacterCustomization(
+            rect=self.modal_rt,
+            window_display_title="Prepare Yourself",
+            manager=self.ui,
+            resizable=False,
+        )
+
+    def start_game(self):
+        """Starts the game that was configured."""
+        self._done = True
         self.container.kill()
         self.container = None
 
