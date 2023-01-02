@@ -23,13 +23,7 @@ jobs:
     - name: Build Windows executable
       run: |
         .\venv\Scripts\activate
-        pyinstaller --onefile --windowed -n survive \
-          --add-data 'ui;ui' \
-          --add-data 'fonts/*.ttf;fonts' \
-          --add-data 'tiles/*.png;tiles' \
-          --add-data 'themes;themes' \
-          --add-data 'words;words' \
-          -i survive.ico .\survive\main.py
+        .\build.bat
     - name: Upload EXE
       uses: actions/upload-release-asset@v1
       env:
