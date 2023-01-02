@@ -133,13 +133,18 @@ class InventoryTransferModal:
     def transfer_all_to_player(self):
         """Transfer all items to the player."""
 
+        transferred_items = []
+
         inventory_filled = False
         for item in self._container.items():
             if self._player.give(item):
-                self._container.take_item(item)
+                transferred_items.append(item)
             else:
                 # don't break here, because gold still transfers to a full inventory
                 inventory_filled = True
+
+        for item in transferred_items:
+            self._container.take_item(item)
 
         if inventory_filled:
             game().log("Your inventory is full!")
