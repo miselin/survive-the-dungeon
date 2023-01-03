@@ -70,7 +70,7 @@ class MainMenu:
         )
 
         title = pygame_gui.elements.UILabel(
-            pygame.Rect(0, 64, surface_rect.width, 64),
+            pygame.Rect(0, 48, surface_rect.width, 64),
             GAME_TITLE,
             manager=self.ui,
             container=self.container,
