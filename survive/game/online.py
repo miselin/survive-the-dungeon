@@ -55,8 +55,6 @@ class OnlinePlay:
             self._player_name = os.environ.get("REPL_OWNER", "Player")
             api_keys["repl-identity"] = self._identity_token.decode('utf-8').strip()
 
-            print(api_keys)
-
         self._api_client = api.ApiClient(api.Configuration(host=host, api_key=api_keys))
 
     @functools.cached_property
