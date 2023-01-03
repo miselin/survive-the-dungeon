@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 # **add_a_new_tombstone_**
 <a name="add_a_new_tombstone_"></a>
-> Tombstones add_a_new_tombstone_(seedpayload)
+> Tombstone add_a_new_tombstone_(seedpayload)
 
 Create a new tombstone
 
@@ -20,7 +20,7 @@ Create a new tombstone
 ```python
 import api
 from api.apis.tags import tombstone_api
-from api.model.tombstones import Tombstones
+from api.model.tombstone import Tombstone
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -47,17 +47,12 @@ with api.ApiClient(configuration) as api_client:
     path_params = {
         'seed': 1,
     }
-    body = Tombstones(
-        entries=[
-            Tombstone(
-                player="player_example",
-                x=1,
-                y=1,
-                last_logs="last_logs_example",
-                at="1970-01-01T00:00:00.00Z",
-                seed=1,
-            )
-        ],
+    body = Tombstone(
+        player="player_example",
+        x=1,
+        y=1,
+        last_logs="last_logs_example",
+        at="1970-01-01T00:00:00.00Z",
         seed=1,
     )
     try:
@@ -87,7 +82,7 @@ skip_deserialization | bool | default is False | when True, headers and body wil
 # SchemaForRequestBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Tombstones**](../../models/Tombstones.md) |  | 
+[**Tombstone**](../../models/Tombstone.md) |  | 
 
 
 ### path_params
@@ -121,7 +116,7 @@ headers | Unset | headers were not defined |
 # SchemaFor201ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Tombstones**](../../models/Tombstones.md) |  | 
+[**Tombstone**](../../models/Tombstone.md) |  | 
 
 
 ### Authorization

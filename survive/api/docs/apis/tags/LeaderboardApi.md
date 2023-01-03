@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 # **create_todo**
 <a name="create_todo"></a>
-> Leaderboard create_todo(seedpayload)
+> Score create_todo(seedpayload)
 
 Create a new leaderboard entry
 
@@ -20,7 +20,7 @@ Create a new leaderboard entry
 ```python
 import api
 from api.apis.tags import leaderboard_api
-from api.model.leaderboard import Leaderboard
+from api.model.score import Score
 from pprint import pprint
 # Defining the host is optional and defaults to http://localhost
 # See configuration.py for a list of all supported configuration parameters.
@@ -47,16 +47,11 @@ with api.ApiClient(configuration) as api_client:
     path_params = {
         'seed': 1,
     }
-    body = Leaderboard(
-        entries=[
-            Score(
-                player="player_example",
-                score=1,
-                seed=1,
-                at="1970-01-01T00:00:00.00Z",
-            )
-        ],
+    body = Score(
+        player="player_example",
+        score=1,
         seed=1,
+        at="1970-01-01T00:00:00.00Z",
     )
     try:
         # Create a new leaderboard entry
@@ -85,7 +80,7 @@ skip_deserialization | bool | default is False | when True, headers and body wil
 # SchemaForRequestBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Leaderboard**](../../models/Leaderboard.md) |  | 
+[**Score**](../../models/Score.md) |  | 
 
 
 ### path_params
@@ -119,7 +114,7 @@ headers | Unset | headers were not defined |
 # SchemaFor201ResponseBodyApplicationJson
 Type | Description  | Notes
 ------------- | ------------- | -------------
-[**Leaderboard**](../../models/Leaderboard.md) |  | 
+[**Score**](../../models/Score.md) |  | 
 
 
 ### Authorization
