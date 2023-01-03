@@ -150,3 +150,25 @@ class OnlinePlay:
             print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
 
         return None
+
+    def submit_tombstone(self, seed: int, x: int, y: int, logs: str):
+        """Submit the player's tombstone for the given seed."""
+        if not ON_REPLIT:
+            # no-op, can't submit tombstones without the Replit Identity token
+            return
+
+        api_instance = tombstone_api.TombstoneApi(self._api_client)
+
+        try:
+            api_instance.add_a_new_tombstone_(
+                {
+                    "player": self._player_name,
+                    "seed": seed,
+                    "x": x,
+                    "y": y,
+                    "last_logs": logs,
+                    "at": datetime.datetime.now(),
+                }
+            )
+        except api.ApiException as e:
+            print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
