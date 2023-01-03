@@ -897,6 +897,8 @@ class Dungeon:
         )
         self.game.stats().gold_left_behind = self.sum_gold_in_chests()
         self.game.stats().level = self.player.level
+        if self._online is not None and not self.player.alive:
+            self._online.submit_tombstone(self.game.seed, *self.player.position, '\n'.join(self.game.get_log(entries=8)))
         self.game.set_state(new_state)
         self.container.kill()
 
