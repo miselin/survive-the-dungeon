@@ -3,11 +3,14 @@
 import pygame
 import pygame_gui
 
+from .online import OnlinePlay
+
 from .dungeon import WINDOW_H, WINDOW_W, Dungeon
 from .game import Game, GameState, set_game
 from .gameend import GameEndedScreen
 from .mainmenu import GAME_TITLE, MainMenu
 from .sprites import SpriteSet, SpriteSheet
+from .env import ONLINE_PLAY
 
 
 def run():
@@ -51,11 +54,16 @@ def run():
         hall_clutter_sprites,
     )
 
+    if ONLINE_PLAY:
+        online = OnlinePlay()
+    else:
+        online = None
+
     game = Game(seed=0)
     set_game(game)
 
-    main_menu = MainMenu(ui, window)
-    game_ended = GameEndedScreen(ui, window)
+    main_menu = MainMenu(ui, window, online=online)
+    game_ended = GameEndedScreen(ui, window, online=online)
 
     receiver = main_menu
 

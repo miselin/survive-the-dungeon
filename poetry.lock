@@ -57,6 +57,14 @@ jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
 
 [[package]]
+name = "certifi"
+version = "2022.12.7"
+description = "Python package for providing Mozilla's CA Bundle."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
 name = "cffi"
 version = "1.15.1"
 description = "Foreign Function Interface for Python calling C code."
@@ -121,6 +129,14 @@ name = "docstring-to-markdown"
 version = "0.11"
 description = "On the fly conversion of Python docstrings to markdown"
 category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[[package]]
+name = "frozendict"
+version = "2.3.4"
+description = "A simple immutable dictionary"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -401,6 +417,17 @@ spelling = ["pyenchant (>=3.2,<4.0)"]
 testutils = ["gitpython (>3)"]
 
 [[package]]
+name = "python-dateutil"
+version = "2.8.2"
+description = "Extensions to the standard Python datetime module"
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 name = "python-i18n"
 version = "0.3.9"
 description = "Translation library for Python"
@@ -509,6 +536,14 @@ dev = ["pytest (>=7.0.1)", "pytest-timeout (>=2.1.0)", "build (>=0.7.0)"]
 doc = ["pytoolconfig", "sphinx (>=4.5.0)", "sphinx-autodoc-typehints (>=1.18.1)", "sphinx-rtd-theme (>=1.0.0)"]
 
 [[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
 name = "tcod"
 version = "14.0.0"
 description = "The official Python port of libtcod."
@@ -570,6 +605,19 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
+name = "urllib3"
+version = "1.26.13"
+description = "HTTP library with thread-safe connection pooling, file post, and more."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+
+[package.extras]
+brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "urllib3-secure-extra", "ipaddress"]
+socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+
+[[package]]
 name = "whatthepatch"
 version = "1.0.3"
 description = "A patch parsing and application library."
@@ -608,13 +656,14 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.0,<3.12"
-content-hash = "df4b43bb90ab66d1f93729100909999e4de89840a7dad78804f08dea2ede28b7"
+content-hash = "78d155e704e83cdcb987604917912ce470ed78c637fcd1f0fbd91275b8beca1b"
 
 [metadata.files]
 altgraph = []
 astroid = []
 autopep8 = []
 black = []
+certifi = []
 cffi = []
 click = []
 colorama = []
@@ -622,6 +671,7 @@ coverage = []
 debugpy = []
 dill = []
 docstring-to-markdown = []
+frozendict = []
 future = []
 importlib-resources = []
 isort = []
@@ -646,6 +696,7 @@ pygame-gui = []
 pyinstaller = []
 pyinstaller-hooks-contrib = []
 pylint = []
+python-dateutil = []
 python-i18n = []
 python-lsp-jsonrpc = []
 python-lsp-server = []
@@ -653,6 +704,7 @@ pytoolconfig = []
 pywin32-ctypes = []
 pyyaml = []
 rope = []
+six = []
 tcod = []
 toml = []
 tomli = []
@@ -660,6 +712,7 @@ tomlkit = []
 types-pyyaml = []
 typing-extensions = []
 ujson = []
+urllib3 = []
 whatthepatch = []
 wrapt = []
 yapf = []

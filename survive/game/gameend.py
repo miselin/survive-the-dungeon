@@ -2,8 +2,10 @@
 
 import pygame
 import pygame_gui
+from typing import Optional
 
 from .game import GameState, game
+from .online import OnlinePlay
 
 YOU_WON = "Dungeon cleared!"
 YOU_LOST = "The dungeon consumed you."
@@ -12,13 +14,14 @@ YOU_LOST = "The dungeon consumed you."
 class GameEndedScreen:
     """Handles all the logic for the end-of-game popup."""
 
-    def __init__(self, ui: pygame_gui.UIManager, surface: pygame.Surface):
+    def __init__(self, ui: pygame_gui.UIManager, surface: pygame.Surface, online: Optional[OnlinePlay] = None) -> None:
         self.won = False
         self.ui = ui
         self.seed = 0
         self.surface = surface
         self.dirty = True
         self._done = False
+        self.online = online
 
         self.popup = None
 
@@ -56,6 +59,7 @@ class GameEndedScreen:
                 subtitle
                 + "\n\n<b>Last log messages before your demise:</b>\n"
                 + "\n".join(game().get_log())
+                + self._leaderboard()
             )
 
         self.popup = pygame_gui.windows.UIMessageWindow(
@@ -97,6 +101,8 @@ class GameEndedScreen:
         """Generate the text body for the player's statistics in the run."""
         stats = game().stats()
 
+        score = self._calculate_score()
+
         return f"""<br><br><b>Your Stats:</b>
 You vanquished <b>{stats.vanquished}</b> enemies.
 You earned <b><font color=#FFFF64>{stats.gold_earned}</font> gold</b>.
@@ -104,4 +110,32 @@ You spent <b><font color=#FFFF64>{stats.gold_spent}</font></b> of your earned go
 You left <b><font color=#FFFF64>{stats.gold_left_behind}</font> gold</b> in chests in the dungeon.
 You held <font color=#FFFF64>{stats.inventory_value}</font> gold</b> worth of items.
 You received <b>{stats.xp_gained}</b> total XP.
-You reached <b>level {stats.level}</b>."""
+You reached <b>level {stats.level}</b>.
+
+Your score is: <b>{score}</b>."""
+
+    def _calculate_score(self) -> int:
+        """Calculate the score for the player."""
+        stats = game().stats()
+        return stats.gold_earned + stats.xp_gained + stats.inventory_value + stats.vanquished
+
+    def _leaderboard(self) -> str:
+        """Returns leaderboard text, if one is available."""
+        if self.online is None:
+            return ''
+
+        # submit the player's score before we load the leaderboard
+        self.online.submit_score(game().seed, self._calculate_score())
+
+        board = self.online.leaderboard(game().seed)
+
+        if board.entries:
+            board_str = ''
+            for nth, entry in enumerate(board.entries):
+                board_str += f'{nth + 1}: <b>{entry.player}</b> with a score of {entry.score}.'
+        else:
+            board_str = 'Nobody has completed this dungeon yet!'
+
+        return f'''\n\n<b>Leaderboard for This Dungeon</b>
+
+{board_str}'''

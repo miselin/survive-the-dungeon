@@ -10,7 +10,9 @@ import pygame_gui
 from .attributes import AttributeSet
 from .attributeui import CharacterCustomization
 from .customseed import CustomSeed
-from .env import IS_TESTING
+from .env import ONLINE_PLAY
+from .online import OnlinePlay
+from .leaderboardui import Leaderboard
 
 GAME_TITLE = "Survive the Dungeon"
 GAME_SUBTITLE = "Infinite procedural dungeons. Survival is not guaranteed."
@@ -30,7 +32,7 @@ class MainMenu:
     STATE_CHOOSE_SEED = 1
     STATE_HIGH_SCORES = 2
 
-    def __init__(self, ui, surface) -> None:
+    def __init__(self, ui, surface, online: Optional[OnlinePlay] = None) -> None:
         self.seed = 0
         self.ui = ui
         self.surface = surface
@@ -40,6 +42,7 @@ class MainMenu:
         self.custom_seed_window: Optional[CustomSeed] = None
         self.character_attribute_window: Optional[CharacterCustomization] = None
         self.attributes: Optional[AttributeSet] = None
+        self.online: Optional[OnlinePlay] = online
 
         self.rebuild()
 
@@ -128,7 +131,9 @@ class MainMenu:
             tool_tip_text="Play a randomly generated dungeon using a specific seed.",
         )
 
-        if IS_TESTING:
+        prev_button = self.custom_seed
+
+        if ONLINE_PLAY:
             self.high_scores = pygame_gui.elements.UIButton(
                 pygame.Rect(0, 16, 192, 32),
                 "High Scores",
@@ -142,12 +147,14 @@ class MainMenu:
                 tool_tip_text="View high scores.",
             )
 
+            prev_button = self.high_scores
+
         self.quit_button = pygame_gui.elements.UIButton(
             pygame.Rect(0, 16, 192, 32),
             "Quit",
             manager=self.ui,
             container=self.container,
-            anchors={"top_target": self.custom_seed, "centerx": "centerx"},
+            anchors={"top_target": prev_button, "centerx": "centerx"},
             object_id=pygame_gui.core.ObjectID(
                 class_id="@mainmenu_buttons",
                 object_id="#mainmenu4",
@@ -173,6 +180,8 @@ class MainMenu:
                 self.start_daily_dungeon()
             elif event.ui_element == self.custom_seed:
                 self.start_custom_seed()
+            elif event.ui_element == self.high_scores:
+                self.start_high_scores()
 
         elif event.type == pygame_gui.UI_WINDOW_CLOSE:
             if event.ui_element == self.custom_seed_window:
@@ -191,7 +200,12 @@ class MainMenu:
 
     def start_daily_dungeon(self):
         """Starts a daily dungeon game."""
-        self.start_with_seed(todays_seed())
+        if self.online is not None:
+            seed = self.online.daily_seed
+        else:
+            seed = todays_seed()
+
+        self.start_with_seed(seed)
 
     def start_with_seed(self, seed: int):
         """Starts a dungeon game with a user-selected seed."""
@@ -220,7 +234,8 @@ class MainMenu:
         )
 
     def start_high_scores(self):
-        """Currently unused. Will show high score table."""
+        """Show the high score table for today's daily."""
+        self.high_score_window = Leaderboard(self.online, rect=self.modal_rt, window_display_title="Daily Leaderboard", manager=self.ui, resizable=False)
 
     def quit(self):
         """Quits the game."""
