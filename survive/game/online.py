@@ -1,34 +1,46 @@
 """This module provides handling for online play."""
 
+import datetime
+import functools
 import os
 import subprocess
-import functools
-from typing import Optional, List
-
-from tomlkit import datetime
-from .env import ON_REPLIT
+from dataclasses import dataclass
+from typing import List, Optional
 
 import api
-from api.apis.tags import daily_api, leaderboard_api
+from api.apis.tags import daily_api, leaderboard_api, tombstone_api
 
-from dataclasses import dataclass
+from .env import ON_REPLIT
 
+DEFAULT_HOST = "https://Survive-the-Dungeon-Server.mattiselin.repl.co"
+DEFAULT_AUDIENCE = "970a2027-ee56-4336-8751-57a070f055ee"
 
-DEFAULT_HOST = 'https://Survive-the-Dungeon-Server.mattiselin.repl.co'
-DEFAULT_AUDIENCE = '970a2027-ee56-4336-8751-57a070f055ee'
 
 @dataclass
 class LeaderboardEntry:
     """An entry in a leaderboard"""
+
     player: str
     score: int
+    at: datetime.datetime
 
 
 @dataclass
 class Leaderboard:
     """A leaderboard"""
+
     seed: int
     entries: List[LeaderboardEntry]
+
+
+@dataclass
+class Tombstone:
+    """A tombstone in the world"""
+
+    player: str
+    x: int
+    y: int
+    at: datetime.datetime
 
 
 class OnlinePlay:
@@ -37,9 +49,11 @@ class OnlinePlay:
     def __init__(self, host=DEFAULT_HOST):
         api_keys = {}
         if ON_REPLIT:
-            self._identity_token = subprocess.check_output(['./replit', 'repl-identity', 'create', f'-audience={DEFAULT_AUDIENCE}'])
-            self._player_name = os.environ.get('REPL_OWNER', 'Player')
-            api_keys['repl-identity'] = self._identity_token
+            self._identity_token = subprocess.check_output(
+                ["./replit", "repl-identity", "create", f"-audience={DEFAULT_AUDIENCE}"]
+            )
+            self._player_name = os.environ.get("REPL_OWNER", "Player")
+            api_keys["repl-identity"] = self._identity_token
 
         self._api_client = api.ApiClient(api.Configuration(host=host, api_key=api_keys))
 
@@ -52,14 +66,16 @@ class OnlinePlay:
         try:
             # Get today's seed
             api_response = api_instance.get_daily_route()
-            return api_response.body.get('seed')
+            return api_response.body.get("seed")
         except api.ApiException as e:
             print("Exception when calling DailyApi->get_daily_route: %s\n" % e)
 
         return None
 
-    def leaderboard(self, seed: Optional[int]=None) -> Optional[Leaderboard]:
-        """Get the leaderboard for the given seed. If no seed is given, today's seed will be used."""
+    def leaderboard(self, seed: Optional[int] = None) -> Optional[Leaderboard]:
+        """Get the leaderboard for the given seed.
+
+        If no seed is given, today's seed will be used."""
         api_instance = leaderboard_api.LeaderboardApi(self._api_client)
 
         if seed is None:
@@ -67,18 +83,25 @@ class OnlinePlay:
 
         try:
             # Get today's seed
-            api_response = api_instance.get_leaderboard({'seed': seed})
-            seed = api_response.body['seed']
-            entries = api_response.body['entries']
+            api_response = api_instance.get_leaderboard({"seed": seed})
+            seed = api_response.body["seed"]
+            entries = api_response.body["entries"]
 
             result = Leaderboard(seed=seed, entries=[])
             for entry in entries:
-                result.entries.append(LeaderboardEntry(player=entry['player'], score=entry['score']))
+                result.entries.append(
+                    LeaderboardEntry(
+                        player=entry["player"],
+                        score=entry["score"],
+                        at=entry["at"].as_datetime_oapg,
+                    )
+                )
 
-            print(result)
             return result
         except api.ApiException as e:
             print("Exception when calling LeaderboardApi->get_leaderboard: %s\n" % e)
+
+        return None
 
     def submit_score(self, seed: int, score: int):
         """Submit the player's score for the given seed."""
@@ -88,13 +111,42 @@ class OnlinePlay:
 
         api_instance = leaderboard_api.LeaderboardApi(self._api_client)
 
-        self._player_name
         try:
-            api_instance.create_todo({
-                "player": self._player_name,
-                "seed": seed,
-                "score": score,
-                "at": datetime.datetime.now(),
-            })
+            api_instance.create_todo(
+                {
+                    "player": self._player_name,
+                    "seed": seed,
+                    "score": score,
+                    "at": datetime.datetime.now(),
+                }
+            )
         except api.ApiException as e:
             print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
+
+    def tombstones(self, seed: int) -> Optional[List[Tombstone]]:
+        """Get tombstones for the given seed."""
+        api_instance = tombstone_api.TombstoneApi(self._api_client)
+
+        try:
+            response = api_instance.get_tombstones(
+                {
+                    "seed": seed,
+                }
+            )
+
+            result = []
+            for entry in response.body["entries"]:
+                result.append(
+                    Tombstone(
+                        player=entry["player"],
+                        x=entry["x"],
+                        y=entry["y"],
+                        at=entry["at"].as_datetime_oapg,
+                    )
+                )
+
+            return result
+        except api.ApiException as e:
+            print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
+
+        return None

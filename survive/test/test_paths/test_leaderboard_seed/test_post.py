@@ -9,11 +9,10 @@
 import unittest
 from unittest.mock import patch
 
-import urllib3
-
 import api
+import urllib3
+from api import api_client, configuration, schemas
 from api.paths.leaderboard_seed import post  # noqa: E501
-from api import configuration, schemas, api_client
 
 from .. import ApiTestMixin
 
@@ -23,6 +22,7 @@ class TestLeaderboardSeed(ApiTestMixin, unittest.TestCase):
     LeaderboardSeed unit test stubs
         Create a new leaderboard entry  # noqa: E501
     """
+
     _configuration = configuration.Configuration()
 
     def setUp(self):
@@ -35,9 +35,5 @@ class TestLeaderboardSeed(ApiTestMixin, unittest.TestCase):
     response_status = 201
 
 
-
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

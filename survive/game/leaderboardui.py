@@ -1,11 +1,10 @@
 """This module exports the UI for showing high scores."""
-import random
+import datetime
 
+import humanize
 import pygame
 import pygame_gui
 
-from .attributes import ATTRIBUTES, Attribute, AttributeSet
-from .constants import POINT_BUY_POOL_COUNT
 from .online import OnlinePlay
 
 
@@ -54,14 +53,16 @@ class Leaderboard(pygame_gui.elements.UIWindow):
         board = self._online.leaderboard()
 
         if board.entries:
-            board_str = ''
+            board_str = ""
             for nth, entry in enumerate(board.entries):
-                board_str += f'{nth + 1}: <b>{entry.player}</b> with a score of {entry.score}.'
+                since = datetime.datetime.now(datetime.timezone.utc) - entry.at
+                board_str += f"{nth + 1}: <b>{entry.player}</b> with a score of "
+                board_str += f"{entry.score} {humanize.naturaldelta(since)} ago.\n"
         else:
-            board_str = 'Nobody has completed this seed yet!'
+            board_str = "Nobody has completed this seed yet!"
 
-        return f'''<b>Leaderboard</b>
+        return f"""<b>Leaderboard</b>
 
 Today's seed is <b>{board.seed}</b>. Here's the top 10 for this seed.
 
-{board_str}'''
+{board_str}"""

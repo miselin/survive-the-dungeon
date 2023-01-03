@@ -12,14 +12,15 @@
 import unittest
 
 import api
-from api.model.seed import Seed
 from api import configuration
+from api.model.seed import Seed
 
 
 class TestSeed(unittest.TestCase):
     """Seed unit test stubs"""
+
     _configuration = configuration.Configuration()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

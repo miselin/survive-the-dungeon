@@ -11,8 +11,8 @@ from .attributes import AttributeSet
 from .attributeui import CharacterCustomization
 from .customseed import CustomSeed
 from .env import ONLINE_PLAY
-from .online import OnlinePlay
 from .leaderboardui import Leaderboard
+from .online import OnlinePlay
 
 GAME_TITLE = "Survive the Dungeon"
 GAME_SUBTITLE = "Infinite procedural dungeons. Survival is not guaranteed."
@@ -41,6 +41,7 @@ class MainMenu:
         self.container = None
         self.custom_seed_window: Optional[CustomSeed] = None
         self.character_attribute_window: Optional[CharacterCustomization] = None
+        self.high_score_window: Optional[Leaderboard] = None
         self.attributes: Optional[AttributeSet] = None
         self.online: Optional[OnlinePlay] = online
 
@@ -235,7 +236,13 @@ class MainMenu:
 
     def start_high_scores(self):
         """Show the high score table for today's daily."""
-        self.high_score_window = Leaderboard(self.online, rect=self.modal_rt, window_display_title="Daily Leaderboard", manager=self.ui, resizable=False)
+        self.high_score_window = Leaderboard(
+            self.online,
+            rect=self.modal_rt,
+            window_display_title="Daily Leaderboard",
+            manager=self.ui,
+            resizable=False,
+        )
 
     def quit(self):
         """Quits the game."""

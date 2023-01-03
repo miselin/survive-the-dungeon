@@ -3,14 +3,13 @@
 import pygame
 import pygame_gui
 
-from .online import OnlinePlay
-
 from .dungeon import WINDOW_H, WINDOW_W, Dungeon
+from .env import ONLINE_PLAY
 from .game import Game, GameState, set_game
 from .gameend import GameEndedScreen
 from .mainmenu import GAME_TITLE, MainMenu
+from .online import OnlinePlay
 from .sprites import SpriteSet, SpriteSheet
-from .env import ONLINE_PLAY
 
 
 def run():
@@ -42,6 +41,7 @@ def run():
 
     clutter_sprites = [spritesheet_props.sprite(88 + i) for i in range(8)]
     hall_clutter_sprites = [spritesheet_props.sprite(67 + i) for i in range(7)]
+    corpse_sprite = spritesheet_props.sprite(64)
 
     spriteset = SpriteSet(
         player_sprite,
@@ -52,6 +52,7 @@ def run():
         [spritesheet_items.sprite(22), spritesheet_items.sprite(23)],
         clutter_sprites,
         hall_clutter_sprites,
+        corpse_sprite,
     )
 
     if ONLINE_PLAY:
@@ -103,6 +104,7 @@ def run():
                     window,
                     spriteset,
                     main_menu.attributes,
+                    online=online,
                 )
                 main_menu.ack_done()
 

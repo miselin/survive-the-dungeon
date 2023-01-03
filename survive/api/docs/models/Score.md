@@ -8,6 +8,7 @@ dict, frozendict.frozendict,  | frozendict.frozendict,  |  |
 ### Dictionary Keys
 Key | Input Type | Accessed Type | Description | Notes
 ------------ | ------------- | ------------- | ------------- | -------------
+**at** | str, datetime,  | str,  | The date and time that this score was submitted. | value must conform to RFC-3339 date-time
 **player** | str,  | str,  | The player that achieved this score. | [optional] 
 **score** | decimal.Decimal, int,  | decimal.Decimal,  | The score the player achieved. | [optional] 
 **seed** | decimal.Decimal, int,  | decimal.Decimal,  | The seed the player achieved this score on. | [optional] 

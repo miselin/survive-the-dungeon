@@ -12,14 +12,15 @@
 import unittest
 
 import api
-from api.model.tombstones import Tombstones
 from api import configuration
+from api.model.tombstones import Tombstones
 
 
 class TestTombstones(unittest.TestCase):
     """Tombstones unit test stubs"""
+
     _configuration = configuration.Configuration()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

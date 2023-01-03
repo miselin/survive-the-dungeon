@@ -1,8 +1,10 @@
 """This module holds the main game logic for a dungeon"""
 
+import datetime
 import math
 from typing import List, Optional, Union
 
+import humanize
 import pygame
 import pygame_gui
 
@@ -33,6 +35,7 @@ from .game import Game, GameState
 from .inventoryui import InventoryModal
 from .item import Armor, Chest, Gold, InstantEffectItem, Weapon
 from .mapgen import Cell, generate_map
+from .online import OnlinePlay
 from .procgen import NAMES, NameGenerator, creature_at_level
 from .shopui import Shop
 from .sprites import SpriteSet
@@ -93,6 +96,7 @@ class Dungeon:
         surface: pygame.Surface,
         spriteset: SpriteSet,
         player_attributes: AttributeSet,
+        online: Optional[OnlinePlay] = None,
     ):
         self.font = font
 
@@ -101,6 +105,8 @@ class Dungeon:
         self.surface = surface
         self.spriteset = spriteset
         self._pause_window = None
+
+        self._online = online
 
         self.left_x = 0
         self.right_x = 0
@@ -388,6 +394,11 @@ class Dungeon:
         self._x_delta = 0
         self._y_delta = 0
 
+        if self._online is not None:
+            self.tombstones = self._online.tombstones(self.game.seed)
+        else:
+            self.tombstones = []
+
     def generate_items(self) -> None:
         """Generate items to use throughout the dungeon."""
 
@@ -509,6 +520,13 @@ class Dungeon:
             if chest.position == new_player_pos:
                 opened_chest = chest
                 break
+
+        for tombstone in self.tombstones:
+            if (tombstone.x, tombstone.y) == new_player_pos:
+                since = datetime.datetime.now(datetime.timezone.utc) - tombstone.at
+                self.game.log(
+                    f"{tombstone.player} died here {humanize.naturaldelta(since)} ago"
+                )
 
         if attacked_creature is None and opened_chest is None:
             cell = self.worldmap.cell_at(*new_player_pos)
@@ -664,6 +682,28 @@ class Dungeon:
                     (chest.position[0] - self.left_x) * 32,
                     (chest.position[1] - self.top_y) * 32,
                 ),
+                (0, 0, *sprite.get_size()),
+            )
+
+    def draw_tombstones(self):
+        """Draws tombstones to the screen."""
+
+        sprite = self.spriteset.get_corpse()
+
+        for tombstone in self.tombstones:
+            if not is_visible(
+                tombstone.x,
+                tombstone.y,
+                self.left_x,
+                self.right_x,
+                self.top_y,
+                self.bottom_y,
+            ):
+                continue
+
+            self.surface.blit(
+                sprite,
+                ((tombstone.x - self.left_x) * 32, (tombstone.y - self.top_y) * 32),
                 (0, 0, *sprite.get_size()),
             )
 
@@ -882,6 +922,7 @@ class Dungeon:
         self.bottom_y = self.player.position[1] + HALF_TILES_H + 1
 
         self.draw_map()
+        self.draw_tombstones()
         self.draw_player()
         self.draw_creatures()
         self.draw_containers()

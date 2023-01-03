@@ -12,14 +12,15 @@
 import unittest
 
 import api
-from api.model.leaderboard import Leaderboard
 from api import configuration
+from api.model.leaderboard import Leaderboard
 
 
 class TestLeaderboard(unittest.TestCase):
     """Leaderboard unit test stubs"""
+
     _configuration = configuration.Configuration()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

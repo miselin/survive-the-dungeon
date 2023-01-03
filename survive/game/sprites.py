@@ -58,6 +58,7 @@ class SpriteSet:
         chest: List[pygame.Surface],
         clutter: List[pygame.Surface],
         hall_clutter: List[pygame.Surface],
+        corpse: pygame.Surface,
     ):
         self.player = player
         self.mobs = mobs
@@ -67,6 +68,7 @@ class SpriteSet:
         self.chest = chest
         self.clutter = clutter
         self.hall_clutter = hall_clutter
+        self.corpse = corpse
 
     def get_player(self) -> pygame.Surface:
         """Get the sprite for the player"""
@@ -102,3 +104,7 @@ class SpriteSet:
     def get_hall_clutter(self) -> List[pygame.Surface]:
         """Get the sprites for hallway clutter"""
         return self.hall_clutter
+
+    def get_corpse(self) -> pygame.Surface:
+        """Get the sprite for a corpse"""
+        return self.corpse

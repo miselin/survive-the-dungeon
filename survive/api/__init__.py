@@ -20,9 +20,11 @@ from api.api_client import ApiClient
 from api.configuration import Configuration
 
 # import exceptions
-from api.exceptions import OpenApiException
-from api.exceptions import ApiAttributeError
-from api.exceptions import ApiTypeError
-from api.exceptions import ApiValueError
-from api.exceptions import ApiKeyError
-from api.exceptions import ApiException
+from api.exceptions import (
+    ApiAttributeError,
+    ApiException,
+    ApiKeyError,
+    ApiTypeError,
+    ApiValueError,
+    OpenApiException,
+)

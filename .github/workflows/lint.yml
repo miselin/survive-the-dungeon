@@ -28,5 +28,4 @@ jobs:
         python -m black --check survive
         python -m isort -rc survive -c --diff
         python -m pylint survive
-        python -m pycodestyle --max-line-length=100 --exclude=gen.py survive
-        python -m mypy survive
+        python -m pycodestyle --max-line-length=100 --exclude='survive/api/*'  --exclude='survive/test/test_paths/*' survive

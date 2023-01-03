@@ -12,14 +12,15 @@
 import unittest
 
 import api
-from api.model.score import Score
 from api import configuration
+from api.model.score import Score
 
 
 class TestScore(unittest.TestCase):
     """Score unit test stubs"""
+
     _configuration = configuration.Configuration()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

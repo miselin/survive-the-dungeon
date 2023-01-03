@@ -53,6 +53,7 @@ with api.ApiClient(configuration) as api_client:
                 player="player_example",
                 score=1,
                 seed=1,
+                at="1970-01-01T00:00:00.00Z",
             )
         ],
         seed=1,
