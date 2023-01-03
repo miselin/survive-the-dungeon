@@ -67,8 +67,9 @@ class GameEndedScreen:
                 subtitle
                 + "\n\n<b>Last log messages before your demise:</b>\n"
                 + "\n".join(game().get_log())
-                + self._leaderboard()
             )
+
+        subtitle += self._leaderboard()
 
         self.popup = pygame_gui.windows.UIMessageWindow(
             self.dialog_rt,
