@@ -53,7 +53,9 @@ class OnlinePlay:
                 ["./replit", "repl-identity", "create", f"-audience={DEFAULT_AUDIENCE}"]
             )
             self._player_name = os.environ.get("REPL_OWNER", "Player")
-            api_keys["repl-identity"] = self._identity_token.decode('utf-8')
+            api_keys["repl-identity"] = self._identity_token.decode('utf-8').strip()
+
+            print(api_keys)
 
         self._api_client = api.ApiClient(api.Configuration(host=host, api_key=api_keys))
 
@@ -118,7 +120,10 @@ class OnlinePlay:
                     "seed": seed,
                     "score": score,
                     "at": datetime.datetime.now(),
-                }
+                },
+                path_params={
+                    "seed": seed,
+                },
             )
         except api.ApiException as e:
             print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
