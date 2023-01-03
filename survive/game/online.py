@@ -168,7 +168,10 @@ class OnlinePlay:
                     "y": y,
                     "last_logs": logs,
                     "at": datetime.datetime.now(),
-                }
+                },
+                {
+                    "seed": seed,
+                },
             )
         except api.ApiException as e:
             print("Exception when calling LeaderboardApi->create_todo: %s\n" % e)
