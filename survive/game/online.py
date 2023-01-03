@@ -169,7 +169,7 @@ class OnlinePlay:
                     "last_logs": logs,
                     "at": datetime.datetime.now(),
                 },
-                {
+                path_params={
                     "seed": seed,
                 },
             )
