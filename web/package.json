@@ -1,0 +1,17 @@
+{
+  "name": "web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "npm run test:unit",
+    "test:unit": "esbuild src/tests/run.ts --bundle --platform=node --format=esm --outfile=.unit-dist/run.mjs && node .unit-dist/run.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vite": "^7.3.1"
+  }
+}
