@@ -14,15 +14,15 @@ const attributeDescriptions: Record<AttributeName, string> = {
   str: "Increases hit chance and boosts aggressive builds.",
   dex: "Improves defense and flee reliability.",
   con: "Raises max HP and durability.",
-  int: "Reserved for future spell/crafting systems.",
-  wis: "Reserved for future utility systems.",
+  int: "Aptitude for lore and study.",
+  wis: "Aptitude for instincts and awareness.",
   chr: "Improves shop discounts.",
 };
 
 export const EN = {
   ui: {
     appTitle: "Survive the Dungeon",
-    menuSubtitle: "A browser port of your one-week roguelike prototype.",
+    menuSubtitle: "Descend floor by floor, gather gear, and survive the boss gauntlet.",
     seedInputLabel: "Seed phrase (optional)",
     seedInputPlaceholder: "e.g. goblin-market-17",
     startRunButton: "Start Run",
@@ -242,6 +242,7 @@ export const EN = {
     labels: {
       perk: "Perk",
       gambit: "Gambit",
+      wieldingNothing: "Wielding nothing.",
     },
     startingGear: {
       fists: "Fists",

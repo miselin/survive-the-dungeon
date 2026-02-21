@@ -1,6 +1,6 @@
 # Survive the Dungeon (Web Port)
 
-Browser port of the original roguelike prototype, rebuilt with TypeScript + Vite.
+Browser dungeon crawler built with TypeScript + Vite.
 
 ## Run
 

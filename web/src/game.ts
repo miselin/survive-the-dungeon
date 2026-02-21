@@ -1,4 +1,12 @@
 import {
+  findBuildChoice,
+  GAMBIT_POOL,
+  PERK_POOL,
+  type BuildChoice,
+  type BuildChoiceDefinition,
+  type BuildChoiceKind,
+} from "./buildChoices";
+import {
   AI_WANDER_MOVE_ROLL_MIN,
   AI_WANDER_ROLL_MAX,
   AI_MOVE_MS,
@@ -106,6 +114,8 @@ import { ROOM_BOSS, ROOM_SHOP, ROOM_START } from "./types";
 import type { LogEntry, Position, Room, WieldSlot } from "./types";
 import type { CombatLuckState, CombatResult } from "./combat";
 
+export type { BuildChoice, BuildChoiceKind } from "./buildChoices";
+
 type MobEntity = {
   id: string;
   creature: Creature;
@@ -141,25 +151,6 @@ type ShopClutter = {
   x: number;
   y: number;
   sprite: number;
-};
-
-export type BuildChoiceKind = "perk" | "gambit";
-
-export type BuildChoice = {
-  id: string;
-  name: string;
-  description: string;
-  kind: BuildChoiceKind;
-};
-
-type BuildChoiceDefinition = BuildChoice & {
-  attackBonus?: number;
-  defenseBonus?: number;
-  maxHitpoints?: number;
-  damageDealtMultiplier?: number;
-  damageTakenMultiplier?: number;
-  hitpointCapMultiplier?: number;
-  attributes?: Partial<Record<AttributeName, number>>;
 };
 
 export type LevelUpChoice = {
@@ -306,104 +297,13 @@ export type DungeonRunSaveData = {
 };
 
 const ATTRIBUTE_ORDER: AttributeName[] = ["str", "dex", "con", "int", "wis", "chr"];
+export const LEVEL_UP_ATTRIBUTES = ["str", "dex", "con", "chr"] as const;
+export type LevelUpAttribute = (typeof LEVEL_UP_ATTRIBUTES)[number];
+const LEVEL_UP_ATTRIBUTE_SET = new Set<AttributeName>(LEVEL_UP_ATTRIBUTES);
 const WIELD_SLOTS: WieldSlot[] = ["head", "chest", "arms", "hands", "legs", "feet"];
 
 const ATTRIBUTE_LABELS = EN.game.attributeLabels;
 const ATTRIBUTE_DESCRIPTIONS = EN.game.attributeDescriptions;
-
-const PERK_POOL: BuildChoiceDefinition[] = [
-  {
-    id: "perk-iron-frame",
-    name: EN.game.buildChoices.perks.ironFrame.name,
-    description: EN.game.buildChoices.perks.ironFrame.description,
-    kind: "perk",
-    maxHitpoints: 28,
-    defenseBonus: 2,
-  },
-  {
-    id: "perk-duelist-instinct",
-    name: EN.game.buildChoices.perks.duelistInstinct.name,
-    description: EN.game.buildChoices.perks.duelistInstinct.description,
-    kind: "perk",
-    attackBonus: 3,
-    attributes: { dex: 1 },
-  },
-  {
-    id: "perk-scavenger-wits",
-    name: EN.game.buildChoices.perks.scavengerWits.name,
-    description: EN.game.buildChoices.perks.scavengerWits.description,
-    kind: "perk",
-    attributes: { str: 2, chr: 2 },
-  },
-  {
-    id: "perk-relentless-edge",
-    name: EN.game.buildChoices.perks.relentlessEdge.name,
-    description: EN.game.buildChoices.perks.relentlessEdge.description,
-    kind: "perk",
-    damageDealtMultiplier: 1.2,
-  },
-  {
-    id: "perk-warding-shell",
-    name: EN.game.buildChoices.perks.wardingShell.name,
-    description: EN.game.buildChoices.perks.wardingShell.description,
-    kind: "perk",
-    damageTakenMultiplier: 0.85,
-  },
-];
-
-const GAMBIT_POOL: BuildChoiceDefinition[] = [
-  {
-    id: "gambit-blood-oath",
-    name: EN.game.buildChoices.gambits.bloodOath.name,
-    description: EN.game.buildChoices.gambits.bloodOath.description,
-    kind: "gambit",
-    damageDealtMultiplier: 2,
-    hitpointCapMultiplier: 0.5,
-  },
-  {
-    id: "gambit-berserker-stance",
-    name: EN.game.buildChoices.gambits.berserkerStance.name,
-    description: EN.game.buildChoices.gambits.berserkerStance.description,
-    kind: "gambit",
-    attackBonus: 6,
-    defenseBonus: -4,
-  },
-  {
-    id: "gambit-hollow-core",
-    name: EN.game.buildChoices.gambits.hollowCore.name,
-    description: EN.game.buildChoices.gambits.hollowCore.description,
-    kind: "gambit",
-    damageDealtMultiplier: 1.6,
-    maxHitpoints: -25,
-  },
-  {
-    id: "gambit-mirrored-pain",
-    name: EN.game.buildChoices.gambits.mirroredPain.name,
-    description: EN.game.buildChoices.gambits.mirroredPain.description,
-    kind: "gambit",
-    damageDealtMultiplier: 1.35,
-    damageTakenMultiplier: 1.7,
-  },
-  {
-    id: "gambit-brittle-focus",
-    name: EN.game.buildChoices.gambits.brittleFocus.name,
-    description: EN.game.buildChoices.gambits.brittleFocus.description,
-    kind: "gambit",
-    attributes: { str: 4, dex: 4, con: -3 },
-  },
-];
-
-const BUILD_CHOICE_BY_ID = new Map<string, BuildChoiceDefinition>(
-  [...PERK_POOL, ...GAMBIT_POOL].map((choice) => [choice.id, choice]),
-);
-
-function findBuildChoice(id: string): BuildChoiceDefinition {
-  const choice = BUILD_CHOICE_BY_ID.get(id);
-  if (!choice) {
-    throw new Error(`Unknown build choice id: ${id}`);
-  }
-  return choice;
-}
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -1523,7 +1423,7 @@ export class DungeonRun {
   }
 
   levelUpChoices(): LevelUpChoice[] {
-    return ATTRIBUTE_ORDER.map((attr) => ({
+    return LEVEL_UP_ATTRIBUTES.map((attr) => ({
       attr,
       label: ATTRIBUTE_LABELS[attr],
       description: ATTRIBUTE_DESCRIPTIONS[attr],
@@ -1532,8 +1432,11 @@ export class DungeonRun {
     }));
   }
 
-  allocateLevelUp(attr: AttributeName): void {
+  allocateLevelUp(attr: LevelUpAttribute): void {
     if (this.overlay.type !== "level-up") {
+      return;
+    }
+    if (!LEVEL_UP_ATTRIBUTE_SET.has(attr)) {
       return;
     }
 

@@ -1,6 +1,8 @@
 import { runCombatTests } from "./combat.test.js";
 import { runDiceTests } from "./dice.test.js";
+import { runGameTests } from "./game.test.js";
 import { runProcgenTests } from "./procgen.test.js";
+import { runSaveTests } from "./save.test.js";
 
 type TestCase = {
   name: string;
@@ -11,6 +13,8 @@ const tests: TestCase[] = [
   { name: "dice", run: runDiceTests },
   { name: "procgen", run: runProcgenTests },
   { name: "combat", run: runCombatTests },
+  { name: "game", run: runGameTests },
+  { name: "save", run: runSaveTests },
 ];
 
 let failures = 0;

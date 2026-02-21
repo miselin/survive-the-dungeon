@@ -19,6 +19,7 @@ import {
 } from "./constants";
 import { AttributeSet, type AttributeName } from "./attributes";
 import { Buff, Container, Gold, InstantEffectItem, Poison, Weapon, WieldableItem } from "./items";
+import { EN } from "./strings/en";
 import type { Position, WieldSlot } from "./types";
 import type { Dice } from "./dice";
 
@@ -159,7 +160,7 @@ export class Creature {
       }
     }
     if (lines.length === 0) {
-      return "Wielding nothing.";
+      return EN.game.labels.wieldingNothing;
     }
     return lines.join("\n");
   }
