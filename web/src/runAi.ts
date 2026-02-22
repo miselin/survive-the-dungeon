@@ -1,4 +1,8 @@
-import { AI_WANDER_MOVE_ROLL_MIN, AI_WANDER_ROLL_MAX } from "./constants";
+import {
+  AI_LEASH_PURSUIT_TURNS,
+  AI_WANDER_MOVE_ROLL_MIN,
+  AI_WANDER_ROLL_MAX,
+} from "./constants";
 import { Creature } from "./creature";
 import { Chest } from "./items";
 import { WorldMap } from "./mapgen";
@@ -8,6 +12,9 @@ import type { Position } from "./types";
 type MobLike = {
   id: string;
   creature: Creature;
+  roomId: number;
+  isBoss: boolean;
+  pursuitTurnsRemaining: number;
 };
 
 type ChestLike = {
@@ -65,6 +72,7 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
     return { battleTrigger: null };
   }
 
+  const roomById = new Map(options.world.rooms.map((room) => [room.id, room]));
   const occupied = new Set<string>();
   occupied.add(posKey(options.player.position));
 
@@ -89,8 +97,17 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
 
     const playerRoom = options.world.roomAt(options.player.position);
     const mobRoom = options.world.roomAt(creature.position);
+    const mobInHomeRoom = mobRoom !== null && mobRoom.id === mob.roomId;
+    const playerInMobHomeRoom =
+      playerRoom !== null && playerRoom.id === mob.roomId;
+    const homeAggro = mobInHomeRoom && playerInMobHomeRoom;
 
-    if (playerRoom && mobRoom && playerRoom.id === mobRoom.id) {
+    if (homeAggro) {
+      mob.pursuitTurnsRemaining = AI_LEASH_PURSUIT_TURNS;
+    }
+
+    const canPursuePlayer = homeAggro || mob.pursuitTurnsRemaining > 0;
+    if (canPursuePlayer) {
       const blocked = new Set(occupied);
       blocked.delete(posKey(creature.position));
       const path = options.world.pathTo(
@@ -103,7 +120,7 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
         return {
           battleTrigger: {
             mobId: mob.id,
-            roomId: playerRoom?.id ?? mobRoom?.id ?? null,
+            roomId: playerRoom?.id ?? mobRoom?.id ?? mob.roomId,
             attackerName: creature.name,
           },
         };
@@ -111,6 +128,35 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
 
       if (path.length > 0) {
         const next = path[0];
+        const nextKey = posKey(next);
+        if (!occupied.has(nextKey)) {
+          occupied.delete(posKey(creature.position));
+          creature.position = next;
+          occupied.add(nextKey);
+        }
+      }
+
+      if (!homeAggro && !mob.isBoss) {
+        mob.pursuitTurnsRemaining = Math.max(0, mob.pursuitTurnsRemaining - 1);
+      }
+      continue;
+    }
+
+    const homeRoom = roomById.get(mob.roomId) ?? null;
+    if (!mobInHomeRoom && homeRoom) {
+      const blocked = new Set(occupied);
+      blocked.delete(posKey(creature.position));
+      const homeTarget = {
+        x: homeRoom.x + Math.floor(homeRoom.w / 2),
+        y: homeRoom.y + Math.floor(homeRoom.h / 2),
+      };
+      const pathHome = options.world.pathTo(
+        creature.position,
+        homeTarget,
+        blocked,
+      );
+      if (pathHome.length > 0) {
+        const next = pathHome[0];
         const nextKey = posKey(next);
         if (!occupied.has(nextKey)) {
           occupied.delete(posKey(creature.position));
@@ -136,6 +182,10 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
         !options.world.inBounds(next.x, next.y) ||
         !options.world.isPassable(next.x, next.y)
       ) {
+        continue;
+      }
+      const nextRoom = options.world.roomAt(next);
+      if (!nextRoom || nextRoom.id !== mob.roomId) {
         continue;
       }
       const nextKey = posKey(next);

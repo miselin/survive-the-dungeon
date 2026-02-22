@@ -58,6 +58,7 @@ export type MobEntity = {
   creature: Creature;
   roomId: number;
   isBoss: boolean;
+  pursuitTurnsRemaining: number;
 };
 
 export type ChestEntity = {
@@ -247,6 +248,7 @@ export function populateDungeon(
         creature: mob,
         roomId: room.id,
         isBoss,
+        pursuitTurnsRemaining: 0,
       });
     }
 

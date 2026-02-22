@@ -2,6 +2,7 @@ import { runCombatTests } from "./combat.test.js";
 import { runDiceTests } from "./dice.test.js";
 import { runGameTests } from "./game.test.js";
 import { runProcgenTests } from "./procgen.test.js";
+import { runAiTests } from "./runAi.test.js";
 import { runCombatFlowTests } from "./runCombatFlow.test.js";
 import { runProgressionTests } from "./runProgression.test.js";
 import { runSaveTests } from "./save.test.js";
@@ -15,6 +16,7 @@ const tests: TestCase[] = [
   { name: "dice", run: runDiceTests },
   { name: "procgen", run: runProcgenTests },
   { name: "combat", run: runCombatTests },
+  { name: "run-ai", run: runAiTests },
   { name: "run-combat-flow", run: runCombatFlowTests },
   { name: "run-progression", run: runProgressionTests },
   { name: "game", run: runGameTests },

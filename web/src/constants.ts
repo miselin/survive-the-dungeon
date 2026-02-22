@@ -187,6 +187,7 @@ export const SHOP_REWARD_HEAL_FALLBACK_RATIO = 0.35;
 export const AI_MOVE_MS = 450;
 export const AI_WANDER_ROLL_MAX = 12;
 export const AI_WANDER_MOVE_ROLL_MIN = 9; // move when roll is 9..12
+export const AI_LEASH_PURSUIT_TURNS = 2;
 
 export const LOG_LIMIT = 9;
 

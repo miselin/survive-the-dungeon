@@ -63,6 +63,7 @@ type SavedMob = {
   id: string;
   roomId: number;
   isBoss: boolean;
+  pursuitTurnsRemaining?: number;
   creature: SavedCreature;
 };
 
@@ -139,6 +140,7 @@ export type RuntimeMob = {
   creature: Creature;
   roomId: number;
   isBoss: boolean;
+  pursuitTurnsRemaining: number;
 };
 
 export type RuntimeChest = {
@@ -451,6 +453,7 @@ export function encodeRunSaveData(
       id: mob.id,
       roomId: mob.roomId,
       isBoss: mob.isBoss,
+      pursuitTurnsRemaining: mob.pursuitTurnsRemaining,
       creature: serializeCreature(mob.creature),
     })),
     chests: input.chests.map((entry) => ({
@@ -534,6 +537,10 @@ export function decodeRunSaveData(
       id: entry.id,
       roomId: entry.roomId,
       isBoss: entry.isBoss,
+      pursuitTurnsRemaining: Math.max(
+        0,
+        Math.floor(entry.pursuitTurnsRemaining ?? 0),
+      ),
       creature,
     };
   });

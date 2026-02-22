@@ -140,7 +140,13 @@ export function runCombatFlowTests(): void {
     enemy.inBattle = true;
     player.inBattle = true;
     const mobs: MobEntity[] = [
-      { id: "mob-1", creature: enemy, roomId: 1, isBoss: false },
+      {
+        id: "mob-1",
+        creature: enemy,
+        roomId: 1,
+        isBoss: false,
+        pursuitTurnsRemaining: 0,
+      },
     ];
     const chests: ChestEntity[] = [];
     const result = resolveCombatTurn({
@@ -198,7 +204,13 @@ export function runCombatFlowTests(): void {
     enemy.hitpoints = 40;
     enemy.gold = 19;
     const mobs: MobEntity[] = [
-      { id: "boss-1", creature: enemy, roomId: 1, isBoss: true },
+      {
+        id: "boss-1",
+        creature: enemy,
+        roomId: 1,
+        isBoss: true,
+        pursuitTurnsRemaining: 0,
+      },
     ];
     const stats = { vanquished: 0, goldEarned: 0, xpGained: 0 };
 
@@ -256,7 +268,15 @@ export function runCombatFlowTests(): void {
       action: "normal",
       state: "playing",
       overlay: battleOverlay("mob-1"),
-      mobs: [{ id: "mob-1", creature: enemy, roomId: 1, isBoss: false }],
+      mobs: [
+        {
+          id: "mob-1",
+          creature: enemy,
+          roomId: 1,
+          isBoss: false,
+          pursuitTurnsRemaining: 0,
+        },
+      ],
       combat: fakeCombat((combatPlayer) => {
         combatPlayer.alive = false;
         combatPlayer.hitpoints = 0;
