@@ -19,6 +19,7 @@ export const FLOOR_DEPTH_SCALE_PER_FLOOR = 0.02;
 
 // Critical tuning
 export const PLAYER_CRIT_MINIMUM_ROLL = 18;
+export const PLAYER_CRIT_MINIMUM_MULTIPLIER = 2;
 export const PLAYER_CRIT_MAXIMUM_MULTIPLIER = 3;
 export const WEAPON_CRIT_MAXIMUM_ROLL = 20;
 export const DEFAULT_WEAPON_CRITICAL_RANGE = 20;

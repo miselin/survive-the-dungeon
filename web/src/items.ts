@@ -9,6 +9,7 @@ import {
   DEFAULT_WEAPON_CRITICAL_RANGE,
   DEFAULT_WEAPON_DAMAGE_DICE,
   DEFAULT_WEAPON_DEFENSE_BONUS,
+  PLAYER_CRIT_MINIMUM_MULTIPLIER,
   POISON_DEFAULT_DAMAGE_PER_TURN,
   TURN_EFFECT_DEFAULT_LIFETIME,
   WEAPON_CRIT_MAXIMUM_ROLL,
@@ -44,21 +45,52 @@ export abstract class Item {
 
 export type SerializedItem =
   | { kind: "gold"; id: string; name: string; value: number; amount: number }
-  | { kind: "armor"; id: string; name: string; value: number; slot: WieldSlot; attackBonus: number; defenseBonus: number }
   | {
-    kind: "weapon";
-    id: string;
-    name: string;
-    value: number;
-    critRange: number;
-    critMult: number;
-    attackBonus: number;
-    defenseBonus: number;
-    damageDice: string;
-  }
-  | { kind: "instant"; id: string; name: string; value: number; hpBoost: number; hpDrop: number }
-  | { kind: "poison"; id: string; name: string; value: number; damagePerTurn: number; lifetime: number }
-  | { kind: "buff"; id: string; name: string; value: number; hpBuff: number; attackBuff: number; defenseBuff: number; lifetime: number };
+      kind: "armor";
+      id: string;
+      name: string;
+      value: number;
+      slot: WieldSlot;
+      attackBonus: number;
+      defenseBonus: number;
+    }
+  | {
+      kind: "weapon";
+      id: string;
+      name: string;
+      value: number;
+      critRange: number;
+      critMult: number;
+      attackBonus: number;
+      defenseBonus: number;
+      damageDice: string;
+    }
+  | {
+      kind: "instant";
+      id: string;
+      name: string;
+      value: number;
+      hpBoost: number;
+      hpDrop: number;
+    }
+  | {
+      kind: "poison";
+      id: string;
+      name: string;
+      value: number;
+      damagePerTurn: number;
+      lifetime: number;
+    }
+  | {
+      kind: "buff";
+      id: string;
+      name: string;
+      value: number;
+      hpBuff: number;
+      attackBuff: number;
+      defenseBuff: number;
+      lifetime: number;
+    };
 
 function assignItemMeta<T extends Item>(item: T, id: string, value: number): T {
   (item as Item & { id: string }).id = id;
@@ -78,7 +110,11 @@ export class Gold extends Item {
 }
 
 export abstract class WieldableItem extends Item {
-  constructor(name: string, readonly attackBonus = 0, readonly defenseBonus = 0) {
+  constructor(
+    name: string,
+    readonly attackBonus = 0,
+    readonly defenseBonus = 0,
+  ) {
     super(name);
   }
 
@@ -116,13 +152,16 @@ export class Weapon extends WieldableItem {
   constructor(
     name: string,
     private readonly critRange = DEFAULT_WEAPON_CRITICAL_RANGE,
-    private readonly critMult = DEFAULT_WEAPON_CRITICAL_MULTIPLIER,
+    critMult = DEFAULT_WEAPON_CRITICAL_MULTIPLIER,
     attackBonus = DEFAULT_WEAPON_ATTACK_BONUS,
     defenseBonus = DEFAULT_WEAPON_DEFENSE_BONUS,
     private readonly damageDice = DEFAULT_WEAPON_DAMAGE_DICE,
   ) {
     super(name, attackBonus, defenseBonus);
+    this.critMult = Math.max(PLAYER_CRIT_MINIMUM_MULTIPLIER, critMult);
   }
+
+  private readonly critMult: number;
 
   wieldsAt(): WieldSlot {
     return "hands";
@@ -141,18 +180,27 @@ export class Weapon extends WieldableItem {
   }
 
   describe(): string {
-    return `${this.name} ${this.damageDice} crit ${this.critRange}-${WEAPON_CRIT_MAXIMUM_ROLL} x${this.critMult}`;
+    const critRange = this.critRange;
+    const critPercent = (WEAPON_CRIT_MAXIMUM_ROLL - critRange + 1) / 20;
+    return `Deals ${this.damageDice} damage. Critical hit: d20 >= ${critRange} for x${this.critMult} dmg (${(critPercent * 100).toFixed(2)}% chance)`;
   }
 }
 
 export class InstantEffectItem extends Item {
-  constructor(name: string, readonly hpBoost = 0, readonly hpDrop = 0) {
+  constructor(
+    name: string,
+    readonly hpBoost = 0,
+    readonly hpDrop = 0,
+  ) {
     super(name);
   }
 
   apply(currentHp: number, maxHp: number): { hp: number; delta: number } {
     const previous = currentHp;
-    const next = Math.min(maxHp, Math.max(0, currentHp + this.hpBoost - this.hpDrop));
+    const next = Math.min(
+      maxHp,
+      Math.max(0, currentHp + this.hpBoost - this.hpDrop),
+    );
     return { hp: next, delta: next - previous };
   }
 
@@ -164,7 +212,10 @@ export class InstantEffectItem extends Item {
 export abstract class TurnBasedEffectItem extends Item {
   private expiryTurn = 0;
 
-  constructor(name: string, readonly lifetime = TURN_EFFECT_DEFAULT_LIFETIME) {
+  constructor(
+    name: string,
+    readonly lifetime = TURN_EFFECT_DEFAULT_LIFETIME,
+  ) {
     super(name);
   }
 
@@ -183,7 +234,11 @@ export abstract class TurnBasedEffectItem extends Item {
 }
 
 export class Poison extends TurnBasedEffectItem {
-  constructor(name: string, readonly damagePerTurn = POISON_DEFAULT_DAMAGE_PER_TURN, lifetime = TURN_EFFECT_DEFAULT_LIFETIME) {
+  constructor(
+    name: string,
+    readonly damagePerTurn = POISON_DEFAULT_DAMAGE_PER_TURN,
+    lifetime = TURN_EFFECT_DEFAULT_LIFETIME,
+  ) {
     super(name, lifetime);
   }
 
@@ -234,7 +289,9 @@ export class Container {
   }
 
   remove(item: Item): void {
-    const idx = this.inventory.findIndex((candidate) => candidate.id === item.id);
+    const idx = this.inventory.findIndex(
+      (candidate) => candidate.id === item.id,
+    );
     if (idx >= 0) {
       this.inventory.splice(idx, 1);
     }
@@ -246,7 +303,11 @@ export class Container {
 }
 
 export class Chest extends Container {
-  constructor(readonly x: number, readonly y: number, capacity = CHEST_DEFAULT_CAPACITY) {
+  constructor(
+    readonly x: number,
+    readonly y: number,
+    capacity = CHEST_DEFAULT_CAPACITY,
+  ) {
     super(capacity);
   }
 }
@@ -323,17 +384,28 @@ export function serializeItem(item: Item): SerializedItem {
     };
   }
 
-  throw new Error(`Unsupported item serialization kind: ${item.constructor.name}`);
+  throw new Error(
+    `Unsupported item serialization kind: ${item.constructor.name}`,
+  );
 }
 
 export function deserializeItem(serialized: SerializedItem): Item {
   if (serialized.kind === "gold") {
-    return assignItemMeta(new Gold(serialized.amount), serialized.id, serialized.value);
+    return assignItemMeta(
+      new Gold(serialized.amount),
+      serialized.id,
+      serialized.value,
+    );
   }
 
   if (serialized.kind === "armor") {
     return assignItemMeta(
-      new Armor(serialized.slot, serialized.name, serialized.attackBonus, serialized.defenseBonus),
+      new Armor(
+        serialized.slot,
+        serialized.name,
+        serialized.attackBonus,
+        serialized.defenseBonus,
+      ),
       serialized.id,
       serialized.value,
     );
@@ -356,7 +428,11 @@ export function deserializeItem(serialized: SerializedItem): Item {
 
   if (serialized.kind === "instant") {
     return assignItemMeta(
-      new InstantEffectItem(serialized.name, serialized.hpBoost, serialized.hpDrop),
+      new InstantEffectItem(
+        serialized.name,
+        serialized.hpBoost,
+        serialized.hpDrop,
+      ),
       serialized.id,
       serialized.value,
     );
@@ -364,7 +440,11 @@ export function deserializeItem(serialized: SerializedItem): Item {
 
   if (serialized.kind === "poison") {
     return assignItemMeta(
-      new Poison(serialized.name, serialized.damagePerTurn, serialized.lifetime),
+      new Poison(
+        serialized.name,
+        serialized.damagePerTurn,
+        serialized.lifetime,
+      ),
       serialized.id,
       serialized.value,
     );

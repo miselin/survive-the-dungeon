@@ -88,4 +88,25 @@ export function runCombatTests(): void {
 
   assert(playerRoll.bonus > 0, `Expected positive luck-adjusted to-hit bonus, got ${playerRoll.bonus}`);
   assert(playerRoll.success, "Expected luck-adjusted roll to convert the hit check to success");
+
+  const finisherPlayer = makeCreature("Player", 10);
+  const finisherEnemy = makeCreature("Goblin", 1);
+  finisherEnemy.mob = true;
+  const finisherCombat = new Combat(new FixedDice([11]) as unknown as Dice);
+  const finisherResult = finisherCombat.turn(finisherPlayer, finisherEnemy, "normal");
+  const damageMomentIndex = finisherResult.moments.findIndex((moment) => (
+    moment.type === "damage"
+    && moment.actor === "Player"
+    && moment.defender === "Goblin"
+  ));
+  const fallsMomentIndex = finisherResult.moments.findIndex((moment) => (
+    moment.type === "text"
+    && moment.text === "Goblin falls."
+  ));
+
+  assert(damageMomentIndex >= 0, "Expected a player damage moment when delivering a finishing blow");
+  assert(
+    fallsMomentIndex > damageMomentIndex,
+    "Defeat moment should appear after the damage moment in combat roll playback",
+  );
 }

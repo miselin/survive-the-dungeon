@@ -1,139 +1,34 @@
 import { useEffect, useRef } from "react";
-import { describeHealChoice, type CombatMoment } from "../combat";
-import type { DungeonRun } from "../game";
+import { describeHealChoice, type CombatMoment, type PlayerAction } from "../combat";
+import type { DungeonRun, LevelUpAttribute, ShopRewardChoice } from "../game";
 import type { CombatFxState } from "../combatFx";
-import { overlayRenderKey } from "./overlay/overlayKey";
 import { EN } from "../strings/en";
 import { InventoryOverlay } from "./overlay/InventoryOverlay";
 import { ShopOverlay } from "./overlay/ShopOverlay";
 import { Window } from "./Window";
-
-export type OverlayChrome = {
-  key: string;
-  stateText: string;
-  stateClass: string;
-  modalHidden: boolean;
-  modalClass?: string;
-  windowKey?: string;
-};
-
-export function buildOverlayChrome(activeRun: DungeonRun, combatFx: CombatFxState | null, combatSkipAll: boolean): OverlayChrome {
-  const key = overlayRenderKey(activeRun, combatFx, combatSkipAll);
-
-  if (combatFx) {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-battle",
-      windowKey: "battle",
-    };
-  }
-
-  if (activeRun.state === "dead" || activeRun.state === "won") {
-    const won = activeRun.state === "won";
-    return {
-      key,
-      stateText: won ? EN.ui.stateText.cleared : EN.ui.stateText.defeated,
-      stateClass: `state-text ${won ? "state-win" : "state-dead"}`,
-      modalHidden: false,
-      modalClass: "modal-run-end",
-      windowKey: "run-end",
-    };
-  }
-
-  if (activeRun.overlay.type === "none") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: true,
-      modalClass: "modal-idle",
-    };
-  }
-
-  if (activeRun.overlay.type === "battle") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-battle",
-      windowKey: "battle",
-    };
-  }
-
-  if (activeRun.overlay.type === "level-up") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-level-up",
-      windowKey: "level-up",
-    };
-  }
-
-  if (activeRun.overlay.type === "boss-reward") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-boss-reward",
-      windowKey: "boss-reward",
-    };
-  }
-
-  if (activeRun.overlay.type === "shop-reward") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-shop-reward",
-      windowKey: "shop-reward",
-    };
-  }
-
-  if (activeRun.overlay.type === "chest") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-chest",
-      windowKey: "chest",
-    };
-  }
-
-  if (activeRun.overlay.type === "inventory") {
-    return {
-      key,
-      stateText: EN.ui.stateText.floor(activeRun.floor),
-      stateClass: "state-text",
-      modalHidden: false,
-      modalClass: "modal-inventory",
-      windowKey: "inventory",
-    };
-  }
-
-  return {
-    key,
-    stateText: EN.ui.stateText.floor(activeRun.floor),
-    stateClass: "state-text",
-    modalHidden: false,
-    modalClass: "modal-shop",
-    windowKey: "shop",
-  };
-}
 
 type OverlayModalProps = {
   run: DungeonRun;
   combatFx: CombatFxState | null;
   combatSkipAll: boolean;
   inventoryCompareItemId: string | null;
+  onInventoryCompareItemChange: (itemId: string | null) => void;
+  onClose: () => void;
+  onCombatAction: (action: PlayerAction) => void;
+  onCombatFxSkip: () => void;
+  onCombatFxContinue: () => void;
+  onCombatFxSkipAllChange: (enabled: boolean) => void;
+  onLoot: (itemId: string) => void;
+  onLootAll: () => void;
+  onInventoryEquip: (itemId: string) => void;
+  onInventoryUse: (itemId: string) => void;
+  onInventoryDrop: (itemId: string) => void;
+  onShopBuy: (entryId: string) => void;
+  onLevelUpAttribute: (attr: LevelUpAttribute) => void;
+  onBossPerk: (choiceId: string) => void;
+  onBossGambit: (choiceId: string) => void;
+  onBossNone: () => void;
+  onShopReward: (choiceId: ShopRewardChoice["id"]) => void;
 };
 
 function combatMomentClass(level: "info" | "warn" | "success"): string {
@@ -266,17 +161,18 @@ export function OverlayModal(props: OverlayModalProps) {
         title={EN.ui.overlays.combatFx.title}
         actions={
           done
-            ? <button data-action="combat-fx-continue" type="button">{EN.ui.buttons.continue}</button>
-            : <button data-action="combat-fx-skip" type="button">{EN.ui.buttons.skip}</button>
+            ? <button type="button" onClick={props.onCombatFxContinue}>{EN.ui.buttons.continue}</button>
+            : <button type="button" onClick={props.onCombatFxSkip}>{EN.ui.buttons.skip}</button>
         }
       >
         <p className="hint">{EN.ui.overlays.combatFx.hint}</p>
         <label className="skip-all-toggle">
           <input
             type="checkbox"
-            data-action="combat-fx-skip-all"
             checked={props.combatSkipAll}
-            onChange={() => {}}
+            onChange={(event) => {
+              props.onCombatFxSkipAllChange(event.target.checked);
+            }}
           />
           {EN.ui.overlays.combatFx.skipAll}
         </label>
@@ -298,7 +194,7 @@ export function OverlayModal(props: OverlayModalProps) {
     return (
       <Window
         title={won ? EN.ui.overlays.runEnd.victoryTitle : EN.ui.overlays.runEnd.defeatTitle}
-        actions={<button data-action="close" type="button">{EN.ui.buttons.close}</button>}
+        actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
       >
         <p>{won ? EN.ui.overlays.runEnd.victoryBody : EN.ui.overlays.runEnd.defeatBody}</p>
         <ul className="summary-list">
@@ -365,7 +261,7 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.battle.noTargetTitle}
-          actions={<button data-action="close" type="button">{EN.ui.buttons.close}</button>}
+          actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
         >
           <p>{EN.ui.overlays.battle.noTargetBody}</p>
         </Window>
@@ -375,18 +271,18 @@ export function OverlayModal(props: OverlayModalProps) {
     return (
       <Window
         title={EN.ui.overlays.battle.title(enemy.creature.name)}
-        actions={<button data-action="close" type="button">{EN.ui.buttons.close}</button>}
+        actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
       >
         <p>{EN.ui.overlays.battle.yourHp(activeRun.player.hitpoints, activeRun.player.currentMaxHitpoints())}</p>
         <p>{EN.ui.overlays.battle.enemyHp(enemy.creature.hitpoints, enemy.creature.maxHitpoints)}</p>
         {activeRun.overlay.surpriseProtection ? <p className="hint">{EN.ui.overlays.battle.ambushProtectionHint}</p> : null}
         <p className="hint">{EN.ui.overlays.battle.healChoice(describeHealChoice(activeRun.player))}</p>
         <div className="action-grid">
-          <button data-action="combat-normal" type="button"><span>{EN.ui.overlays.battle.actions.normal.label}</span><small>{EN.ui.overlays.battle.actions.normal.subtitle}</small></button>
-          <button data-action="combat-offensive" type="button"><span>{EN.ui.overlays.battle.actions.offensive.label}</span><small>{EN.ui.overlays.battle.actions.offensive.subtitle}</small></button>
-          <button data-action="combat-defensive" type="button"><span>{EN.ui.overlays.battle.actions.defensive.label}</span><small>{EN.ui.overlays.battle.actions.defensive.subtitle}</small></button>
-          <button data-action="combat-heal" type="button"><span>{EN.ui.overlays.battle.actions.heal.label}</span><small>{EN.ui.overlays.battle.actions.heal.subtitle}</small></button>
-          <button data-action="combat-flee" type="button"><span>{EN.ui.overlays.battle.actions.flee.label}</span><small>{EN.ui.overlays.battle.actions.flee.subtitle}</small></button>
+          <button type="button" onClick={() => { props.onCombatAction("normal"); }}><span>{EN.ui.overlays.battle.actions.normal.label}</span><small>{EN.ui.overlays.battle.actions.normal.subtitle}</small></button>
+          <button type="button" onClick={() => { props.onCombatAction("offensive"); }}><span>{EN.ui.overlays.battle.actions.offensive.label}</span><small>{EN.ui.overlays.battle.actions.offensive.subtitle}</small></button>
+          <button type="button" onClick={() => { props.onCombatAction("defensive"); }}><span>{EN.ui.overlays.battle.actions.defensive.label}</span><small>{EN.ui.overlays.battle.actions.defensive.subtitle}</small></button>
+          <button type="button" onClick={() => { props.onCombatAction("heal"); }}><span>{EN.ui.overlays.battle.actions.heal.label}</span><small>{EN.ui.overlays.battle.actions.heal.subtitle}</small></button>
+          <button type="button" onClick={() => { props.onCombatAction("flee"); }}><span>{EN.ui.overlays.battle.actions.flee.label}</span><small>{EN.ui.overlays.battle.actions.flee.subtitle}</small></button>
         </div>
         <h3>{EN.ui.sidebar.combatLog}</h3>
         <ul ref={battleLogRef} className="combat-log">
@@ -416,7 +312,14 @@ export function OverlayModal(props: OverlayModalProps) {
                 </strong>
                 <span>{choice.description}</span>
               </div>
-              <button data-action="levelup-attr" data-id={choice.attr} type="button">{EN.ui.overlays.levelUp.spend(choice.label)}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onLevelUpAttribute(choice.attr as LevelUpAttribute);
+                }}
+              >
+                {EN.ui.overlays.levelUp.spend(choice.label)}
+              </button>
             </li>
           ))}
         </ul>
@@ -431,7 +334,7 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.bossReward.emptyTitle}
-          actions={<button data-action="boss-none" type="button">{EN.ui.buttons.descend}</button>}
+          actions={<button type="button" onClick={props.onBossNone}>{EN.ui.buttons.descend}</button>}
         >
           <p>{EN.ui.overlays.bossReward.emptyBody}</p>
         </Window>
@@ -443,7 +346,7 @@ export function OverlayModal(props: OverlayModalProps) {
     return (
       <Window
         title={EN.ui.overlays.bossReward.title}
-        actions={<button data-action="boss-none" type="button">{EN.ui.buttons.descendWithoutPicking}</button>}
+        actions={<button type="button" onClick={props.onBossNone}>{EN.ui.buttons.descendWithoutPicking}</button>}
       >
         <p>{EN.ui.overlays.bossReward.body(activeRun.floor)}</p>
         <p className="hint">{EN.ui.overlays.bossReward.currentBuild(build.perks.length, build.gambits.length)}</p>
@@ -455,7 +358,14 @@ export function OverlayModal(props: OverlayModalProps) {
                 <strong>{choice.name}</strong>
                 <span>{choice.description}</span>
               </div>
-              <button data-action="boss-perk" data-id={choice.id} type="button">{EN.ui.buttons.pick}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onBossPerk(choice.id);
+                }}
+              >
+                {EN.ui.buttons.pick}
+              </button>
             </li>
           ))}
         </ul>
@@ -467,7 +377,14 @@ export function OverlayModal(props: OverlayModalProps) {
                 <strong>{choice.name}</strong>
                 <span>{choice.description}</span>
               </div>
-              <button data-action="boss-gambit" data-id={choice.id} type="button">{EN.ui.buttons.pick}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onBossGambit(choice.id);
+                }}
+              >
+                {EN.ui.buttons.pick}
+              </button>
             </li>
           ))}
         </ul>
@@ -488,7 +405,14 @@ export function OverlayModal(props: OverlayModalProps) {
                 <strong>{choice.title}</strong>
                 <span>{choice.description}</span>
               </div>
-              <button data-action="shop-reward" data-id={choice.id} type="button">{EN.ui.buttons.claim}</button>
+              <button
+                type="button"
+                onClick={() => {
+                  props.onShopReward(choice.id);
+                }}
+              >
+                {EN.ui.buttons.claim}
+              </button>
             </li>
           ))}
         </ul>
@@ -503,7 +427,7 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.chest.title}
-          actions={<button data-action="close" type="button">{EN.ui.buttons.close}</button>}
+          actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
         >
           <p>{EN.ui.overlays.chest.emptyBody}</p>
         </Window>
@@ -517,8 +441,8 @@ export function OverlayModal(props: OverlayModalProps) {
         title={EN.ui.overlays.chest.title}
         actions={
           <>
-            <button data-action="loot-all" type="button">{EN.ui.buttons.lootAll}</button>
-            <button data-action="close" type="button">{EN.ui.buttons.close}</button>
+            <button type="button" onClick={props.onLootAll}>{EN.ui.buttons.lootAll}</button>
+            <button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>
           </>
         }
       >
@@ -533,7 +457,14 @@ export function OverlayModal(props: OverlayModalProps) {
                   {EN.ui.overlays.shop.price(item.value)}
                   {")"}
                 </span>
-                <button data-action="loot" data-id={item.id} type="button">{EN.ui.buttons.loot}</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    props.onLoot(item.id);
+                  }}
+                >
+                  {EN.ui.buttons.loot}
+                </button>
               </li>
             ))}
         </ul>
@@ -542,8 +473,24 @@ export function OverlayModal(props: OverlayModalProps) {
   }
 
   if (activeRun.overlay.type === "inventory") {
-    return <InventoryOverlay run={activeRun} compareItemId={props.inventoryCompareItemId} />;
+    return (
+      <InventoryOverlay
+        run={activeRun}
+        compareItemId={props.inventoryCompareItemId}
+        onCompareItemChange={props.onInventoryCompareItemChange}
+        onClose={props.onClose}
+        onEquipItem={props.onInventoryEquip}
+        onUseItem={props.onInventoryUse}
+        onDropItem={props.onInventoryDrop}
+      />
+    );
   }
 
-  return <ShopOverlay run={activeRun} />;
+  return (
+    <ShopOverlay
+      run={activeRun}
+      onClose={props.onClose}
+      onBuy={props.onShopBuy}
+    />
+  );
 }

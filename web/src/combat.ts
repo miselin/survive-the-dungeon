@@ -277,13 +277,10 @@ export class Combat {
       level: "info",
     });
 
-    if (defender.hitpoints <= 0) {
+    const defenderFalls = defender.hitpoints <= 0;
+    if (defenderFalls) {
       defender.hitpoints = 0;
       defender.alive = false;
-      const fallLevel = defender.mob ? "success" : "warn";
-      const fallsText = EN.combat.logs.falls(defender.name);
-      logs.push({ text: fallsText, level: fallLevel });
-      moments.push({ type: "text", text: fallsText, level: fallLevel });
     }
 
     moments.push({
@@ -296,6 +293,13 @@ export class Combat {
       final: finalDamage,
       remainingHp: remainingHp,
     });
+
+    if (defenderFalls) {
+      const fallLevel = defender.mob ? "success" : "warn";
+      const fallsText = EN.combat.logs.falls(defender.name);
+      logs.push({ text: fallsText, level: fallLevel });
+      moments.push({ type: "text", text: fallsText, level: fallLevel });
+    }
   }
 
   private enemyAction(enemy: Creature): { atk: number; def: number; name: string } {

@@ -16,6 +16,8 @@ This subdirectory (`web/`) is a web version of the Python game in the parent dir
 - Dev: `npm run dev`
 - Build and check types: `npm run build`
 - Unit tests: `npm run test`
+- Format code using `npm run format`
+- Check for linter errors using `npm run lint`
 
 ---
 

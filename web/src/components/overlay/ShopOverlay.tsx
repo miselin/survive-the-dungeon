@@ -4,6 +4,8 @@ import { Window } from "../Window";
 
 type ShopOverlayProps = {
   run: DungeonRun;
+  onClose: () => void;
+  onBuy: (entryId: string) => void;
 };
 
 export function ShopOverlay(props: ShopOverlayProps) {
@@ -12,7 +14,7 @@ export function ShopOverlay(props: ShopOverlayProps) {
   return (
     <Window
       title={EN.ui.overlays.shop.title}
-      actions={<button data-action="close" type="button">{EN.ui.buttons.close}</button>}
+      actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
     >
       <ul className="item-list shop">
         {entries.map((entry) => {
@@ -24,7 +26,13 @@ export function ShopOverlay(props: ShopOverlayProps) {
                 <span>{entry.description}</span>
                 <span className="price">{EN.ui.overlays.shop.price(cost)}</span>
               </div>
-              <button data-action="shop-buy" data-id={entry.id} type="button" disabled={entry.sold}>
+              <button
+                type="button"
+                disabled={entry.sold}
+                onClick={() => {
+                  props.onBuy(entry.id);
+                }}
+              >
                 {entry.sold ? EN.ui.buttons.sold : EN.ui.buttons.buy}
               </button>
             </li>

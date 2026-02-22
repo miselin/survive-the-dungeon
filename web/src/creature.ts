@@ -9,6 +9,7 @@ import {
   PLAYER_BASE_ATTACK_BONUS,
   PLAYER_BASE_DEFENSE,
   PLAYER_BASE_DEFENSE_BONUS,
+  PLAYER_CRIT_MINIMUM_MULTIPLIER,
   PLAYER_HP_HEAL_ON_LEVEL_UP,
   PLAYER_HP_PER_LEVEL_MULTIPLIER,
   PLAYER_CONSTITUTION_BONUS,
@@ -18,12 +19,25 @@ import {
   PLAYER_XP_GOAL_MULTIPLIER,
 } from "./constants";
 import { AttributeSet, type AttributeName } from "./attributes";
-import { Buff, Container, Gold, InstantEffectItem, Poison, Weapon, WieldableItem } from "./items";
+import {
+  Buff,
+  Container,
+  Gold,
+  InstantEffectItem,
+  Poison,
+  Weapon,
+  WieldableItem,
+} from "./items";
 import { EN } from "./strings/en";
 import type { Position, WieldSlot } from "./types";
 import type { Dice } from "./dice";
 
 const SLOTS: WieldSlot[] = ["head", "chest", "arms", "hands", "legs", "feet"];
+
+type WieldedItem = {
+  slot: WieldSlot;
+  item: WieldableItem;
+};
 
 export class Creature {
   alive = true;
@@ -86,7 +100,10 @@ export class Creature {
   name: string;
 
   currentMaxHitpoints(): number {
-    return Math.max(1, Math.floor(this.maxHitpoints * this.hitpointCapMultiplier));
+    return Math.max(
+      1,
+      Math.floor(this.maxHitpoints * this.hitpointCapMultiplier),
+    );
   }
 
   enforceHitpointCap(): void {
@@ -95,8 +112,13 @@ export class Creature {
   }
 
   rollMobGold(dice: Dice): void {
-    const count = Math.max(1, Math.ceil(this.maxHitpoints / CREATURE_GOLD_SCALER));
-    this.gold = Math.floor(dice.rollNamed(`${count}d20`) * CREATURE_GOLD_MULTIPLIER);
+    const count = Math.max(
+      1,
+      Math.ceil(this.maxHitpoints / CREATURE_GOLD_SCALER),
+    );
+    this.gold = Math.floor(
+      dice.rollNamed(`${count}d20`) * CREATURE_GOLD_MULTIPLIER,
+    );
   }
 
   getWeapon(): Weapon | null {
@@ -129,7 +151,10 @@ export class Creature {
     if (!weapon) {
       return DEFAULT_WEAPON_CRITICAL_MULTIPLIER;
     }
-    const critMult = weapon.criticalMultiplier();
+    const critMult = Math.max(
+      PLAYER_CRIT_MINIMUM_MULTIPLIER,
+      weapon.criticalMultiplier(),
+    );
     if (this.mob) {
       return Math.min(MOB_CRITICAL_MULTIPLIER_MAXIMUM, critMult);
     }
@@ -151,12 +176,24 @@ export class Creature {
     }
   }
 
+  getWields(): WieldedItem[] {
+    const result: WieldedItem[] = [];
+    for (const slot of SLOTS) {
+      const item = this.wieldpoints[slot];
+      if (item) {
+        result.push({ slot, item });
+      }
+    }
+
+    return result;
+  }
+
   describeWields(): string {
     const lines: string[] = [];
     for (const slot of SLOTS) {
       const item = this.wieldpoints[slot];
       if (item) {
-        lines.push(`${slot}: ${item.describe()}`);
+        lines.push(`${slot}: ${item.name} - ${item.describe()}`);
       }
     }
     if (lines.length === 0) {
@@ -213,7 +250,9 @@ export class Creature {
     }
 
     for (const poison of expiredPoisons) {
-      const idx = this.poisons.findIndex((candidate) => candidate.id === poison.id);
+      const idx = this.poisons.findIndex(
+        (candidate) => candidate.id === poison.id,
+      );
       if (idx >= 0) {
         this.poisons.splice(idx, 1);
       }
@@ -254,9 +293,14 @@ export class Creature {
       leveled += 1;
       this.unspentStatPoints += 1;
       this.nextLevelXp *= PLAYER_XP_GOAL_MULTIPLIER;
-      this.maxHitpoints = Math.floor(this.maxHitpoints * PLAYER_HP_PER_LEVEL_MULTIPLIER);
+      this.maxHitpoints = Math.floor(
+        this.maxHitpoints * PLAYER_HP_PER_LEVEL_MULTIPLIER,
+      );
       const heal = Math.floor(this.maxHitpoints * PLAYER_HP_HEAL_ON_LEVEL_UP);
-      this.hitpoints = Math.min(this.currentMaxHitpoints(), this.hitpoints + heal);
+      this.hitpoints = Math.min(
+        this.currentMaxHitpoints(),
+        this.hitpoints + heal,
+      );
     }
 
     this.enforceHitpointCap();
@@ -297,7 +341,10 @@ export class Creature {
     const hpNeeded = this.maxHitpoints - this.hitpoints;
     const heals = this.inventory
       .items()
-      .filter((item): item is InstantEffectItem => item instanceof InstantEffectItem && item.hpBoost > 0)
+      .filter(
+        (item): item is InstantEffectItem =>
+          item instanceof InstantEffectItem && item.hpBoost > 0,
+      )
       .sort((a, b) => a.hpBoost - b.hpBoost);
 
     if (heals.length === 0) {
@@ -318,6 +365,9 @@ export class Creature {
   healItems(): InstantEffectItem[] {
     return this.inventory
       .items()
-      .filter((item): item is InstantEffectItem => item instanceof InstantEffectItem && item.hpBoost > 0);
+      .filter(
+        (item): item is InstantEffectItem =>
+          item instanceof InstantEffectItem && item.hpBoost > 0,
+      );
   }
 }

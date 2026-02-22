@@ -1,10 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { LogEntry } from "../types";
 
-export function buildLogsRenderKey(logs: LogEntry[]): string {
-  return logs.map((entry) => `${entry.level}:${entry.text}`).join("|\n");
-}
-
 type LogsPanelProps = {
   logs: LogEntry[];
 };

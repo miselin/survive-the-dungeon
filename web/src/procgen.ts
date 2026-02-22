@@ -19,6 +19,7 @@ import {
   NAME_GENERATION_FALLBACK_MAX_ID,
   NAME_GENERATION_MAX_ATTEMPTS,
   PLAYER_CRIT_MAXIMUM_MULTIPLIER,
+  PLAYER_CRIT_MINIMUM_MULTIPLIER,
   PLAYER_CRIT_MINIMUM_ROLL,
   WEAPON_CRIT_MAXIMUM_ROLL,
   WEAPON_DAMAGE_FACE_MAX,
@@ -100,7 +101,7 @@ export function createWeapon(
   );
 
   const critRange = rng.int(PLAYER_CRIT_MINIMUM_ROLL, WEAPON_CRIT_MAXIMUM_ROLL);
-  const critMult = rng.int(1, PLAYER_CRIT_MAXIMUM_MULTIPLIER);
+  const critMult = rng.int(PLAYER_CRIT_MINIMUM_MULTIPLIER, PLAYER_CRIT_MAXIMUM_MULTIPLIER);
 
   return new Weapon(name, critRange, critMult, challengeLevel + 1, 0, `${count}d${faces} +${flatBonus}`);
 }
