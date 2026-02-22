@@ -34,7 +34,9 @@ for (const test of tests) {
 }
 
 if (failures > 0) {
-  const maybeProcess = globalThis as unknown as { process?: { exitCode: number } };
+  const maybeProcess = globalThis as unknown as {
+    process?: { exitCode: number };
+  };
   if (maybeProcess.process) {
     maybeProcess.process.exitCode = 1;
   }

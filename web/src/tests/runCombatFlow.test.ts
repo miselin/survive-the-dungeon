@@ -40,7 +40,9 @@ function makeWorld(): WorldMap {
   return new WorldMap(width, height, rooms, cells);
 }
 
-function fakeCombat(resultFactory: (player: Creature, enemy: Creature) => CombatResult): Combat {
+function fakeCombat(
+  resultFactory: (player: Creature, enemy: Creature) => CombatResult,
+): Combat {
   return {
     turn: (player: Creature, enemy: Creature) => resultFactory(player, enemy),
   } as unknown as Combat;
@@ -69,7 +71,12 @@ export function runCombatFlowTests(): void {
       state: "playing",
       overlay: { type: "none" },
       mobs: [],
-      combat: fakeCombat(() => ({ over: true, fled: false, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: false,
+        logs: [],
+        moments: [],
+      })),
       player,
       world,
       chests: [],
@@ -79,8 +86,16 @@ export function runCombatFlowTests(): void {
       log: noLogs(),
     });
 
-    assertEqual(result.result, null, "Combat flow should no-op when there is no battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, false, "No-op combat flow should not request auto-overlay checks");
+    assertEqual(
+      result.result,
+      null,
+      "Combat flow should no-op when there is no battle overlay",
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      false,
+      "No-op combat flow should not request auto-overlay checks",
+    );
   }
 
   {
@@ -91,7 +106,12 @@ export function runCombatFlowTests(): void {
       state: "playing",
       overlay: battleOverlay("missing-mob"),
       mobs: [],
-      combat: fakeCombat(() => ({ over: true, fled: false, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: false,
+        logs: [],
+        moments: [],
+      })),
       player,
       world,
       chests: [],
@@ -101,8 +121,16 @@ export function runCombatFlowTests(): void {
       log: noLogs(),
     });
 
-    assertEqual(result.overlay.type, "none", "Missing battle target should close the battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, true, "Missing battle target should allow auto-overlays to reopen");
+    assertEqual(
+      result.overlay.type,
+      "none",
+      "Missing battle target should close the battle overlay",
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      true,
+      "Missing battle target should allow auto-overlays to reopen",
+    );
   }
 
   {
@@ -111,14 +139,21 @@ export function runCombatFlowTests(): void {
     const enemy = makeMob("Runner");
     enemy.inBattle = true;
     player.inBattle = true;
-    const mobs: MobEntity[] = [{ id: "mob-1", creature: enemy, roomId: 1, isBoss: false }];
+    const mobs: MobEntity[] = [
+      { id: "mob-1", creature: enemy, roomId: 1, isBoss: false },
+    ];
     const chests: ChestEntity[] = [];
     const result = resolveCombatTurn({
       action: "flee",
       state: "playing",
       overlay: battleOverlay("mob-1"),
       mobs,
-      combat: fakeCombat(() => ({ over: true, fled: true, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: true,
+        logs: [],
+        moments: [],
+      })),
       player,
       world,
       chests,
@@ -128,11 +163,31 @@ export function runCombatFlowTests(): void {
       log: noLogs(),
     });
 
-    assertEqual(result.overlay.type, "none", "Successful flee should close the battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, true, "Successful flee should request auto-overlay checks");
-    assertEqual(player.inBattle, false, "Successful flee should clear player battle state");
-    assertEqual(enemy.inBattle, false, "Successful flee should clear enemy battle state");
-    assertEqual(result.currentRoom, null, "Successful flee should relocate the player outside the battle room when possible");
+    assertEqual(
+      result.overlay.type,
+      "none",
+      "Successful flee should close the battle overlay",
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      true,
+      "Successful flee should request auto-overlay checks",
+    );
+    assertEqual(
+      player.inBattle,
+      false,
+      "Successful flee should clear player battle state",
+    );
+    assertEqual(
+      enemy.inBattle,
+      false,
+      "Successful flee should clear enemy battle state",
+    );
+    assertEqual(
+      result.currentRoom,
+      null,
+      "Successful flee should relocate the player outside the battle room when possible",
+    );
   }
 
   {
@@ -142,7 +197,9 @@ export function runCombatFlowTests(): void {
     enemy.maxHitpoints = 40;
     enemy.hitpoints = 40;
     enemy.gold = 19;
-    const mobs: MobEntity[] = [{ id: "boss-1", creature: enemy, roomId: 1, isBoss: true }];
+    const mobs: MobEntity[] = [
+      { id: "boss-1", creature: enemy, roomId: 1, isBoss: true },
+    ];
     const stats = { vanquished: 0, goldEarned: 0, xpGained: 0 };
 
     const result = resolveCombatTurn({
@@ -164,11 +221,31 @@ export function runCombatFlowTests(): void {
       log: noLogs(),
     });
 
-    assertEqual(result.openBossReward, true, "Defeating a boss should request opening boss rewards");
-    assertEqual(result.mobs.length, 0, "Defeated enemies should be removed from the live mob list");
-    assertEqual(stats.vanquished, 1, "Defeating an enemy should increment vanquish stats");
-    assertEqual(stats.goldEarned, 19, "Defeating an enemy should award its gold");
-    assertEqual(stats.xpGained, Math.floor(40 * CREATURE_XP_MULTIPLIER), "XP gain should scale with enemy max HP");
+    assertEqual(
+      result.openBossReward,
+      true,
+      "Defeating a boss should request opening boss rewards",
+    );
+    assertEqual(
+      result.mobs.length,
+      0,
+      "Defeated enemies should be removed from the live mob list",
+    );
+    assertEqual(
+      stats.vanquished,
+      1,
+      "Defeating an enemy should increment vanquish stats",
+    );
+    assertEqual(
+      stats.goldEarned,
+      19,
+      "Defeating an enemy should award its gold",
+    );
+    assertEqual(
+      stats.xpGained,
+      Math.floor(40 * CREATURE_XP_MULTIPLIER),
+      "XP gain should scale with enemy max HP",
+    );
   }
 
   {
@@ -194,8 +271,20 @@ export function runCombatFlowTests(): void {
       log: noLogs(),
     });
 
-    assertEqual(result.state, "dead", "Player death during combat should transition run state to dead");
-    assertEqual(result.finalizeStats, true, "Player death during combat should request final stats finalization");
-    assertEqual(result.maybeOpenAutoOverlay, false, "Player death should not request auto-overlay reopening");
+    assertEqual(
+      result.state,
+      "dead",
+      "Player death during combat should transition run state to dead",
+    );
+    assertEqual(
+      result.finalizeStats,
+      true,
+      "Player death during combat should request final stats finalization",
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      false,
+      "Player death should not request auto-overlay reopening",
+    );
   }
 }

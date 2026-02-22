@@ -41,12 +41,21 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: "Share Tech Mono", "Courier Prime", "IBM Plex Mono", "Fira Mono", monospace;
+  font-family:
+    "Share Tech Mono", "Courier Prime", "IBM Plex Mono", "Fira Mono", monospace;
   line-height: 150%;
   color: var(--ink);
   background:
-    radial-gradient(circle at 20% 20%, rgba(92, 156, 169, 0.25), transparent 42%),
-    radial-gradient(circle at 80% 12%, rgba(193, 122, 74, 0.16), transparent 35%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(92, 156, 169, 0.25),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 80% 12%,
+      rgba(193, 122, 74, 0.16),
+      transparent 35%
+    ),
     linear-gradient(165deg, var(--bg-0), var(--bg-1) 40%, var(--bg-2));
 }
 
@@ -66,12 +75,18 @@ button {
   border: 1px solid rgba(22, 40, 53, 0.95);
   border-top-color: rgba(199, 230, 238, 0.68);
   border-left-color: rgba(199, 230, 238, 0.68);
-  background: linear-gradient(180deg, rgba(66, 107, 129, 0.95), rgba(46, 78, 99, 0.95));
+  background: linear-gradient(
+    180deg,
+    rgba(66, 107, 129, 0.95),
+    rgba(46, 78, 99, 0.95)
+  );
   color: var(--ink);
   border-radius: var(--radius-control);
   padding: 0.45rem 0.75rem;
   cursor: pointer;
-  transition: filter 120ms ease, box-shadow 120ms ease;
+  transition:
+    filter 120ms ease,
+    box-shadow 120ms ease;
   box-shadow:
     inset 1px 1px 0 rgba(232, 248, 255, 0.15),
     inset -1px -1px 0 rgba(8, 18, 27, 0.42);
@@ -423,7 +438,11 @@ input:focus-visible {
   max-width: calc(100vw - 1rem);
   max-height: calc(100vh - 1rem);
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(17, 34, 45, 0.98), rgba(10, 21, 29, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(17, 34, 45, 0.98),
+    rgba(10, 21, 29, 0.98)
+  );
   border: 1px solid rgba(152, 202, 210, 0.45);
   border-radius: var(--radius-panel);
   padding: 0;

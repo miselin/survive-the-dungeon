@@ -25,6 +25,7 @@ from .constants import (
     MS_PER_AI_MOVE,
     MS_PER_TILE_MOVE,
     PLAYER_CONSTITUTION_BONUS,
+    PLAYER_CRIT_MINIMUM_MULTIPLIER,
     PLAYER_CRIT_MAXIMUM_MULTIPLIER,
     PLAYER_CRIT_MINIMUM_ROLL,
 )
@@ -427,7 +428,9 @@ class Dungeon:
                 self.generated_armors.append(armor)
             else:
                 cr = self.dice.roll(PLAYER_CRIT_MINIMUM_ROLL, 20)
-                cm = self.dice.roll(1, PLAYER_CRIT_MAXIMUM_MULTIPLIER)
+                cm = self.dice.roll(
+                    PLAYER_CRIT_MINIMUM_MULTIPLIER, PLAYER_CRIT_MAXIMUM_MULTIPLIER
+                )
                 ab = self.dice.roll()
                 db = self.dice.roll()
                 dn = self.dice.roll()

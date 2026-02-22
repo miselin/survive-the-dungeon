@@ -20,6 +20,10 @@ BOSS_CHALLENGE_LEVEL = MAXIMUM_CHALLENGE_LEVEL + 5
 # Used to generate the crit range for weapons in the dungeon
 PLAYER_CRIT_MINIMUM_ROLL = 18
 
+# Lowest possible critical-hit damage multiplier for player weapons.
+# Values below 2x are effectively dead stats and feel punishing to loot.
+PLAYER_CRIT_MINIMUM_MULTIPLIER = 2
+
 # Highest possible damage multiplier for a critical hit
 PLAYER_CRIT_MAXIMUM_MULTIPLIER = 3
 

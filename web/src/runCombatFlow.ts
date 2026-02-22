@@ -47,7 +47,9 @@ export type ResolveCombatTurnResult = {
   maybeOpenAutoOverlay: boolean;
 };
 
-export function resolveCombatTurn(options: ResolveCombatTurnOptions): ResolveCombatTurnResult {
+export function resolveCombatTurn(
+  options: ResolveCombatTurnOptions,
+): ResolveCombatTurnResult {
   if (options.overlay.type !== "battle" || options.state !== "playing") {
     return {
       result: null,
@@ -82,10 +84,17 @@ export function resolveCombatTurn(options: ResolveCombatTurnOptions): ResolveCom
     battle.surpriseProtection = false;
   }
 
-  const result = options.combat.turn(options.player, mob.creature, options.action, {
-    enemyAttackMultiplier: openingProtection ? SURPRISE_PROTECTION_ATTACK_MULTIPLIER : 1,
-    fleeBonus: openingProtection ? SURPRISE_PROTECTION_FLEE_BONUS : 0,
-  });
+  const result = options.combat.turn(
+    options.player,
+    mob.creature,
+    options.action,
+    {
+      enemyAttackMultiplier: openingProtection
+        ? SURPRISE_PROTECTION_ATTACK_MULTIPLIER
+        : 1,
+      fleeBonus: openingProtection ? SURPRISE_PROTECTION_FLEE_BONUS : 0,
+    },
+  );
   for (const entry of result.logs) {
     options.log(entry.text, entry.level);
   }
@@ -122,11 +131,19 @@ export function resolveCombatTurn(options: ResolveCombatTurnOptions): ResolveCom
   if (!mob.creature.alive) {
     options.stats.vanquished += 1;
 
-    const gainedXp = Math.floor(mob.creature.maxHitpoints * CREATURE_XP_MULTIPLIER);
+    const gainedXp = Math.floor(
+      mob.creature.maxHitpoints * CREATURE_XP_MULTIPLIER,
+    );
     const gain = options.player.giveXp(gainedXp);
     options.stats.xpGained += gainedXp;
     if (gain.leveled > 0) {
-      options.log(EN.game.logs.welcomeLevel(options.player.level, options.player.unspentStatPoints), "success");
+      options.log(
+        EN.game.logs.welcomeLevel(
+          options.player.level,
+          options.player.unspentStatPoints,
+        ),
+        "success",
+      );
     }
 
     const lootGold = mob.creature.gold;
@@ -144,7 +161,10 @@ export function resolveCombatTurn(options: ResolveCombatTurnOptions): ResolveCom
       options.log(EN.game.logs.bossDownChooseReward, "success");
       openBossReward = true;
     } else if (nextMobs.length > 0) {
-      options.log(EN.game.logs.enemiesRemain(nextMobs.length, options.floor), "info");
+      options.log(
+        EN.game.logs.enemiesRemain(nextMobs.length, options.floor),
+        "info",
+      );
     }
   }
 

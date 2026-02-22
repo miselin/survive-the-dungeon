@@ -93,7 +93,11 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
     if (playerRoom && mobRoom && playerRoom.id === mobRoom.id) {
       const blocked = new Set(occupied);
       blocked.delete(posKey(creature.position));
-      const path = options.world.pathTo(creature.position, options.player.position, blocked);
+      const path = options.world.pathTo(
+        creature.position,
+        options.player.position,
+        blocked,
+      );
 
       if (path.length === 1) {
         return {
@@ -128,7 +132,10 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
       { x: creature.position.x, y: creature.position.y - 1 },
     ]);
     for (const next of steps) {
-      if (!options.world.inBounds(next.x, next.y) || !options.world.isPassable(next.x, next.y)) {
+      if (
+        !options.world.inBounds(next.x, next.y) ||
+        !options.world.isPassable(next.x, next.y)
+      ) {
         continue;
       }
       const nextKey = posKey(next);
@@ -145,7 +152,9 @@ export function runAiStep(options: RunAiStepOptions): RunAiStepResult {
   return { battleTrigger: null };
 }
 
-export function findRetreatPosition(options: FindRetreatPositionOptions): Position {
+export function findRetreatPosition(
+  options: FindRetreatPositionOptions,
+): Position {
   if (options.battleRoomId === null) {
     return clonePos(options.fallback);
   }
@@ -172,7 +181,8 @@ export function findRetreatPosition(options: FindRetreatPositionOptions): Positi
     cursor += 1;
 
     const currentRoom = options.world.roomAt(current);
-    const isOutsideRoom = !currentRoom || currentRoom.id !== options.battleRoomId;
+    const isOutsideRoom =
+      !currentRoom || currentRoom.id !== options.battleRoomId;
     const currentKey = posKey(current);
     if (isOutsideRoom && !occupied.has(currentKey)) {
       return clonePos(current);
@@ -180,7 +190,10 @@ export function findRetreatPosition(options: FindRetreatPositionOptions): Positi
 
     for (const [dx, dy] of CARDINAL_STEPS) {
       const next = { x: current.x + dx, y: current.y + dy };
-      if (!options.world.inBounds(next.x, next.y) || !options.world.isPassable(next.x, next.y)) {
+      if (
+        !options.world.inBounds(next.x, next.y) ||
+        !options.world.isPassable(next.x, next.y)
+      ) {
         continue;
       }
       const key = posKey(next);

@@ -18,7 +18,14 @@ import type { SeededRandom } from "./rng";
 import { EN } from "./strings/en";
 import type { LogEntry } from "./types";
 
-const ATTRIBUTE_ORDER: AttributeName[] = ["str", "dex", "con", "int", "wis", "chr"];
+const ATTRIBUTE_ORDER: AttributeName[] = [
+  "str",
+  "dex",
+  "con",
+  "int",
+  "wis",
+  "chr",
+];
 
 export type PendingShopRewardChoice = {
   id: "bonus-point" | "remove-perk" | "remove-gambit";
@@ -33,7 +40,9 @@ export type PendingBossRewards = {
 
 type LogFn = (text: string, level?: LogEntry["level"]) => void;
 
-export function toPublicBuildChoice(choice: BuildChoiceDefinition): BuildChoice {
+export function toPublicBuildChoice(
+  choice: BuildChoiceDefinition,
+): BuildChoice {
   return {
     id: choice.id,
     name: choice.name,
@@ -50,14 +59,18 @@ function pickRandomBuildChoices(
   activeGambits: BuildChoiceDefinition[],
 ): BuildChoiceDefinition[] {
   const pool = kind === "perk" ? PERK_POOL : GAMBIT_POOL;
-  const active = new Set((kind === "perk" ? activePerks : activeGambits).map((choice) => choice.id));
+  const active = new Set(
+    (kind === "perk" ? activePerks : activeGambits).map((choice) => choice.id),
+  );
 
   let available = pool.filter((choice) => !active.has(choice.id));
   if (available.length < count) {
     available = [...pool];
   }
 
-  return rng.shuffle([...available]).slice(0, Math.min(count, available.length));
+  return rng
+    .shuffle([...available])
+    .slice(0, Math.min(count, available.length));
 }
 
 export function createPendingBossRewards(
@@ -67,11 +80,20 @@ export function createPendingBossRewards(
 ): PendingBossRewards {
   return {
     perks: pickRandomBuildChoices("perk", 3, rng, activePerks, activeGambits),
-    gambits: pickRandomBuildChoices("gambit", 3, rng, activePerks, activeGambits),
+    gambits: pickRandomBuildChoices(
+      "gambit",
+      3,
+      rng,
+      activePerks,
+      activeGambits,
+    ),
   };
 }
 
-export function applyBuildChoiceEffect(player: Creature, choice: BuildChoiceDefinition): void {
+export function applyBuildChoiceEffect(
+  player: Creature,
+  choice: BuildChoiceDefinition,
+): void {
   const previousCap = player.currentMaxHitpoints();
 
   player.attackBonus += choice.attackBonus ?? 0;
@@ -85,13 +107,19 @@ export function applyBuildChoiceEffect(player: Creature, choice: BuildChoiceDefi
       }
       player.attributes.modify(attr, delta);
       if (attr === "con") {
-        player.maxHitpoints = Math.max(1, player.maxHitpoints + (delta * PLAYER_CONSTITUTION_BONUS));
+        player.maxHitpoints = Math.max(
+          1,
+          player.maxHitpoints + delta * PLAYER_CONSTITUTION_BONUS,
+        );
       }
     }
   }
 
   if (choice.maxHitpoints) {
-    player.maxHitpoints = Math.max(1, player.maxHitpoints + choice.maxHitpoints);
+    player.maxHitpoints = Math.max(
+      1,
+      player.maxHitpoints + choice.maxHitpoints,
+    );
   }
 
   player.damageDealtMultiplier *= choice.damageDealtMultiplier ?? 1;
@@ -105,7 +133,10 @@ export function applyBuildChoiceEffect(player: Creature, choice: BuildChoiceDefi
   player.enforceHitpointCap();
 }
 
-export function removeBuildChoiceEffect(player: Creature, choice: BuildChoiceDefinition): void {
+export function removeBuildChoiceEffect(
+  player: Creature,
+  choice: BuildChoiceDefinition,
+): void {
   player.attackBonus -= choice.attackBonus ?? 0;
   player.defenseBonus -= choice.defenseBonus ?? 0;
 
@@ -117,13 +148,19 @@ export function removeBuildChoiceEffect(player: Creature, choice: BuildChoiceDef
       }
       player.attributes.modify(attr, -delta);
       if (attr === "con") {
-        player.maxHitpoints = Math.max(1, player.maxHitpoints - (delta * PLAYER_CONSTITUTION_BONUS));
+        player.maxHitpoints = Math.max(
+          1,
+          player.maxHitpoints - delta * PLAYER_CONSTITUTION_BONUS,
+        );
       }
     }
   }
 
   if (choice.maxHitpoints) {
-    player.maxHitpoints = Math.max(1, player.maxHitpoints - choice.maxHitpoints);
+    player.maxHitpoints = Math.max(
+      1,
+      player.maxHitpoints - choice.maxHitpoints,
+    );
   }
 
   player.damageDealtMultiplier /= choice.damageDealtMultiplier ?? 1;
@@ -179,7 +216,9 @@ type ChooseBossRewardResult = {
   shouldAdvanceFloor: boolean;
 };
 
-export function chooseBossReward(options: ChooseBossRewardOptions): ChooseBossRewardResult {
+export function chooseBossReward(
+  options: ChooseBossRewardOptions,
+): ChooseBossRewardResult {
   if (options.overlayType !== "boss-reward" || !options.pendingBossRewards) {
     return {
       pendingBossRewards: options.pendingBossRewards,
@@ -195,7 +234,10 @@ export function chooseBossReward(options: ChooseBossRewardOptions): ChooseBossRe
     };
   }
 
-  const source = options.kind === "perk" ? options.pendingBossRewards.perks : options.pendingBossRewards.gambits;
+  const source =
+    options.kind === "perk"
+      ? options.pendingBossRewards.perks
+      : options.pendingBossRewards.gambits;
   const picked = source.find((choice) => choice.id === options.choiceId);
   if (!picked) {
     return {
@@ -212,7 +254,10 @@ export function chooseBossReward(options: ChooseBossRewardOptions): ChooseBossRe
   }
 
   options.log(
-    EN.game.logs.selectedBuildChoice(picked.kind === "perk" ? EN.game.labels.perk : EN.game.labels.gambit, picked.name),
+    EN.game.logs.selectedBuildChoice(
+      picked.kind === "perk" ? EN.game.labels.perk : EN.game.labels.gambit,
+      picked.name,
+    ),
     "success",
   );
 
@@ -222,7 +267,9 @@ export function chooseBossReward(options: ChooseBossRewardOptions): ChooseBossRe
   };
 }
 
-type RemoveLatestChoiceFn = (kind: BuildChoiceKind) => BuildChoiceDefinition | null;
+type RemoveLatestChoiceFn = (
+  kind: BuildChoiceKind,
+) => BuildChoiceDefinition | null;
 
 type ShopRewardStats = {
   goldEarned: number;
@@ -243,7 +290,9 @@ type ClaimShopRewardResult = {
   claimed: boolean;
 };
 
-export function claimShopReward(options: ClaimShopRewardOptions): ClaimShopRewardResult {
+export function claimShopReward(
+  options: ClaimShopRewardOptions,
+): ClaimShopRewardResult {
   if (options.overlayType !== "shop-reward" || !options.pendingShopRewards) {
     return {
       pendingShopRewards: options.pendingShopRewards,
@@ -266,12 +315,29 @@ export function claimShopReward(options: ClaimShopRewardOptions): ClaimShopRewar
   } else if (options.choiceId === "remove-gambit") {
     const removed = options.removeLatestChoice("gambit");
     if (removed) {
-      options.log(EN.game.logs.shopRewardRemovedGambit(removed.name), "success");
+      options.log(
+        EN.game.logs.shopRewardRemovedGambit(removed.name),
+        "success",
+      );
     } else {
-      const heal = Math.max(1, Math.floor(options.player.currentMaxHitpoints() * SHOP_REWARD_HEAL_FALLBACK_RATIO));
+      const heal = Math.max(
+        1,
+        Math.floor(
+          options.player.currentMaxHitpoints() *
+            SHOP_REWARD_HEAL_FALLBACK_RATIO,
+        ),
+      );
       const before = options.player.hitpoints;
-      options.player.hitpoints = Math.min(options.player.currentMaxHitpoints(), options.player.hitpoints + heal);
-      options.log(EN.game.logs.shopRewardGambitFallbackHeal(options.player.hitpoints - before), "success");
+      options.player.hitpoints = Math.min(
+        options.player.currentMaxHitpoints(),
+        options.player.hitpoints + heal,
+      );
+      options.log(
+        EN.game.logs.shopRewardGambitFallbackHeal(
+          options.player.hitpoints - before,
+        ),
+        "success",
+      );
     }
   }
 
@@ -294,11 +360,16 @@ type AllocateLevelUpResult = {
   nextOverlayType: "level-up" | "none" | null;
 };
 
-function isValidLevelUpAttribute(attr: string, validAttributes: readonly AttributeName[]): attr is AttributeName {
+function isValidLevelUpAttribute(
+  attr: string,
+  validAttributes: readonly AttributeName[],
+): attr is AttributeName {
   return validAttributes.includes(attr as AttributeName);
 }
 
-export function allocateLevelUp(options: AllocateLevelUpOptions): AllocateLevelUpResult {
+export function allocateLevelUp(
+  options: AllocateLevelUpOptions,
+): AllocateLevelUpResult {
   if (options.overlayType !== "level-up") {
     return {
       spent: false,
@@ -318,7 +389,10 @@ export function allocateLevelUp(options: AllocateLevelUpOptions): AllocateLevelU
     };
   }
 
-  options.log(EN.game.logs.levelUpSpent(EN.game.attributeLabels[options.attr]), "success");
+  options.log(
+    EN.game.logs.levelUpSpent(EN.game.attributeLabels[options.attr]),
+    "success",
+  );
 
   return {
     spent: true,

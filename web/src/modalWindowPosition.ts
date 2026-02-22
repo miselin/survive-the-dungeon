@@ -28,7 +28,10 @@ export function centerModal(modal: HTMLElement): void {
   modal.style.transform = "translate(-50%, -50%)";
 }
 
-export function placeModalAt(modal: HTMLElement, position: WindowPosition): void {
+export function placeModalAt(
+  modal: HTMLElement,
+  position: WindowPosition,
+): void {
   modal.style.left = `${Math.round(position.left)}px`;
   modal.style.top = `${Math.round(position.top)}px`;
   modal.style.transform = "none";
@@ -42,7 +45,10 @@ export function currentModalPosition(modal: HTMLElement): WindowPosition {
   };
 }
 
-export function clampModalPosition(modal: HTMLElement, position: WindowPosition): WindowPosition {
+export function clampModalPosition(
+  modal: HTMLElement,
+  position: WindowPosition,
+): WindowPosition {
   if (!hasBrowserWindow()) {
     return {
       left: Math.round(position.left),
@@ -53,11 +59,20 @@ export function clampModalPosition(modal: HTMLElement, position: WindowPosition)
   const rect = modal.getBoundingClientRect();
   const width = rect.width || modal.offsetWidth || 0;
   const height = rect.height || modal.offsetHeight || 0;
-  const maxLeft = Math.max(WINDOW_MARGIN_PX, window.innerWidth - width - WINDOW_MARGIN_PX);
-  const maxTop = Math.max(WINDOW_MARGIN_PX, window.innerHeight - height - WINDOW_MARGIN_PX);
+  const maxLeft = Math.max(
+    WINDOW_MARGIN_PX,
+    window.innerWidth - width - WINDOW_MARGIN_PX,
+  );
+  const maxTop = Math.max(
+    WINDOW_MARGIN_PX,
+    window.innerHeight - height - WINDOW_MARGIN_PX,
+  );
 
   return {
-    left: Math.min(maxLeft, Math.max(WINDOW_MARGIN_PX, Math.round(position.left))),
+    left: Math.min(
+      maxLeft,
+      Math.max(WINDOW_MARGIN_PX, Math.round(position.left)),
+    ),
     top: Math.min(maxTop, Math.max(WINDOW_MARGIN_PX, Math.round(position.top))),
   };
 }
@@ -87,19 +102,28 @@ export function readWindowPosition(windowKey: string): WindowPosition | null {
   }
 }
 
-export function writeWindowPosition(windowKey: string, position: WindowPosition): void {
+export function writeWindowPosition(
+  windowKey: string,
+  position: WindowPosition,
+): void {
   if (!hasStorage()) {
     return;
   }
 
   try {
-    window.localStorage.setItem(storageKey(windowKey), JSON.stringify(position));
+    window.localStorage.setItem(
+      storageKey(windowKey),
+      JSON.stringify(position),
+    );
   } catch {
     // Ignore storage failures (private mode/quota) and continue without persistence.
   }
 }
 
-export function applySavedWindowPosition(modal: HTMLElement, windowKey: string | null): void {
+export function applySavedWindowPosition(
+  modal: HTMLElement,
+  windowKey: string | null,
+): void {
   if (!windowKey) {
     centerModal(modal);
     return;

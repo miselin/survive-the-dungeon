@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
-import { describeHealChoice, type CombatMoment, type PlayerAction } from "../combat";
+import {
+  describeHealChoice,
+  type CombatMoment,
+  type PlayerAction,
+} from "../combat";
 import type { DungeonRun, LevelUpAttribute, ShopRewardChoice } from "../game";
 import type { CombatFxState } from "../combatFx";
 import { EN } from "../strings/en";
@@ -43,26 +47,24 @@ function combatMomentClass(level: "info" | "warn" | "success"): string {
 
 function renderCombatMoment(moment: CombatMoment) {
   if (moment.type === "roll") {
-    const phaseLabel = moment.phase === "flee"
-      ? EN.ui.combatFxMoments.phaseLabel.flee
-      : moment.phase === "crit-check"
-        ? EN.ui.combatFxMoments.phaseLabel.critCheck
-        : moment.phase === "crit-confirm"
-          ? EN.ui.combatFxMoments.phaseLabel.critConfirm
-          : EN.ui.combatFxMoments.phaseLabel.toHit;
+    const phaseLabel =
+      moment.phase === "flee"
+        ? EN.ui.combatFxMoments.phaseLabel.flee
+        : moment.phase === "crit-check"
+          ? EN.ui.combatFxMoments.phaseLabel.critCheck
+          : moment.phase === "crit-confirm"
+            ? EN.ui.combatFxMoments.phaseLabel.critConfirm
+            : EN.ui.combatFxMoments.phaseLabel.toHit;
 
     return (
-      <li className="fx-row" key={`${moment.type}-${moment.actor}-${moment.roll}-${moment.total}-${moment.target}`}>
-        <div className="fx-die">
-          d20
-          {" "}
-          {moment.roll}
-        </div>
+      <li
+        className="fx-row"
+        key={`${moment.type}-${moment.actor}-${moment.roll}-${moment.total}-${moment.target}`}
+      >
+        <div className="fx-die">d20 {moment.roll}</div>
         <div className="fx-details">
           <strong>
-            {moment.actor}
-            {" "}
-            {phaseLabel}
+            {moment.actor} {phaseLabel}
           </strong>
           <span>
             {moment.roll}
@@ -77,7 +79,9 @@ function renderCombatMoment(moment: CombatMoment) {
             {")"}
           </span>
           <span className={moment.success ? "fx-good" : "fx-bad"}>
-            {moment.success ? EN.ui.combatFxMoments.verdictSuccess : EN.ui.combatFxMoments.verdictFail}
+            {moment.success
+              ? EN.ui.combatFxMoments.verdictSuccess
+              : EN.ui.combatFxMoments.verdictFail}
           </span>
         </div>
       </li>
@@ -86,15 +90,24 @@ function renderCombatMoment(moment: CombatMoment) {
 
   if (moment.type === "damage") {
     return (
-      <li className="fx-row" key={`${moment.type}-${moment.actor}-${moment.roll}-${moment.final}-${moment.remainingHp}`}>
+      <li
+        className="fx-row"
+        key={`${moment.type}-${moment.actor}-${moment.roll}-${moment.final}-${moment.remainingHp}`}
+      >
         <div className="fx-die">
-          {moment.dice}
-          {" "}
-          {moment.roll}
+          {moment.dice} {moment.roll}
         </div>
         <div className="fx-details">
           <strong>{EN.ui.combatFxMoments.damageRollTitle(moment.actor)}</strong>
-          <span>{EN.ui.combatFxMoments.damageRollDetail(moment.roll, moment.multiplier, moment.final, moment.defender, moment.remainingHp)}</span>
+          <span>
+            {EN.ui.combatFxMoments.damageRollDetail(
+              moment.roll,
+              moment.multiplier,
+              moment.final,
+              moment.defender,
+              moment.remainingHp,
+            )}
+          </span>
         </div>
       </li>
     );
@@ -102,14 +115,16 @@ function renderCombatMoment(moment: CombatMoment) {
 
   if (moment.type === "heal") {
     return (
-      <li className="fx-row" key={`${moment.type}-${moment.actor}-${moment.item}-${moment.amount}`}>
-        <div className="fx-die">
-          +
-          {moment.amount}
-        </div>
+      <li
+        className="fx-row"
+        key={`${moment.type}-${moment.actor}-${moment.item}-${moment.amount}`}
+      >
+        <div className="fx-die">+{moment.amount}</div>
         <div className="fx-details">
           <strong>{EN.ui.combatFxMoments.healTitle(moment.actor)}</strong>
-          <span>{EN.ui.combatFxMoments.healDetail(moment.item, moment.amount)}</span>
+          <span>
+            {EN.ui.combatFxMoments.healDetail(moment.item, moment.amount)}
+          </span>
         </div>
       </li>
     );
@@ -118,7 +133,9 @@ function renderCombatMoment(moment: CombatMoment) {
   return (
     <li className="fx-row" key={`${moment.type}-${moment.text}`}>
       <div className="fx-details">
-        <strong className={combatMomentClass(moment.level)}>{moment.text}</strong>
+        <strong className={combatMomentClass(moment.level)}>
+          {moment.text}
+        </strong>
       </div>
     </li>
   );
@@ -150,19 +167,31 @@ export function OverlayModal(props: OverlayModalProps) {
   }, [props.combatFx, activeRun.overlay.type, activeRun.logs.length]);
 
   if (props.combatFx) {
-    const shown = props.combatFx.moments.slice(0, Math.max(1, props.combatFx.revealed));
+    const shown = props.combatFx.moments.slice(
+      0,
+      Math.max(1, props.combatFx.revealed),
+    );
     const done = props.combatFx.revealed >= props.combatFx.moments.length;
     const knockoutMoment = shown
-      .filter((moment): moment is Extract<CombatMoment, { type: "text" }> => moment.type === "text")
+      .filter(
+        (moment): moment is Extract<CombatMoment, { type: "text" }> =>
+          moment.type === "text",
+      )
       .find((moment) => moment.text.endsWith("falls."));
 
     return (
       <Window
         title={EN.ui.overlays.combatFx.title}
         actions={
-          done
-            ? <button type="button" onClick={props.onCombatFxContinue}>{EN.ui.buttons.continue}</button>
-            : <button type="button" onClick={props.onCombatFxSkip}>{EN.ui.buttons.skip}</button>
+          done ? (
+            <button type="button" onClick={props.onCombatFxContinue}>
+              {EN.ui.buttons.continue}
+            </button>
+          ) : (
+            <button type="button" onClick={props.onCombatFxSkip}>
+              {EN.ui.buttons.skip}
+            </button>
+          )
         }
       >
         <p className="hint">{EN.ui.overlays.combatFx.hint}</p>
@@ -176,11 +205,11 @@ export function OverlayModal(props: OverlayModalProps) {
           />
           {EN.ui.overlays.combatFx.skipAll}
         </label>
-        {
-          knockoutMoment
-            ? <p className={combatMomentClass(knockoutMoment.level)}><b>{knockoutMoment.text}</b></p>
-            : null
-        }
+        {knockoutMoment ? (
+          <p className={combatMomentClass(knockoutMoment.level)}>
+            <b>{knockoutMoment.text}</b>
+          </p>
+        ) : null}
         <ul ref={combatFxListRef} className="combat-fx-list">
           {shown.map((moment) => renderCombatMoment(moment))}
         </ul>
@@ -193,57 +222,48 @@ export function OverlayModal(props: OverlayModalProps) {
 
     return (
       <Window
-        title={won ? EN.ui.overlays.runEnd.victoryTitle : EN.ui.overlays.runEnd.defeatTitle}
-        actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
+        title={
+          won
+            ? EN.ui.overlays.runEnd.victoryTitle
+            : EN.ui.overlays.runEnd.defeatTitle
+        }
+        actions={
+          <button type="button" onClick={props.onClose}>
+            {EN.ui.buttons.close}
+          </button>
+        }
       >
-        <p>{won ? EN.ui.overlays.runEnd.victoryBody : EN.ui.overlays.runEnd.defeatBody}</p>
+        <p>
+          {won
+            ? EN.ui.overlays.runEnd.victoryBody
+            : EN.ui.overlays.runEnd.defeatBody}
+        </p>
         <ul className="summary-list">
           <li>
-            {EN.ui.runSummary.vanquished}
-            :
-            {" "}
-            <b>{activeRun.stats.vanquished}</b>
+            {EN.ui.runSummary.vanquished}: <b>{activeRun.stats.vanquished}</b>
           </li>
           <li>
-            {EN.ui.runSummary.goldEarned}
-            :
-            {" "}
-            <b>{activeRun.stats.goldEarned}</b>
+            {EN.ui.runSummary.goldEarned}: <b>{activeRun.stats.goldEarned}</b>
           </li>
           <li>
-            {EN.ui.runSummary.goldSpent}
-            :
-            {" "}
-            <b>{activeRun.stats.goldSpent}</b>
+            {EN.ui.runSummary.goldSpent}: <b>{activeRun.stats.goldSpent}</b>
           </li>
           <li>
-            {EN.ui.runSummary.goldLeftInChests}
-            :
-            {" "}
+            {EN.ui.runSummary.goldLeftInChests}:{" "}
             <b>{activeRun.stats.goldLeftBehind}</b>
           </li>
           <li>
-            {EN.ui.runSummary.inventoryValue}
-            :
-            {" "}
+            {EN.ui.runSummary.inventoryValue}:{" "}
             <b>{activeRun.stats.inventoryValue}</b>
           </li>
           <li>
-            {EN.ui.runSummary.xpGained}
-            :
-            {" "}
-            <b>{activeRun.stats.xpGained}</b>
+            {EN.ui.runSummary.xpGained}: <b>{activeRun.stats.xpGained}</b>
           </li>
           <li>
-            {EN.ui.runSummary.finalLevel}
-            :
-            {" "}
-            <b>{activeRun.stats.level}</b>
+            {EN.ui.runSummary.finalLevel}: <b>{activeRun.stats.level}</b>
           </li>
           <li>
-            {EN.ui.runSummary.floorReached}
-            :
-            {" "}
+            {EN.ui.runSummary.floorReached}:{" "}
             <b>{activeRun.stats.floorReached}</b>
           </li>
         </ul>
@@ -261,7 +281,11 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.battle.noTargetTitle}
-          actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
+          actions={
+            <button type="button" onClick={props.onClose}>
+              {EN.ui.buttons.close}
+            </button>
+          }
         >
           <p>{EN.ui.overlays.battle.noTargetBody}</p>
         </Window>
@@ -271,23 +295,88 @@ export function OverlayModal(props: OverlayModalProps) {
     return (
       <Window
         title={EN.ui.overlays.battle.title(enemy.creature.name)}
-        actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
+        actions={
+          <button type="button" onClick={props.onClose}>
+            {EN.ui.buttons.close}
+          </button>
+        }
       >
-        <p>{EN.ui.overlays.battle.yourHp(activeRun.player.hitpoints, activeRun.player.currentMaxHitpoints())}</p>
-        <p>{EN.ui.overlays.battle.enemyHp(enemy.creature.hitpoints, enemy.creature.maxHitpoints)}</p>
-        {activeRun.overlay.surpriseProtection ? <p className="hint">{EN.ui.overlays.battle.ambushProtectionHint}</p> : null}
-        <p className="hint">{EN.ui.overlays.battle.healChoice(describeHealChoice(activeRun.player))}</p>
+        <p>
+          {EN.ui.overlays.battle.yourHp(
+            activeRun.player.hitpoints,
+            activeRun.player.currentMaxHitpoints(),
+          )}
+        </p>
+        <p>
+          {EN.ui.overlays.battle.enemyHp(
+            enemy.creature.hitpoints,
+            enemy.creature.maxHitpoints,
+          )}
+        </p>
+        {activeRun.overlay.surpriseProtection ? (
+          <p className="hint">{EN.ui.overlays.battle.ambushProtectionHint}</p>
+        ) : null}
+        <p className="hint">
+          {EN.ui.overlays.battle.healChoice(
+            describeHealChoice(activeRun.player),
+          )}
+        </p>
         <div className="action-grid">
-          <button type="button" onClick={() => { props.onCombatAction("normal"); }}><span>{EN.ui.overlays.battle.actions.normal.label}</span><small>{EN.ui.overlays.battle.actions.normal.subtitle}</small></button>
-          <button type="button" onClick={() => { props.onCombatAction("offensive"); }}><span>{EN.ui.overlays.battle.actions.offensive.label}</span><small>{EN.ui.overlays.battle.actions.offensive.subtitle}</small></button>
-          <button type="button" onClick={() => { props.onCombatAction("defensive"); }}><span>{EN.ui.overlays.battle.actions.defensive.label}</span><small>{EN.ui.overlays.battle.actions.defensive.subtitle}</small></button>
-          <button type="button" onClick={() => { props.onCombatAction("heal"); }}><span>{EN.ui.overlays.battle.actions.heal.label}</span><small>{EN.ui.overlays.battle.actions.heal.subtitle}</small></button>
-          <button type="button" onClick={() => { props.onCombatAction("flee"); }}><span>{EN.ui.overlays.battle.actions.flee.label}</span><small>{EN.ui.overlays.battle.actions.flee.subtitle}</small></button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onCombatAction("normal");
+            }}
+          >
+            <span>{EN.ui.overlays.battle.actions.normal.label}</span>
+            <small>{EN.ui.overlays.battle.actions.normal.subtitle}</small>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onCombatAction("offensive");
+            }}
+          >
+            <span>{EN.ui.overlays.battle.actions.offensive.label}</span>
+            <small>{EN.ui.overlays.battle.actions.offensive.subtitle}</small>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onCombatAction("defensive");
+            }}
+          >
+            <span>{EN.ui.overlays.battle.actions.defensive.label}</span>
+            <small>{EN.ui.overlays.battle.actions.defensive.subtitle}</small>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onCombatAction("heal");
+            }}
+          >
+            <span>{EN.ui.overlays.battle.actions.heal.label}</span>
+            <small>{EN.ui.overlays.battle.actions.heal.subtitle}</small>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              props.onCombatAction("flee");
+            }}
+          >
+            <span>{EN.ui.overlays.battle.actions.flee.label}</span>
+            <small>{EN.ui.overlays.battle.actions.flee.subtitle}</small>
+          </button>
         </div>
         <h3>{EN.ui.sidebar.combatLog}</h3>
         <ul ref={battleLogRef} className="combat-log">
           {activeRun.logs.slice(-8).map((entry, index) => (
-            <li key={`${index}-${entry.level}-${entry.text}`} className={`log-${entry.level}`}>{entry.text}</li>
+            <li
+              key={`${index}-${entry.level}-${entry.text}`}
+              className={`log-${entry.level}`}
+            >
+              {entry.text}
+            </li>
           ))}
         </ul>
       </Window>
@@ -334,7 +423,11 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.bossReward.emptyTitle}
-          actions={<button type="button" onClick={props.onBossNone}>{EN.ui.buttons.descend}</button>}
+          actions={
+            <button type="button" onClick={props.onBossNone}>
+              {EN.ui.buttons.descend}
+            </button>
+          }
         >
           <p>{EN.ui.overlays.bossReward.emptyBody}</p>
         </Window>
@@ -346,10 +439,19 @@ export function OverlayModal(props: OverlayModalProps) {
     return (
       <Window
         title={EN.ui.overlays.bossReward.title}
-        actions={<button type="button" onClick={props.onBossNone}>{EN.ui.buttons.descendWithoutPicking}</button>}
+        actions={
+          <button type="button" onClick={props.onBossNone}>
+            {EN.ui.buttons.descendWithoutPicking}
+          </button>
+        }
       >
         <p>{EN.ui.overlays.bossReward.body(activeRun.floor)}</p>
-        <p className="hint">{EN.ui.overlays.bossReward.currentBuild(build.perks.length, build.gambits.length)}</p>
+        <p className="hint">
+          {EN.ui.overlays.bossReward.currentBuild(
+            build.perks.length,
+            build.gambits.length,
+          )}
+        </p>
         <h3>{EN.ui.sidebar.perks}</h3>
         <ul className="item-list">
           {rewards.perks.map((choice) => (
@@ -427,7 +529,11 @@ export function OverlayModal(props: OverlayModalProps) {
       return (
         <Window
           title={EN.ui.overlays.chest.title}
-          actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
+          actions={
+            <button type="button" onClick={props.onClose}>
+              {EN.ui.buttons.close}
+            </button>
+          }
         >
           <p>{EN.ui.overlays.chest.emptyBody}</p>
         </Window>
@@ -441,15 +547,20 @@ export function OverlayModal(props: OverlayModalProps) {
         title={EN.ui.overlays.chest.title}
         actions={
           <>
-            <button type="button" onClick={props.onLootAll}>{EN.ui.buttons.lootAll}</button>
-            <button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>
+            <button type="button" onClick={props.onLootAll}>
+              {EN.ui.buttons.lootAll}
+            </button>
+            <button type="button" onClick={props.onClose}>
+              {EN.ui.buttons.close}
+            </button>
           </>
         }
       >
         <ul className="item-list">
-          {chestItems.length === 0
-            ? <li>{EN.ui.overlays.chest.nothingLeft}</li>
-            : chestItems.map((item) => (
+          {chestItems.length === 0 ? (
+            <li>{EN.ui.overlays.chest.nothingLeft}</li>
+          ) : (
+            chestItems.map((item) => (
               <li key={item.id}>
                 <span>
                   {item.name}
@@ -466,7 +577,8 @@ export function OverlayModal(props: OverlayModalProps) {
                   {EN.ui.buttons.loot}
                 </button>
               </li>
-            ))}
+            ))
+          )}
         </ul>
       </Window>
     );

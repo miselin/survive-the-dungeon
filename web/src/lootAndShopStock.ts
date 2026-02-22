@@ -49,37 +49,55 @@ export type ShopStockEntry = {
 };
 
 export function makeBandages(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.bandages, BANDAGES_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.bandages,
+    BANDAGES_HEAL_HP,
+  );
   item.value = BANDAGES_GOLD_VALUE;
   return item;
 }
 
 export function makeHealthPotion(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.healthPotion, HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.healthPotion,
+    HEALTH_POTION_HEAL_HP,
+  );
   item.value = HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 
 export function makeLargePotion(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.largeHealthPotion, LARGE_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.largeHealthPotion,
+    LARGE_HEALTH_POTION_HEAL_HP,
+  );
   item.value = LARGE_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 
 export function makeHugePotion(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.hugeHealthPotion, HUGE_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.hugeHealthPotion,
+    HUGE_HEALTH_POTION_HEAL_HP,
+  );
   item.value = HUGE_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 
 export function makeColossalPotion(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.colossalHealthPotion, COLOSSAL_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.colossalHealthPotion,
+    COLOSSAL_HEALTH_POTION_HEAL_HP,
+  );
   item.value = COLOSSAL_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 
 export function makeInstaheal(): InstantEffectItem {
-  const item = new InstantEffectItem(EN.game.itemNames.instaheal, 1_000_000_000);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.instaheal,
+    1_000_000_000,
+  );
   item.value = INSTAHEAL_GOLD_VALUE;
   return item;
 }
@@ -94,33 +112,52 @@ export function generateItemPools(
 
   for (let i = 0; i < ITEM_POOL_GENERATION_COUNT; i += 1) {
     const special = dice.roll() >= ITEM_SPECIAL_ROLL_MIN;
-    const valueMultiplier = special ? ITEM_SPECIAL_VALUE_MULTIPLIER : ITEM_DEFAULT_VALUE_MULTIPLIER;
+    const valueMultiplier = special
+      ? ITEM_SPECIAL_VALUE_MULTIPLIER
+      : ITEM_DEFAULT_VALUE_MULTIPLIER;
 
-    const mountpoint: WieldSlot = rng.choice(["head", "chest", "arms", "hands", "legs", "feet"]);
+    const mountpoint: WieldSlot = rng.choice([
+      "head",
+      "chest",
+      "arms",
+      "hands",
+      "legs",
+      "feet",
+    ]);
     const name = nameGenerator.generateName(mountpoint, special);
 
     if (mountpoint === "hands") {
       const weapon = createWeapon(
         name,
-        dice.roll(ITEM_WEAPON_MAX_DAMAGE_ROLL_MIN, ITEM_WEAPON_MAX_DAMAGE_ROLL_MAX),
-        dice.roll(ITEM_WEAPON_CHALLENGE_ROLL_MIN, ITEM_WEAPON_CHALLENGE_ROLL_MAX),
+        dice.roll(
+          ITEM_WEAPON_MAX_DAMAGE_ROLL_MIN,
+          ITEM_WEAPON_MAX_DAMAGE_ROLL_MAX,
+        ),
+        dice.roll(
+          ITEM_WEAPON_CHALLENGE_ROLL_MIN,
+          ITEM_WEAPON_CHALLENGE_ROLL_MAX,
+        ),
         rng,
       );
       weapon.value = Math.floor(
-        (
-          (dice.roll(1, ITEM_WEAPON_VALUE_DIE_SIDES) * ITEM_WEAPON_VALUE_DIE_MULTIPLIER)
-          + weapon.getAttackBonus()
-          + weapon.getDefenseBonus()
-        ) * valueMultiplier,
+        (dice.roll(1, ITEM_WEAPON_VALUE_DIE_SIDES) *
+          ITEM_WEAPON_VALUE_DIE_MULTIPLIER +
+          weapon.getAttackBonus() +
+          weapon.getDefenseBonus()) *
+          valueMultiplier,
       );
       weapons.push(weapon);
     } else {
-      const armor = createArmor(name, mountpoint, dice.roll(ITEM_ARMOR_CHALLENGE_ROLL_MIN, ITEM_ARMOR_CHALLENGE_ROLL_MAX), rng);
+      const armor = createArmor(
+        name,
+        mountpoint,
+        dice.roll(ITEM_ARMOR_CHALLENGE_ROLL_MIN, ITEM_ARMOR_CHALLENGE_ROLL_MAX),
+        rng,
+      );
       armor.value = Math.floor(
-        (
-          (armor.getAttackBonus() * ITEM_ARMOR_VALUE_ATTACK_WEIGHT)
-          + (armor.getDefenseBonus() * ITEM_ARMOR_VALUE_DEFENSE_WEIGHT)
-        ) * valueMultiplier,
+        (armor.getAttackBonus() * ITEM_ARMOR_VALUE_ATTACK_WEIGHT +
+          armor.getDefenseBonus() * ITEM_ARMOR_VALUE_DEFENSE_WEIGHT) *
+          valueMultiplier,
       );
       armors.push(armor);
     }
@@ -132,8 +169,15 @@ export function generateItemPools(
   return { weapons, armors };
 }
 
-function makeShopServiceEntries(nextId: (prefix: string) => string): ShopStockEntry[] {
-  const services: Array<{ id: ShopServiceId; name: string; description: string; value: number }> = [
+function makeShopServiceEntries(
+  nextId: (prefix: string) => string,
+): ShopStockEntry[] {
+  const services: Array<{
+    id: ShopServiceId;
+    name: string;
+    description: string;
+    value: number;
+  }> = [
     {
       id: "bonus-point",
       name: EN.game.shop.services.bonusPoint.name,
@@ -166,7 +210,10 @@ function makeShopServiceEntries(nextId: (prefix: string) => string): ShopStockEn
   }));
 }
 
-export function createShopStock(items: Item[], nextId: (prefix: string) => string): ShopStockEntry[] {
+export function createShopStock(
+  items: Item[],
+  nextId: (prefix: string) => string,
+): ShopStockEntry[] {
   const serviceEntries = makeShopServiceEntries(nextId);
   const itemEntries = items.map((item) => ({
     id: item.id,

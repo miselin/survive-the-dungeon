@@ -1,4 +1,8 @@
-import { type AttributeName, AttributeSet, type AttributesRecord } from "./attributes";
+import {
+  type AttributeName,
+  AttributeSet,
+  type AttributesRecord,
+} from "./attributes";
 import type { CombatLuckState } from "./combat";
 import { Creature } from "./creature";
 import {
@@ -14,7 +18,12 @@ import {
 } from "./items";
 import { WorldMap } from "./mapgen";
 import type { BuildChoiceDefinition } from "./buildChoices";
-import type { OverlayState, RunState, RunStats, ShopRewardChoice } from "./game";
+import type {
+  OverlayState,
+  RunState,
+  RunStats,
+  ShopRewardChoice,
+} from "./game";
 import type { LogEntry, Position, Room, WieldSlot } from "./types";
 
 type SavedTimedEffect = {
@@ -179,7 +188,10 @@ export type EncodeRunSaveInput = {
   dangerProtectionArmedRooms: Set<number>;
   activePerkIds: string[];
   activeGambitIds: string[];
-  pendingBossRewards: { perks: BuildChoiceDefinition[]; gambits: BuildChoiceDefinition[] } | null;
+  pendingBossRewards: {
+    perks: BuildChoiceDefinition[];
+    gambits: BuildChoiceDefinition[];
+  } | null;
   pendingShopRewards: ShopRewardChoice[] | null;
   shopRewardClaimedFloors: Set<number>;
   combatLuck: CombatLuckState;
@@ -211,14 +223,31 @@ export type DecodedRunSaveData = {
   dangerProtectionArmedRooms: number[];
   activePerks: BuildChoiceDefinition[];
   activeGambits: BuildChoiceDefinition[];
-  pendingBossRewards: { perks: BuildChoiceDefinition[]; gambits: BuildChoiceDefinition[] } | null;
+  pendingBossRewards: {
+    perks: BuildChoiceDefinition[];
+    gambits: BuildChoiceDefinition[];
+  } | null;
   pendingShopRewards: ShopRewardChoice[] | null;
   shopRewardClaimedFloors: number[];
   combatLuck: CombatLuckState;
 };
 
-const ATTRIBUTE_ORDER: AttributeName[] = ["str", "dex", "con", "int", "wis", "chr"];
-const WIELD_SLOTS: WieldSlot[] = ["head", "chest", "arms", "hands", "legs", "feet"];
+const ATTRIBUTE_ORDER: AttributeName[] = [
+  "str",
+  "dex",
+  "con",
+  "int",
+  "wis",
+  "chr",
+];
+const WIELD_SLOTS: WieldSlot[] = [
+  "head",
+  "chest",
+  "arms",
+  "hands",
+  "legs",
+  "feet",
+];
 
 function bytesToBase64(bytes: Uint8Array): string {
   let binary = "";
@@ -242,7 +271,11 @@ function clonePos(pos: Position): Position {
 }
 
 function turnsRemaining(effect: Buff | Poison, currentTurn: number): number {
-  for (let turn = currentTurn; turn <= currentTurn + effect.lifetime; turn += 1) {
+  for (
+    let turn = currentTurn;
+    turn <= currentTurn + effect.lifetime;
+    turn += 1
+  ) {
     if (effect.hasExpired(turn)) {
       return Math.max(0, turn - currentTurn);
     }
@@ -316,7 +349,10 @@ function serializeCreature(creature: Creature): SavedCreature {
   };
 }
 
-export function hydrateCreatureFromSave(target: Creature, saved: SavedCreature): void {
+export function hydrateCreatureFromSave(
+  target: Creature,
+  saved: SavedCreature,
+): void {
   target.name = saved.name;
   target.position = clonePos(saved.position);
 
@@ -388,7 +424,9 @@ export function hydrateCreatureFromSave(target: Creature, saved: SavedCreature):
   target.enforceHitpointCap();
 }
 
-export function encodeRunSaveData(input: EncodeRunSaveInput): DungeonRunSaveData {
+export function encodeRunSaveData(
+  input: EncodeRunSaveInput,
+): DungeonRunSaveData {
   return {
     version: 1,
     seedPhrase: input.seedPhrase,
@@ -445,9 +483,11 @@ export function encodeRunSaveData(input: EncodeRunSaveInput): DungeonRunSaveData
     activeGambitIds: [...input.activeGambitIds],
     pendingBossRewards: input.pendingBossRewards
       ? {
-        perkIds: input.pendingBossRewards.perks.map((choice) => choice.id),
-        gambitIds: input.pendingBossRewards.gambits.map((choice) => choice.id),
-      }
+          perkIds: input.pendingBossRewards.perks.map((choice) => choice.id),
+          gambitIds: input.pendingBossRewards.gambits.map(
+            (choice) => choice.id,
+          ),
+        }
       : null,
     pendingShopRewards: input.pendingShopRewards
       ? input.pendingShopRewards.map((choice) => ({ ...choice }))
@@ -457,7 +497,10 @@ export function encodeRunSaveData(input: EncodeRunSaveInput): DungeonRunSaveData
   };
 }
 
-export function decodeRunSaveData(saved: DungeonRunSaveData, deps: DecodeRunSaveDependencies): DecodedRunSaveData {
+export function decodeRunSaveData(
+  saved: DungeonRunSaveData,
+  deps: DecodeRunSaveDependencies,
+): DecodedRunSaveData {
   if (saved.version !== 1) {
     throw new Error(`Unsupported save version: ${saved.version}`);
   }
@@ -465,7 +508,10 @@ export function decodeRunSaveData(saved: DungeonRunSaveData, deps: DecodeRunSave
   const expectedCells = saved.world.width * saved.world.height;
   const worldCells = base64ToBytes(saved.world.cellsBase64);
   const worldExplored = base64ToBytes(saved.world.exploredBase64);
-  if (worldCells.length !== expectedCells || worldExplored.length !== expectedCells) {
+  if (
+    worldCells.length !== expectedCells ||
+    worldExplored.length !== expectedCells
+  ) {
     throw new Error("Save data map payload is malformed.");
   }
 
@@ -478,7 +524,11 @@ export function decodeRunSaveData(saved: DungeonRunSaveData, deps: DecodeRunSave
   world.explored.set(worldExplored);
 
   const mobs = saved.mobs.map((entry) => {
-    const creature = new Creature(entry.creature.name, clonePos(entry.creature.position), new AttributeSet(entry.creature.attributes));
+    const creature = new Creature(
+      entry.creature.name,
+      clonePos(entry.creature.position),
+      new AttributeSet(entry.creature.attributes),
+    );
     hydrateCreatureFromSave(creature, entry.creature);
     return {
       id: entry.id,
@@ -538,14 +588,21 @@ export function decodeRunSaveData(saved: DungeonRunSaveData, deps: DecodeRunSave
     activeGambits: saved.activeGambitIds.map((id) => deps.findBuildChoice(id)),
     pendingBossRewards: saved.pendingBossRewards
       ? {
-        perks: saved.pendingBossRewards.perkIds.map((id) => deps.findBuildChoice(id)),
-        gambits: saved.pendingBossRewards.gambitIds.map((id) => deps.findBuildChoice(id)),
-      }
+          perks: saved.pendingBossRewards.perkIds.map((id) =>
+            deps.findBuildChoice(id),
+          ),
+          gambits: saved.pendingBossRewards.gambitIds.map((id) =>
+            deps.findBuildChoice(id),
+          ),
+        }
       : null,
     pendingShopRewards: saved.pendingShopRewards
       ? saved.pendingShopRewards.map((choice) => ({ ...choice }))
       : null,
     shopRewardClaimedFloors: [...saved.shopRewardClaimedFloors],
-    combatLuck: saved.combatLuck ?? { playerD20History: [], playerMissStreak: 0 },
+    combatLuck: saved.combatLuck ?? {
+      playerD20History: [],
+      playerMissStreak: 0,
+    },
   };
 }

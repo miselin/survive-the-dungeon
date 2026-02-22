@@ -1,8 +1,17 @@
 import type { BuildChoiceDefinition, BuildChoiceKind } from "./buildChoices";
 import { SHOP_DISCOUNT_FOR_CHARISMA } from "./constants";
 import { Creature } from "./creature";
-import { Chest, Gold, InstantEffectItem, type Item, WieldableItem } from "./items";
-import type { ShopServiceId as StockShopServiceId, ShopStockEntry } from "./lootAndShopStock";
+import {
+  Chest,
+  Gold,
+  InstantEffectItem,
+  type Item,
+  WieldableItem,
+} from "./items";
+import type {
+  ShopServiceId as StockShopServiceId,
+  ShopStockEntry,
+} from "./lootAndShopStock";
 import { EN } from "./strings/en";
 import type { LogEntry } from "./types";
 
@@ -16,7 +25,9 @@ export type ShopEntry = ShopStockEntry;
 
 type LogFn = (text: string, level?: LogEntry["level"]) => void;
 
-type RemoveLatestChoiceFn = (kind: BuildChoiceKind) => BuildChoiceDefinition | null;
+type RemoveLatestChoiceFn = (
+  kind: BuildChoiceKind,
+) => BuildChoiceDefinition | null;
 
 type LootStats = {
   goldEarned: number;
@@ -38,7 +49,11 @@ export function inventoryItems(player: Creature): InventoryRenderable[] {
   });
 }
 
-export function equipInventoryItem(player: Creature, itemId: string, log: LogFn): void {
+export function equipInventoryItem(
+  player: Creature,
+  itemId: string,
+  log: LogFn,
+): void {
   const item = player.inventory.items().find((entry) => entry.id === itemId);
   if (!(item instanceof WieldableItem)) {
     return;
@@ -56,7 +71,11 @@ export function equipInventoryItem(player: Creature, itemId: string, log: LogFn)
   log(EN.game.logs.equippedItem(item.name, slot), "success");
 }
 
-export function useInventoryItem(player: Creature, itemId: string, log: LogFn): void {
+export function useInventoryItem(
+  player: Creature,
+  itemId: string,
+  log: LogFn,
+): void {
   const item = player.inventory.items().find((entry) => entry.id === itemId);
   if (!(item instanceof InstantEffectItem)) {
     return;
@@ -67,7 +86,11 @@ export function useInventoryItem(player: Creature, itemId: string, log: LogFn): 
   log(EN.game.logs.inventoryItemRestored(item.name, healed), "success");
 }
 
-export function destroyInventoryItem(player: Creature, itemId: string, log: LogFn): void {
+export function destroyInventoryItem(
+  player: Creature,
+  itemId: string,
+  log: LogFn,
+): void {
   const item = player.inventory.items().find((entry) => entry.id === itemId);
   if (!item) {
     return;
@@ -85,7 +108,9 @@ type LootItemOptions = {
 };
 
 export function lootItemFromChest(options: LootItemOptions): void {
-  const item = options.chest.items().find((entry) => entry.id === options.itemId);
+  const item = options.chest
+    .items()
+    .find((entry) => entry.id === options.itemId);
   if (!item) {
     return;
   }
@@ -171,9 +196,13 @@ export function resolveShopEntries(
   });
 }
 
-export function computeShopEntryCost(entry: ShopEntry, player: Creature): number {
-  const discount = SHOP_DISCOUNT_FOR_CHARISMA * player.attributes.modifier("chr");
-  return Math.max(1, Math.floor(entry.value - (entry.value * discount)));
+export function computeShopEntryCost(
+  entry: ShopEntry,
+  player: Creature,
+): number {
+  const discount =
+    SHOP_DISCOUNT_FOR_CHARISMA * player.attributes.modifier("chr");
+  return Math.max(1, Math.floor(entry.value - entry.value * discount));
 }
 
 type BuyShopEntryOptions = {
@@ -186,7 +215,9 @@ type BuyShopEntryOptions = {
 };
 
 export function buyShopEntry(options: BuyShopEntryOptions): void {
-  const entry = options.shopStock.find((candidate) => candidate.id === options.entryId);
+  const entry = options.shopStock.find(
+    (candidate) => candidate.id === options.entryId,
+  );
   if (!entry || entry.sold) {
     return;
   }

@@ -2,7 +2,11 @@ import { describeHealChoice } from "../../combat";
 import type { DungeonRun } from "../../game";
 import type { CombatFxState } from "../../combatFx";
 
-export function overlayRenderKey(activeRun: DungeonRun, combatFx: CombatFxState | null, combatSkipAll: boolean): string {
+export function overlayRenderKey(
+  activeRun: DungeonRun,
+  combatFx: CombatFxState | null,
+  combatSkipAll: boolean,
+): string {
   if (combatFx) {
     return `combat-fx|${combatFx.revealed}|${combatFx.moments.length}|${combatSkipAll ? "1" : "0"}`;
   }
@@ -44,14 +48,20 @@ export function overlayRenderKey(activeRun: DungeonRun, combatFx: CombatFxState 
   }
 
   if (activeRun.overlay.type === "inventory") {
-    return `playing|inventory|${activeRun.player.inventory.items().map((item) => item.id).join(",")}|${activeRun.player.hitpoints}|${activeRun.player.gold}`;
+    return `playing|inventory|${activeRun.player.inventory
+      .items()
+      .map((item) => item.id)
+      .join(",")}|${activeRun.player.hitpoints}|${activeRun.player.gold}`;
   }
 
   if (activeRun.overlay.type === "level-up") {
     return [
       "playing|level-up",
       activeRun.player.unspentStatPoints,
-      activeRun.levelUpChoices().map((choice) => `${choice.attr}:${choice.value}`).join(","),
+      activeRun
+        .levelUpChoices()
+        .map((choice) => `${choice.attr}:${choice.value}`)
+        .join(","),
     ].join("|");
   }
 
@@ -72,7 +82,11 @@ export function overlayRenderKey(activeRun: DungeonRun, combatFx: CombatFxState 
     return [
       "playing|shop-reward",
       activeRun.floor,
-      rewards ? rewards.map((choice) => `${choice.id}:${choice.description}`).join("|") : "none",
+      rewards
+        ? rewards
+            .map((choice) => `${choice.id}:${choice.description}`)
+            .join("|")
+        : "none",
     ].join("|");
   }
 

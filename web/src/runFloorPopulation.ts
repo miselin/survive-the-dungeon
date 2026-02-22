@@ -28,7 +28,14 @@ import {
 } from "./constants";
 import { Dice } from "./dice";
 import type { Creature } from "./creature";
-import { Armor, Chest, Gold, InstantEffectItem, type Item, Weapon } from "./items";
+import {
+  Armor,
+  Chest,
+  Gold,
+  InstantEffectItem,
+  type Item,
+  Weapon,
+} from "./items";
 import {
   createShopStock,
   generateItemPools,
@@ -82,16 +89,24 @@ type PopulateDungeonResult = {
   roomThreatById: Map<number, number>;
 };
 
-export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeonResult {
-  const pools = generateItemPools(options.dice, options.rng, options.nameGenerator);
+export function populateDungeon(
+  options: PopulateDungeonOptions,
+): PopulateDungeonResult {
+  const pools = generateItemPools(
+    options.dice,
+    options.rng,
+    options.nameGenerator,
+  );
   const mobs: MobEntity[] = [];
   const chests: ChestEntity[] = [];
   const shopClutter: ShopClutter[] = [];
   const roomThreatById = new Map<number, number>();
 
   const startingRoom = options.world.rooms[0];
-  const bossRoom = options.world.rooms.find((room) => (room.attrs & ROOM_BOSS) === ROOM_BOSS)
-    ?? options.world.rooms[options.world.rooms.length - 1];
+  const bossRoom =
+    options.world.rooms.find(
+      (room) => (room.attrs & ROOM_BOSS) === ROOM_BOSS,
+    ) ?? options.world.rooms[options.world.rooms.length - 1];
   const startY = roomCenter(startingRoom).y;
   const bossY = roomCenter(bossRoom).y;
   const yScaleSpan = Math.max(1, bossY - startY);
@@ -122,7 +137,8 @@ export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeo
 
     const floorOffset = Math.max(0, options.floor - 1);
 
-    let challengeLevel = floorOffset + Math.floor(yScale * MAXIMUM_CHALLENGE_LEVEL);
+    let challengeLevel =
+      floorOffset + Math.floor(yScale * MAXIMUM_CHALLENGE_LEVEL);
     if (isBoss) {
       challengeLevel = BOSS_CHALLENGE_LEVEL + floorOffset;
     }
@@ -133,8 +149,15 @@ export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeo
 
     if (isShop) {
       const roomSquares = room.w * room.h;
-      const clutterCount = Math.max(1, Math.ceil(roomSquares / SHOP_CLUTTER_DENSITY_DIVISOR));
-      const clutterPositions = randomPositionsInRoom(room, options.rng, clutterCount);
+      const clutterCount = Math.max(
+        1,
+        Math.ceil(roomSquares / SHOP_CLUTTER_DENSITY_DIVISOR),
+      );
+      const clutterPositions = randomPositionsInRoom(
+        room,
+        options.rng,
+        clutterCount,
+      );
       const sprites = [88, 89, 90, 91, 92, 93, 94, 95];
       for (const pos of clutterPositions) {
         shopClutter.push({
@@ -146,31 +169,72 @@ export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeo
       continue;
     }
 
-    const scaled = Math.max(FLOOR_SCALE_MINIMUM, yScale + (options.floor * FLOOR_DEPTH_SCALE_PER_FLOOR));
+    const scaled = Math.max(
+      FLOOR_SCALE_MINIMUM,
+      yScale + options.floor * FLOOR_DEPTH_SCALE_PER_FLOOR,
+    );
 
     let mobCount = 0;
     if (isBoss) {
       mobCount = 1;
     } else if (!isStart) {
-      mobCount = options.dice.roll(1, Math.max(1, Math.ceil((FLOOR_MOB_BASE + (options.floor * FLOOR_MOB_PER_FLOOR)) * scaled)));
+      mobCount = options.dice.roll(
+        1,
+        Math.max(
+          1,
+          Math.ceil(
+            (FLOOR_MOB_BASE + options.floor * FLOOR_MOB_PER_FLOOR) * scaled,
+          ),
+        ),
+      );
     }
 
-    const mobPositions = randomPositionsInRoom(room, options.rng, mobCount, [], 0);
+    const mobPositions = randomPositionsInRoom(
+      room,
+      options.rng,
+      mobCount,
+      [],
+      0,
+    );
 
     const chestCount = options.dice.roll(
       1,
-      Math.max(1, Math.ceil((FLOOR_CHEST_BASE + (options.floor * FLOOR_CHEST_PER_FLOOR)) * scaled)),
+      Math.max(
+        1,
+        Math.ceil(
+          (FLOOR_CHEST_BASE + options.floor * FLOOR_CHEST_PER_FLOOR) * scaled,
+        ),
+      ),
     );
-    const chestPositions = randomPositionsInRoom(room, options.rng, chestCount, mobPositions, 1);
+    const chestPositions = randomPositionsInRoom(
+      room,
+      options.rng,
+      chestCount,
+      mobPositions,
+      1,
+    );
 
     for (const pos of mobPositions) {
-      const mob = creatureAtLevel(challengeLevel, options.nameGenerator, options.rng);
+      const mob = creatureAtLevel(
+        challengeLevel,
+        options.nameGenerator,
+        options.rng,
+      );
       if (isBoss) {
         mob.name = EN.game.names.dungeonBoss;
         mob.attributes.modify("str", BOSS_STR_BONUS_BASE + floorOffset);
-        mob.attributes.modify("dex", BOSS_DEX_BONUS_BASE + Math.floor(floorOffset / BOSS_DEX_BONUS_FLOOR_DIVISOR));
+        mob.attributes.modify(
+          "dex",
+          BOSS_DEX_BONUS_BASE +
+            Math.floor(floorOffset / BOSS_DEX_BONUS_FLOOR_DIVISOR),
+        );
         mob.attributes.modify("con", BOSS_CON_BONUS_BASE + floorOffset);
-        mob.maxHitpoints = Math.max(1, Math.floor(mob.maxHitpoints * (1 + (floorOffset * BOSS_HP_SCALE_PER_FLOOR))));
+        mob.maxHitpoints = Math.max(
+          1,
+          Math.floor(
+            mob.maxHitpoints * (1 + floorOffset * BOSS_HP_SCALE_PER_FLOOR),
+          ),
+        );
         mob.hitpoints = mob.maxHitpoints;
       }
 
@@ -189,10 +253,16 @@ export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeo
     for (const pos of chestPositions) {
       const chest = new Chest(pos.x, pos.y, FLOOR_CHEST_CAPACITY);
 
-      if (options.dice.roll(1, 20) >= CHEST_WEAPON_ROLL_MIN && pools.weapons.length > 0) {
+      if (
+        options.dice.roll(1, 20) >= CHEST_WEAPON_ROLL_MIN &&
+        pools.weapons.length > 0
+      ) {
         chest.add(pools.weapons.shift() as Weapon);
       }
-      if (options.dice.roll(1, 20) >= CHEST_ARMOR_ROLL_MIN && pools.armors.length > 0) {
+      if (
+        options.dice.roll(1, 20) >= CHEST_ARMOR_ROLL_MIN &&
+        pools.armors.length > 0
+      ) {
         chest.add(pools.armors.shift() as Armor);
       }
       if (options.dice.roll(1, 20) >= CHEST_GOLD_ROLL_MIN) {
@@ -201,7 +271,11 @@ export function populateDungeon(options: PopulateDungeonOptions): PopulateDungeo
       if (options.dice.roll(1, 20) >= CHEST_HUGE_POTION_ROLL_MIN) {
         chest.add(makeLargePotion());
       } else if (options.dice.roll(1, 20) >= CHEST_LARGE_OR_HEALTH_ROLL_MIN) {
-        chest.add(challengeLevel >= CHEST_HIGH_TIER_LEVEL ? makeLargePotion() : makeHealthPotion());
+        chest.add(
+          challengeLevel >= CHEST_HIGH_TIER_LEVEL
+            ? makeLargePotion()
+            : makeHealthPotion(),
+        );
       } else if (options.dice.roll(1, 20) >= CHEST_TIERED_POTION_ROLL_MIN) {
         if (challengeLevel >= CHEST_HIGH_TIER_LEVEL) {
           chest.add(makeLargePotion());

@@ -6,6 +6,8 @@ export function assert(condition: boolean, message: string): void {
 
 export function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {
-    throw new Error(`${message} (expected ${String(expected)}, got ${String(actual)})`);
+    throw new Error(
+      `${message} (expected ${String(expected)}, got ${String(actual)})`,
+    );
   }
 }

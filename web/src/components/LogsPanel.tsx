@@ -19,7 +19,12 @@ export function LogsPanel(props: LogsPanelProps) {
   return (
     <ul id="logs" ref={listRef} className="logs">
       {props.logs.map((entry, index) => (
-        <li key={`${index}-${entry.level}-${entry.text}`} className={`log-${entry.level}`}>{entry.text}</li>
+        <li
+          key={`${index}-${entry.level}-${entry.text}`}
+          className={`log-${entry.level}`}
+        >
+          {entry.text}
+        </li>
       ))}
     </ul>
   );

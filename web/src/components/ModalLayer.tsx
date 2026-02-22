@@ -67,7 +67,9 @@ export function ModalLayer(props: ModalLayerProps) {
     }
 
     const target = event.target as HTMLElement;
-    const titleBar = target.closest<HTMLElement>("[data-window-drag-handle='true']");
+    const titleBar = target.closest<HTMLElement>(
+      "[data-window-drag-handle='true']",
+    );
     const windowKey = modal.dataset.windowKey;
     if (!windowKey || !titleBar || !modal.contains(titleBar)) {
       return;
@@ -95,7 +97,11 @@ export function ModalLayer(props: ModalLayerProps) {
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>): void {
     const modal = props.modalRef.current;
-    if (!modal || dragPointerIdRef.current === null || event.pointerId !== dragPointerIdRef.current) {
+    if (
+      !modal ||
+      dragPointerIdRef.current === null ||
+      event.pointerId !== dragPointerIdRef.current
+    ) {
       return;
     }
 
@@ -107,13 +113,19 @@ export function ModalLayer(props: ModalLayerProps) {
   }
 
   function handlePointerUp(event: PointerEvent<HTMLDivElement>): void {
-    if (dragPointerIdRef.current !== null && event.pointerId === dragPointerIdRef.current) {
+    if (
+      dragPointerIdRef.current !== null &&
+      event.pointerId === dragPointerIdRef.current
+    ) {
       stopModalDrag();
     }
   }
 
   function handlePointerCancel(event: PointerEvent<HTMLDivElement>): void {
-    if (dragPointerIdRef.current !== null && event.pointerId === dragPointerIdRef.current) {
+    if (
+      dragPointerIdRef.current !== null &&
+      event.pointerId === dragPointerIdRef.current
+    ) {
       stopModalDrag();
     }
   }
@@ -142,20 +154,27 @@ export function ModalLayer(props: ModalLayerProps) {
     }
   }, [props.chrome.modalHidden]);
 
-  useEffect(() => () => {
-    document.body.classList.remove("modal-dragging");
-  }, []);
+  useEffect(
+    () => () => {
+      document.body.classList.remove("modal-dragging");
+    },
+    [],
+  );
 
   return (
     <div
       id="modal-backdrop"
-      className={props.chrome.modalHidden ? "modal-backdrop hidden" : "modal-backdrop"}
+      className={
+        props.chrome.modalHidden ? "modal-backdrop hidden" : "modal-backdrop"
+      }
       onClick={handleBackdropClick}
     >
       <div
         id="modal"
         ref={props.modalRef}
-        className={props.chrome.modalClass ? `modal ${props.chrome.modalClass}` : "modal"}
+        className={
+          props.chrome.modalClass ? `modal ${props.chrome.modalClass}` : "modal"
+        }
         role="dialog"
         aria-modal="true"
         onPointerDown={handlePointerDown}

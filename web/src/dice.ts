@@ -42,6 +42,6 @@ export class Dice {
 
   minMax(name: string): [number, number] {
     const { count, faces, modifier } = parseDice(name);
-    return [count + modifier, (count * faces) + modifier];
+    return [count + modifier, count * faces + modifier];
   }
 }

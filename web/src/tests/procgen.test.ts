@@ -18,7 +18,10 @@ export function runProcgenTests(): void {
   for (let i = 0; i < 80; i += 1) {
     const weapon = createWeapon(`Blade-${i}`, 6, 0, procgenRng);
     const [minDamage] = dice.minMax(weapon.damage());
-    assert(minDamage > 1, `Procgen min damage should be >1, got ${minDamage} from ${weapon.damage()}`);
+    assert(
+      minDamage > 1,
+      `Procgen min damage should be >1, got ${minDamage} from ${weapon.damage()}`,
+    );
     assert(
       weapon.criticalMultiplier() >= PLAYER_CRIT_MINIMUM_MULTIPLIER,
       `Procgen crit multiplier should be >=${PLAYER_CRIT_MINIMUM_MULTIPLIER}, got ${weapon.criticalMultiplier()}`,

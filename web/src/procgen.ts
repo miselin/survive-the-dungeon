@@ -55,7 +55,14 @@ const ADJECTIVES = [
   "radiant",
 ];
 
-const ADVERBS = ["eerily", "violently", "surprisingly", "quietly", "wildly", "ominously"];
+const ADVERBS = [
+  "eerily",
+  "violently",
+  "surprisingly",
+  "quietly",
+  "wildly",
+  "ominously",
+];
 
 export class NameGenerator {
   private readonly seen = new Set<string>();
@@ -64,7 +71,11 @@ export class NameGenerator {
 
   generateName(slot: WieldSlot, special = false): string {
     const options = NAME_PARTS[slot];
-    for (let attempt = 0; attempt < NAME_GENERATION_MAX_ATTEMPTS; attempt += 1) {
+    for (
+      let attempt = 0;
+      attempt < NAME_GENERATION_MAX_ATTEMPTS;
+      attempt += 1
+    ) {
       const noun = this.rng.choice(options);
       const adjective = this.rng.choice(ADJECTIVES);
       const value = special
@@ -90,32 +101,60 @@ export function createWeapon(
   challengeLevel: number,
   rng: SeededRandom,
 ): Weapon {
-  const damage = rng.int(Math.max(1, Math.floor(maxDamage / 2)), Math.max(2, maxDamage));
-  const faces = Math.max(WEAPON_DAMAGE_FACE_MIN, Math.min(WEAPON_DAMAGE_FACE_MAX, damage));
+  const damage = rng.int(
+    Math.max(1, Math.floor(maxDamage / 2)),
+    Math.max(2, maxDamage),
+  );
+  const faces = Math.max(
+    WEAPON_DAMAGE_FACE_MIN,
+    Math.min(WEAPON_DAMAGE_FACE_MAX, damage),
+  );
   const count = Math.max(1, Math.floor(damage / faces));
   const flatBonus = Math.max(
     ITEM_WEAPON_FLAT_BONUS_BASE,
-    ITEM_WEAPON_FLAT_BONUS_BASE
-    + Math.floor(challengeLevel / ITEM_WEAPON_FLAT_BONUS_CHALLENGE_DIVISOR)
-    + rng.int(0, ITEM_WEAPON_FLAT_BONUS_RANDOM_MAX),
+    ITEM_WEAPON_FLAT_BONUS_BASE +
+      Math.floor(challengeLevel / ITEM_WEAPON_FLAT_BONUS_CHALLENGE_DIVISOR) +
+      rng.int(0, ITEM_WEAPON_FLAT_BONUS_RANDOM_MAX),
   );
 
   const critRange = rng.int(PLAYER_CRIT_MINIMUM_ROLL, WEAPON_CRIT_MAXIMUM_ROLL);
-  const critMult = rng.int(PLAYER_CRIT_MINIMUM_MULTIPLIER, PLAYER_CRIT_MAXIMUM_MULTIPLIER);
+  const critMult = rng.int(
+    PLAYER_CRIT_MINIMUM_MULTIPLIER,
+    PLAYER_CRIT_MAXIMUM_MULTIPLIER,
+  );
 
-  return new Weapon(name, critRange, critMult, challengeLevel + 1, 0, `${count}d${faces} +${flatBonus}`);
+  return new Weapon(
+    name,
+    critRange,
+    critMult,
+    challengeLevel + 1,
+    0,
+    `${count}d${faces} +${flatBonus}`,
+  );
 }
 
-export function createArmor(name: string, slot: WieldSlot, challengeLevel: number, rng: SeededRandom): Armor {
+export function createArmor(
+  name: string,
+  slot: WieldSlot,
+  challengeLevel: number,
+  rng: SeededRandom,
+): Armor {
   return new Armor(
     slot,
     name,
     challengeLevel,
-    rng.int(ITEM_ARMOR_DEFENSE_BASE_MIN, challengeLevel + ITEM_ARMOR_DEFENSE_CHALLENGE_BONUS),
+    rng.int(
+      ITEM_ARMOR_DEFENSE_BASE_MIN,
+      challengeLevel + ITEM_ARMOR_DEFENSE_CHALLENGE_BONUS,
+    ),
   );
 }
 
-export function creatureAtLevel(challengeLevel: number, names: NameGenerator, rng: SeededRandom): Creature {
+export function creatureAtLevel(
+  challengeLevel: number,
+  names: NameGenerator,
+  rng: SeededRandom,
+): Creature {
   let maxDamage = CREATURE_MAX_DAMAGE_AT_LEVEL_1;
   let minHp = CREATURE_MIN_HP_AT_LEVEL_1;
   let maxHp = CREATURE_MAX_HP_AT_LEVEL_1;
@@ -144,9 +183,19 @@ export function creatureAtLevel(challengeLevel: number, names: NameGenerator, rn
   creature.attackBonus = CREATURE_BASE_ATTACK_BONUS;
   creature.defenseBonus = CREATURE_BASE_DEFENSE_BONUS;
 
-  const weapon = createWeapon(names.generateName("hands"), maxDamage, challengeLevel, rng);
+  const weapon = createWeapon(
+    names.generateName("hands"),
+    maxDamage,
+    challengeLevel,
+    rng,
+  );
   const armorSlot: WieldSlot = rng.choice(["chest", "arms", "feet"]);
-  const armor = createArmor(names.generateName(armorSlot), armorSlot, challengeLevel, rng);
+  const armor = createArmor(
+    names.generateName(armorSlot),
+    armorSlot,
+    challengeLevel,
+    rng,
+  );
 
   creature.wield("hands", weapon);
   creature.wield(armorSlot, armor);

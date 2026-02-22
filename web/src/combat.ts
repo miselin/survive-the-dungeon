@@ -33,7 +33,12 @@ import { Dice } from "./dice";
 import { InstantEffectItem } from "./items";
 import { EN } from "./strings/en";
 
-export type PlayerAction = "normal" | "offensive" | "defensive" | "heal" | "flee";
+export type PlayerAction =
+  | "normal"
+  | "offensive"
+  | "defensive"
+  | "heal"
+  | "flee";
 
 export type CombatLog = {
   text: string;
@@ -54,46 +59,51 @@ export type CombatLuckState = {
 
 export type CombatMoment =
   | {
-    type: "text";
-    text: string;
-    level: "info" | "warn" | "success";
-  }
+      type: "text";
+      text: string;
+      level: "info" | "warn" | "success";
+    }
   | {
-    type: "roll";
-    phase: "to-hit" | "crit-check" | "crit-confirm" | "flee";
-    actor: string;
-    defender: string;
-    roll: number;
-    bonus: number;
-    total: number;
-    target: number;
-    success: boolean;
-  }
+      type: "roll";
+      phase: "to-hit" | "crit-check" | "crit-confirm" | "flee";
+      actor: string;
+      defender: string;
+      roll: number;
+      bonus: number;
+      total: number;
+      target: number;
+      success: boolean;
+    }
   | {
-    type: "damage";
-    actor: string;
-    defender: string;
-    dice: string;
-    roll: number;
-    multiplier: number;
-    final: number;
-    remainingHp: number;
-  }
+      type: "damage";
+      actor: string;
+      defender: string;
+      dice: string;
+      roll: number;
+      multiplier: number;
+      final: number;
+      remainingHp: number;
+    }
   | {
-    type: "heal";
-    actor: string;
-    item: string;
-    amount: number;
-  };
+      type: "heal";
+      actor: string;
+      item: string;
+      amount: number;
+    };
 
 type CombatTurnOptions = {
   enemyAttackMultiplier?: number;
   fleeBonus?: number;
 };
 
-export function armorClassFor(defender: Creature, defenseMultiplier = 1): number {
+export function armorClassFor(
+  defender: Creature,
+  defenseMultiplier = 1,
+): number {
   return Math.ceil(
-    10 + (defender.defenseBonus * defenseMultiplier) + defender.attributes.modifier("dex"),
+    10 +
+      defender.defenseBonus * defenseMultiplier +
+      defender.attributes.modifier("dex"),
   );
 }
 
@@ -101,10 +111,13 @@ export function playerLuckBonusFromState(
   state: CombatLuckState,
   hpRatio: number,
 ): number {
-  const lowRolls = state.playerD20History
-    .filter((roll) => roll <= PLAYER_LUCK_LOW_ROLL_THRESHOLD)
-    .length;
-  const triggerExcess = Math.max(0, lowRolls - PLAYER_LUCK_LOW_ROLL_TRIGGER + 1);
+  const lowRolls = state.playerD20History.filter(
+    (roll) => roll <= PLAYER_LUCK_LOW_ROLL_THRESHOLD,
+  ).length;
+  const triggerExcess = Math.max(
+    0,
+    lowRolls - PLAYER_LUCK_LOW_ROLL_TRIGGER + 1,
+  );
   const historyBonus = Math.min(
     PLAYER_LUCK_MAX_HISTORY_BONUS,
     triggerExcess * PLAYER_LUCK_BONUS_PER_LOW_ROLL,
@@ -122,7 +135,13 @@ export function playerLuckBonusFromState(
     hpBonus += PLAYER_LUCK_CRITICAL_HP_EXTRA_BONUS;
   }
 
-  return Math.max(0, Math.min(PLAYER_LUCK_MAX_TOTAL_BONUS, historyBonus + missStreakBonus + hpBonus));
+  return Math.max(
+    0,
+    Math.min(
+      PLAYER_LUCK_MAX_TOTAL_BONUS,
+      historyBonus + missStreakBonus + hpBonus,
+    ),
+  );
 }
 
 export class Combat {
@@ -147,7 +166,8 @@ export class Combat {
   }
 
   private playerLuckBonus(player: Creature): number {
-    const hpRatio = player.hitpoints / Math.max(1, player.currentMaxHitpoints());
+    const hpRatio =
+      player.hitpoints / Math.max(1, player.currentMaxHitpoints());
     return playerLuckBonusFromState(this.snapshotLuckState(), hpRatio);
   }
 
@@ -181,7 +201,8 @@ export class Combat {
     const attackRoll = this.dice.roll();
 
     // Bug fix from original: use ATTACKER str modifier, not defender str modifier.
-    const attackBonus = attacker.attackBonus + attacker.attributes.modifier("str");
+    const attackBonus =
+      attacker.attackBonus + attacker.attributes.modifier("str");
     const luckBonus = !attacker.mob ? this.playerLuckBonus(attacker) : 0;
     const totalAttackBonus = attackBonus + luckBonus;
 
@@ -203,10 +224,16 @@ export class Combat {
       if (!attacker.mob) {
         const critMultiplier = attacker.getWeaponCriticalMultiplier();
         attackDamageMultiplier = critMultiplier;
-        logs.push({ text: EN.combat.logs.playerCritical(attacker.name, critMultiplier), level: "success" });
+        logs.push({
+          text: EN.combat.logs.playerCritical(attacker.name, critMultiplier),
+          level: "success",
+        });
         moments.push({
           type: "text",
-          text: EN.combat.logs.playerCriticalMoment(attacker.name, critMultiplier),
+          text: EN.combat.logs.playerCriticalMoment(
+            attacker.name,
+            critMultiplier,
+          ),
           level: "success",
         });
         this.recordPlayerD20Roll(attackRoll, true);
@@ -226,9 +253,15 @@ export class Combat {
 
         if (critConfirm > armorClass) {
           attackDamageMultiplier = attacker.getWeaponCriticalMultiplier();
-          logs.push({ text: EN.combat.logs.enemyCritical(attacker.name), level: "success" });
+          logs.push({
+            text: EN.combat.logs.enemyCritical(attacker.name),
+            level: "success",
+          });
         } else {
-          logs.push({ text: EN.combat.logs.enemyCriticalDowngrade(attacker.name), level: "info" });
+          logs.push({
+            text: EN.combat.logs.enemyCriticalDowngrade(attacker.name),
+            level: "info",
+          });
         }
       }
     } else {
@@ -249,31 +282,45 @@ export class Combat {
         this.recordPlayerD20Roll(attackRoll, hit);
       }
       if (!hit) {
-        attackDamageMultiplier *= (Math.max(1, totalAttack) / Math.max(1, armorClass)) * MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER;
+        attackDamageMultiplier *=
+          (Math.max(1, totalAttack) / Math.max(1, armorClass)) *
+          MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER;
         logs.push({
-          text: EN.combat.logs.reducedDamageHit(attacker.name, armorClass, totalAttack),
+          text: EN.combat.logs.reducedDamageHit(
+            attacker.name,
+            armorClass,
+            totalAttack,
+          ),
           level: "warn",
         });
       } else {
-        logs.push({ text: EN.combat.logs.hit(attacker.name, totalAttack, armorClass), level: "success" });
+        logs.push({
+          text: EN.combat.logs.hit(attacker.name, totalAttack, armorClass),
+          level: "success",
+        });
       }
     }
 
     const damageRoll = this.dice.rollNamed(attacker.getWeaponDamage());
     let damage = damageRoll;
     damage = Math.ceil(
-      damage
-      * attackDamageMultiplier
-      * attackMultiplier
-      * attacker.damageDealtMultiplier
-      * defender.damageTakenMultiplier,
+      damage *
+        attackDamageMultiplier *
+        attackMultiplier *
+        attacker.damageDealtMultiplier *
+        defender.damageTakenMultiplier,
     );
 
     const finalDamage = Math.max(1, damage);
     defender.hitpoints -= finalDamage;
     const remainingHp = Math.max(0, defender.hitpoints);
     logs.push({
-      text: EN.combat.logs.damage(attacker.name, finalDamage, defender.name, remainingHp),
+      text: EN.combat.logs.damage(
+        attacker.name,
+        finalDamage,
+        defender.name,
+        remainingHp,
+      ),
       level: "info",
     });
 
@@ -289,7 +336,11 @@ export class Combat {
       defender: defender.name,
       dice: attacker.getWeaponDamage(),
       roll: damageRoll,
-      multiplier: attackDamageMultiplier * attackMultiplier * attacker.damageDealtMultiplier * defender.damageTakenMultiplier,
+      multiplier:
+        attackDamageMultiplier *
+        attackMultiplier *
+        attacker.damageDealtMultiplier *
+        defender.damageTakenMultiplier,
       final: finalDamage,
       remainingHp: remainingHp,
     });
@@ -302,10 +353,17 @@ export class Combat {
     }
   }
 
-  private enemyAction(enemy: Creature): { atk: number; def: number; name: string } {
+  private enemyAction(enemy: Creature): {
+    atk: number;
+    def: number;
+    name: string;
+  } {
     const hpRatio = enemy.hitpoints / Math.max(1, enemy.maxHitpoints);
 
-    if (hpRatio < ENEMY_STYLE_LOW_HP_RATIO && this.dice.roll(1, 100) <= ENEMY_STYLE_GUARDED_CHANCE_PERCENT) {
+    if (
+      hpRatio < ENEMY_STYLE_LOW_HP_RATIO &&
+      this.dice.roll(1, 100) <= ENEMY_STYLE_GUARDED_CHANCE_PERCENT
+    ) {
       return {
         atk: ENEMY_STYLE_GUARDED_ATTACK_MULTIPLIER,
         def: ENEMY_STYLE_GUARDED_DEFENSE_MULTIPLIER,
@@ -328,7 +386,12 @@ export class Combat {
     };
   }
 
-  turn(player: Creature, enemy: Creature, action: PlayerAction, options: CombatTurnOptions = {}): CombatResult {
+  turn(
+    player: Creature,
+    enemy: Creature,
+    action: PlayerAction,
+    options: CombatTurnOptions = {},
+  ): CombatResult {
     const logs: CombatLog[] = [];
     const moments: CombatMoment[] = [];
 
@@ -343,17 +406,28 @@ export class Combat {
       playerAtkMult = COMBAT_OFFENSIVE_ATTACK_MULTIPLIER;
       playerDefMult = COMBAT_OFFENSIVE_DEFENSE_MULTIPLIER;
       logs.push({ text: EN.combat.logs.offensiveStance, level: "warn" });
-      moments.push({ type: "text", text: EN.combat.logs.offensiveStance, level: "warn" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.offensiveStance,
+        level: "warn",
+      });
     } else if (action === "defensive") {
       playerAtkMult = COMBAT_DEFENSIVE_ATTACK_MULTIPLIER;
       playerDefMult = COMBAT_DEFENSIVE_DEFENSE_MULTIPLIER;
       logs.push({ text: EN.combat.logs.defensiveStance, level: "info" });
-      moments.push({ type: "text", text: EN.combat.logs.defensiveStance, level: "info" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.defensiveStance,
+        level: "info",
+      });
     }
 
     if (action === "flee") {
       const fleeRoll = this.dice.roll(1, FLEE_DIE_SIDES);
-      const fleeBonus = player.attributes.modifier("dex") + (options.fleeBonus ?? 0) + this.playerLuckBonus(player);
+      const fleeBonus =
+        player.attributes.modifier("dex") +
+        (options.fleeBonus ?? 0) +
+        this.playerLuckBonus(player);
       const score = fleeRoll + fleeBonus;
       const dc = FLEE_BASE_DC + enemy.attributes.modifier("dex");
       const fleeSuccess = score >= dc;
@@ -370,18 +444,32 @@ export class Combat {
       });
       this.recordPlayerD20Roll(fleeRoll, fleeSuccess);
       if (fleeSuccess) {
-        logs.push({ text: EN.combat.logs.fleeSuccess(score, dc), level: "success" });
-        moments.push({ type: "text", text: EN.combat.logs.fleeSuccessMoment(score, dc), level: "success" });
+        logs.push({
+          text: EN.combat.logs.fleeSuccess(score, dc),
+          level: "success",
+        });
+        moments.push({
+          type: "text",
+          text: EN.combat.logs.fleeSuccessMoment(score, dc),
+          level: "success",
+        });
         return { over: true, fled: true, logs, moments };
       }
       logs.push({ text: EN.combat.logs.fleeFail(score, dc), level: "warn" });
-      moments.push({ type: "text", text: EN.combat.logs.fleeFailMoment(score, dc), level: "warn" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.fleeFailMoment(score, dc),
+        level: "warn",
+      });
     } else if (action === "heal") {
       const heal = player.bestHealItem();
       if (heal) {
         player.inventory.remove(heal);
         const amount = player.applyInstantItem(heal);
-        logs.push({ text: EN.combat.logs.heal(heal.name, amount), level: "success" });
+        logs.push({
+          text: EN.combat.logs.heal(heal.name, amount),
+          level: "success",
+        });
         moments.push({
           type: "heal",
           actor: player.name,
@@ -390,7 +478,11 @@ export class Combat {
         });
       } else {
         logs.push({ text: EN.combat.logs.noHealingItem, level: "warn" });
-        moments.push({ type: "text", text: EN.combat.logs.noHealingMoment, level: "warn" });
+        moments.push({
+          type: "text",
+          text: EN.combat.logs.noHealingMoment,
+          level: "warn",
+        });
       }
     } else {
       this.attack(player, enemy, playerAtkMult, 1.0, logs, moments);

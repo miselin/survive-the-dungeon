@@ -96,7 +96,13 @@ export type ShopRewardChoice = PendingShopRewardChoice;
 
 export type OverlayState =
   | { type: "none" }
-  | { type: "battle"; mobId: string; fallback: Position; roomId: number | null; surpriseProtection: boolean }
+  | {
+      type: "battle";
+      mobId: string;
+      fallback: Position;
+      roomId: number | null;
+      surpriseProtection: boolean;
+    }
   | { type: "chest"; chestId: string }
   | { type: "inventory" }
   | { type: "shop" }
@@ -211,7 +217,8 @@ export class DungeonRun {
       { x: PLAYER_START_X, y: PLAYER_START_Y },
       new AttributeSet(STARTING_ATTRS),
     );
-    this.player.maxHitpoints += this.player.attributes.modifier("con") * PLAYER_CONSTITUTION_BONUS;
+    this.player.maxHitpoints +=
+      this.player.attributes.modifier("con") * PLAYER_CONSTITUTION_BONUS;
     this.player.hitpoints = this.player.maxHitpoints;
 
     this.stats = {
@@ -272,7 +279,10 @@ export class DungeonRun {
 
     this.populateDungeon();
 
-    const startingRoom = this.world.rooms.find((room) => (room.attrs & ROOM_START) === ROOM_START) ?? this.world.rooms[0];
+    const startingRoom =
+      this.world.rooms.find(
+        (room) => (room.attrs & ROOM_START) === ROOM_START,
+      ) ?? this.world.rooms[0];
     this.player.position = roomCenter(startingRoom);
     this.currentRoom = this.world.roomAt(this.player.position);
 
@@ -305,7 +315,9 @@ export class DungeonRun {
     }
   }
 
-  private removeLatestChoice(kind: BuildChoiceKind): BuildChoiceDefinition | null {
+  private removeLatestChoice(
+    kind: BuildChoiceKind,
+  ): BuildChoiceDefinition | null {
     const list = kind === "perk" ? this.activePerks : this.activeGambits;
     const removed = list.pop() ?? null;
     if (!removed) {
@@ -316,12 +328,19 @@ export class DungeonRun {
   }
 
   private openBossReward(): void {
-    this.pendingBossRewards = createPendingBossRewards(this.rng, this.activePerks, this.activeGambits);
+    this.pendingBossRewards = createPendingBossRewards(
+      this.rng,
+      this.activePerks,
+      this.activeGambits,
+    );
     this.overlay = { type: "boss-reward" };
   }
 
   private prepareShopReward(): void {
-    this.pendingShopRewards = createPendingShopRewards(this.activePerks, this.activeGambits);
+    this.pendingShopRewards = createPendingShopRewards(
+      this.activePerks,
+      this.activeGambits,
+    );
     this.overlay = { type: "shop-reward" };
   }
 
@@ -342,8 +361,16 @@ export class DungeonRun {
     this.stats.floorReached = this.floor;
 
     const before = this.player.hitpoints;
-    const heal = Math.max(FLOOR_TRANSITION_HEAL_MINIMUM, Math.floor(this.player.currentMaxHitpoints() * FLOOR_TRANSITION_HEAL_RATIO));
-    this.player.hitpoints = Math.min(this.player.currentMaxHitpoints(), this.player.hitpoints + heal);
+    const heal = Math.max(
+      FLOOR_TRANSITION_HEAL_MINIMUM,
+      Math.floor(
+        this.player.currentMaxHitpoints() * FLOOR_TRANSITION_HEAL_RATIO,
+      ),
+    );
+    this.player.hitpoints = Math.min(
+      this.player.currentMaxHitpoints(),
+      this.player.hitpoints + heal,
+    );
 
     this.player.inBattle = false;
     this.overlay = { type: "none" };
@@ -390,8 +417,13 @@ export class DungeonRun {
     this.log(EN.game.logs.dangerWarning(threat), "warn");
   }
 
-  private startBattle(mobId: string, fallback: Position, roomId: number | null): void {
-    const surpriseProtection = roomId !== null && this.dangerProtectionArmedRooms.has(roomId);
+  private startBattle(
+    mobId: string,
+    fallback: Position,
+    roomId: number | null,
+  ): void {
+    const surpriseProtection =
+      roomId !== null && this.dangerProtectionArmedRooms.has(roomId);
     if (surpriseProtection) {
       this.dangerProtectionArmedRooms.delete(roomId);
     }
@@ -418,14 +450,22 @@ export class DungeonRun {
   }
 
   openShop(): void {
-    if (this.state !== "playing" || !this.canOpenShop() || this.overlay.type !== "none") {
+    if (
+      this.state !== "playing" ||
+      !this.canOpenShop() ||
+      this.overlay.type !== "none"
+    ) {
       return;
     }
     this.overlay = { type: "shop" };
   }
 
   closeOverlay(): void {
-    if (this.overlay.type === "level-up" || this.overlay.type === "boss-reward" || this.overlay.type === "shop-reward") {
+    if (
+      this.overlay.type === "level-up" ||
+      this.overlay.type === "boss-reward" ||
+      this.overlay.type === "shop-reward"
+    ) {
       return;
     }
     this.overlay = { type: "none" };
@@ -440,12 +480,20 @@ export class DungeonRun {
       return;
     }
 
-    const next = { x: this.player.position.x + dx, y: this.player.position.y + dy };
-    if (!this.world.inBounds(next.x, next.y) || !this.world.isPassable(next.x, next.y)) {
+    const next = {
+      x: this.player.position.x + dx,
+      y: this.player.position.y + dy,
+    };
+    if (
+      !this.world.inBounds(next.x, next.y) ||
+      !this.world.isPassable(next.x, next.y)
+    ) {
       return;
     }
 
-    const targetMob = this.mobs.find((mob) => mob.creature.alive && posEq(mob.creature.position, next));
+    const targetMob = this.mobs.find(
+      (mob) => mob.creature.alive && posEq(mob.creature.position, next),
+    );
     if (targetMob) {
       const roomId = this.world.roomAt(targetMob.creature.position)?.id ?? null;
       this.startBattle(targetMob.id, this.player.position, roomId);
@@ -455,7 +503,9 @@ export class DungeonRun {
       return;
     }
 
-    const targetChest = this.chests.find((entry) => posEq(chestPos(entry.chest), next) && !entry.chest.empty());
+    const targetChest = this.chests.find(
+      (entry) => posEq(chestPos(entry.chest), next) && !entry.chest.empty(),
+    );
     if (targetChest) {
       this.overlay = { type: "chest", chestId: targetChest.id };
       this.log(EN.game.logs.openChest, "info");
@@ -509,9 +559,15 @@ export class DungeonRun {
     });
     const battleTrigger = aiStep.battleTrigger;
     if (battleTrigger) {
-      this.startBattle(battleTrigger.mobId, this.player.position, battleTrigger.roomId);
+      this.startBattle(
+        battleTrigger.mobId,
+        this.player.position,
+        battleTrigger.roomId,
+      );
       this.player.inBattle = true;
-      const attacker = this.mobs.find((entry) => entry.id === battleTrigger.mobId);
+      const attacker = this.mobs.find(
+        (entry) => entry.id === battleTrigger.mobId,
+      );
       if (attacker) {
         attacker.creature.inBattle = true;
       }
@@ -556,8 +612,8 @@ export class DungeonRun {
 
   private finalizeStats(): void {
     this.stats.inventoryValue =
-      this.player.inventory.items().reduce((acc, item) => acc + item.value, 0)
-      + Object.values(this.player.wieldpoints)
+      this.player.inventory.items().reduce((acc, item) => acc + item.value, 0) +
+      Object.values(this.player.wieldpoints)
         .filter((item): item is WieldableItem => item instanceof WieldableItem)
         .reduce((acc, item) => acc + item.value, 0);
 
@@ -612,8 +668,12 @@ export class DungeonRun {
     }
 
     return {
-      perks: this.pendingBossRewards.perks.map((choice) => toPublicBuildChoice(choice)),
-      gambits: this.pendingBossRewards.gambits.map((choice) => toPublicBuildChoice(choice)),
+      perks: this.pendingBossRewards.perks.map((choice) =>
+        toPublicBuildChoice(choice),
+      ),
+      gambits: this.pendingBossRewards.gambits.map((choice) =>
+        toPublicBuildChoice(choice),
+      ),
     };
   }
 
@@ -689,15 +749,21 @@ export class DungeonRun {
   }
 
   equipItem(itemId: string): void {
-    equipInventoryItemFromPlayer(this.player, itemId, (text, level) => this.log(text, level));
+    equipInventoryItemFromPlayer(this.player, itemId, (text, level) =>
+      this.log(text, level),
+    );
   }
 
   useInventoryItem(itemId: string): void {
-    useInventoryItemFromPlayer(this.player, itemId, (text, level) => this.log(text, level));
+    useInventoryItemFromPlayer(this.player, itemId, (text, level) =>
+      this.log(text, level),
+    );
   }
 
   destroyInventoryItem(itemId: string): void {
-    destroyInventoryItemFromPlayer(this.player, itemId, (text, level) => this.log(text, level));
+    destroyInventoryItemFromPlayer(this.player, itemId, (text, level) =>
+      this.log(text, level),
+    );
   }
 
   lootItem(itemId: string): void {
@@ -730,7 +796,11 @@ export class DungeonRun {
   }
 
   shopEntries(): ShopEntry[] {
-    return resolveShopEntries(this.shopStock, this.activePerks, this.activeGambits);
+    return resolveShopEntries(
+      this.shopStock,
+      this.activePerks,
+      this.activeGambits,
+    );
   }
 
   shopEntryCost(entry: ShopEntry): number {
@@ -817,7 +887,11 @@ export class DungeonRun {
     }
 
     run.activePerks.splice(0, run.activePerks.length, ...decoded.activePerks);
-    run.activeGambits.splice(0, run.activeGambits.length, ...decoded.activeGambits);
+    run.activeGambits.splice(
+      0,
+      run.activeGambits.length,
+      ...decoded.activeGambits,
+    );
 
     run.pendingBossRewards = decoded.pendingBossRewards;
     run.pendingShopRewards = decoded.pendingShopRewards;
@@ -829,9 +903,11 @@ export class DungeonRun {
 
     run.combat.restoreLuckState(decoded.combatLuck);
 
-    run.currentRoom = decoded.currentRoomId === null
-      ? null
-      : run.world.rooms.find((room) => room.id === decoded.currentRoomId) ?? run.world.roomAt(run.player.position);
+    run.currentRoom =
+      decoded.currentRoomId === null
+        ? null
+        : (run.world.rooms.find((room) => room.id === decoded.currentRoomId) ??
+          run.world.roomAt(run.player.position));
 
     run.rng.setState(decoded.rngState);
     entityId = Math.max(1, Math.floor(decoded.nextEntityId));

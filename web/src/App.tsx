@@ -3,7 +3,11 @@ import type { CombatMoment, PlayerAction } from "./combat";
 import { resizeRunCanvas } from "./canvas";
 import { installDebugBridge } from "./debugBridge";
 import { renderDungeonMap } from "./dungeonRenderer";
-import { DungeonRun, type LevelUpAttribute, type ShopRewardChoice } from "./game";
+import {
+  DungeonRun,
+  type LevelUpAttribute,
+  type ShopRewardChoice,
+} from "./game";
 import { installGlobalInputHandlers } from "./inputHandlers";
 import {
   buildSaveUrl,
@@ -708,9 +712,10 @@ export function App() {
   if (!activeRun) {
     return null;
   }
-  const panelRun = combatFxRef.current && combatFxSnapshotRunRef.current
-    ? combatFxSnapshotRunRef.current
-    : activeRun;
+  const panelRun =
+    combatFxRef.current && combatFxSnapshotRunRef.current
+      ? combatFxSnapshotRunRef.current
+      : activeRun;
 
   return (
     <div key={runMountVersion}>

@@ -4,6 +4,7 @@ import abc
 import typing
 from typing import Any, List
 
+from .constants import PLAYER_CRIT_MINIMUM_MULTIPLIER
 from .dice import Dice
 from .types import Position, Wieldpoint
 
@@ -167,7 +168,7 @@ class Weapon(WieldableItem):
         self,
         name="Unknown Weapon",
         critrange=20,
-        critmult=2,
+        critmult=PLAYER_CRIT_MINIMUM_MULTIPLIER,
         attackbonus=4,
         defensebonus=-1,
         dam="1d6",
@@ -175,7 +176,7 @@ class Weapon(WieldableItem):
         super().__init__(name, attackbonus, defensebonus)
 
         self.critrange = critrange
-        self.critmult = critmult
+        self.critmult = max(PLAYER_CRIT_MINIMUM_MULTIPLIER, critmult)
         self.dam = dam
 
     def __repr__(self):

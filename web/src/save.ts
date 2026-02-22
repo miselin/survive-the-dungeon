@@ -17,11 +17,10 @@ function bytesToBase64Url(bytes: Uint8Array): string {
 }
 
 function base64UrlToBytes(input: string): Uint8Array {
-  const normalized = input
-    .replaceAll("-", "+")
-    .replaceAll("_", "/");
+  const normalized = input.replaceAll("-", "+").replaceAll("_", "/");
   const padding = normalized.length % 4;
-  const padded = padding === 0 ? normalized : `${normalized}${"=".repeat(4 - padding)}`;
+  const padded =
+    padding === 0 ? normalized : `${normalized}${"=".repeat(4 - padding)}`;
   const binary = atob(padded);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) {
@@ -77,7 +76,10 @@ export function extractSaveToken(value: string): string | null {
   return trimmed;
 }
 
-export function buildSaveUrl(token: string, locationLike: Pick<Location, "origin" | "pathname">): string {
+export function buildSaveUrl(
+  token: string,
+  locationLike: Pick<Location, "origin" | "pathname">,
+): string {
   const url = new URL(locationLike.pathname, locationLike.origin);
   url.searchParams.set(SAVE_QUERY_PARAM, token);
   return url.toString();

@@ -44,7 +44,9 @@ function moveByKey(activeRun: DungeonRun, key: string): boolean {
   return false;
 }
 
-export function installGlobalInputHandlers(options: GlobalInputHandlersOptions): void {
+export function installGlobalInputHandlers(
+  options: GlobalInputHandlersOptions,
+): void {
   window.addEventListener("keydown", (event) => {
     const activeRun = options.getRun();
     if (!activeRun) {

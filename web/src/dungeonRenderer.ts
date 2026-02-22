@@ -48,7 +48,10 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   const spritesReady = allSpritesReady();
-  const tile = Math.max(16, Math.floor(Math.min(canvas.width / 28, canvas.height / 18)));
+  const tile = Math.max(
+    16,
+    Math.floor(Math.min(canvas.width / 28, canvas.height / 18)),
+  );
   const view = getViewport(
     activeRun.player.position,
     activeRun.world.width,
@@ -92,7 +95,10 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
     worldX: number,
     worldY: number,
   ): void => {
-    if (!activeRun.world.inBounds(worldX, worldY) || !inViewport(worldX, worldY)) {
+    if (
+      !activeRun.world.inBounds(worldX, worldY) ||
+      !inViewport(worldX, worldY)
+    ) {
       return;
     }
 
@@ -114,23 +120,34 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
     }
   };
 
-  const drawTileAccent = (x: number, y: number, roomAttrs: number, visible: boolean): void => {
+  const drawTileAccent = (
+    x: number,
+    y: number,
+    roomAttrs: number,
+    visible: boolean,
+  ): void => {
     const pos = screenPos(x, y);
 
     if ((roomAttrs & ROOM_SHOP) === ROOM_SHOP) {
-      context.fillStyle = visible ? "rgba(230, 178, 86, 0.18)" : "rgba(156, 115, 54, 0.11)";
+      context.fillStyle = visible
+        ? "rgba(230, 178, 86, 0.18)"
+        : "rgba(156, 115, 54, 0.11)";
       context.fillRect(pos.x, pos.y, tile, tile);
       return;
     }
 
     if ((roomAttrs & ROOM_BOSS) === ROOM_BOSS) {
-      context.fillStyle = visible ? "rgba(183, 80, 88, 0.16)" : "rgba(122, 53, 60, 0.11)";
+      context.fillStyle = visible
+        ? "rgba(183, 80, 88, 0.16)"
+        : "rgba(122, 53, 60, 0.11)";
       context.fillRect(pos.x, pos.y, tile, tile);
       return;
     }
 
     if ((roomAttrs & ROOM_START) === ROOM_START) {
-      context.fillStyle = visible ? "rgba(104, 178, 205, 0.14)" : "rgba(72, 124, 146, 0.1)";
+      context.fillStyle = visible
+        ? "rgba(104, 178, 205, 0.14)"
+        : "rgba(72, 124, 146, 0.1)";
       context.fillRect(pos.x, pos.y, tile, tile);
       return;
     }
@@ -142,12 +159,20 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
     const threat = activeRun.getRoomThreat(room);
     const threatDelta = threat - activeRun.player.level;
     if (threatDelta >= 3) {
-      context.fillStyle = visible ? "rgba(181, 99, 56, 0.12)" : "rgba(117, 66, 38, 0.08)";
+      context.fillStyle = visible
+        ? "rgba(181, 99, 56, 0.12)"
+        : "rgba(117, 66, 38, 0.08)";
       context.fillRect(pos.x, pos.y, tile, tile);
     }
   };
 
-  const drawRoomLandmark = (room: { x: number; y: number; w: number; h: number; attrs: number }): void => {
+  const drawRoomLandmark = (room: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    attrs: number;
+  }): void => {
     const cx = room.x + Math.floor(room.w / 2);
     const cy = room.y + Math.floor(room.h / 2);
     if (!activeRun.world.inBounds(cx, cy) || !inViewport(cx, cy)) {
@@ -165,18 +190,29 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
     const py = (cy - view.top) * tile;
 
     if ((room.attrs & ROOM_SHOP) === ROOM_SHOP) {
-      context.fillStyle = visible ? "rgba(241, 203, 119, 0.22)" : "rgba(160, 129, 77, 0.13)";
+      context.fillStyle = visible
+        ? "rgba(241, 203, 119, 0.22)"
+        : "rgba(160, 129, 77, 0.13)";
       context.beginPath();
-      context.arc(px + (tile / 2), py + (tile / 2), tile * 0.48, 0, Math.PI * 2);
+      context.arc(px + tile / 2, py + tile / 2, tile * 0.48, 0, Math.PI * 2);
       context.fill();
-      context.strokeStyle = visible ? "rgba(246, 225, 166, 0.7)" : "rgba(188, 160, 108, 0.35)";
+      context.strokeStyle = visible
+        ? "rgba(246, 225, 166, 0.7)"
+        : "rgba(188, 160, 108, 0.35)";
       context.lineWidth = Math.max(1, Math.floor(tile / 10));
       context.beginPath();
-      context.arc(px + (tile / 2), py + (tile / 2), tile * 0.28, 0, Math.PI * 2);
+      context.arc(px + tile / 2, py + tile / 2, tile * 0.28, 0, Math.PI * 2);
       context.stroke();
 
       if (spritesReady) {
-        drawSheetSprite(context, "props", SPRITE_IDS.props.shopClutter[7], px, py, tile);
+        drawSheetSprite(
+          context,
+          "props",
+          SPRITE_IDS.props.shopClutter[7],
+          px,
+          py,
+          tile,
+        );
         const props = [
           { dx: -1, dy: 0, sprite: SPRITE_IDS.props.shopClutter[0] },
           { dx: 1, dy: 0, sprite: SPRITE_IDS.props.shopClutter[1] },
@@ -204,28 +240,37 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
         }
       } else {
         context.fillStyle = visible ? "#d0a65a" : "#8f7342";
-        context.fillRect(px + (tile * 0.27), py + (tile * 0.27), tile * 0.46, tile * 0.46);
+        context.fillRect(
+          px + tile * 0.27,
+          py + tile * 0.27,
+          tile * 0.46,
+          tile * 0.46,
+        );
       }
       return;
     }
 
     if ((room.attrs & ROOM_BOSS) === ROOM_BOSS) {
-      context.strokeStyle = visible ? "rgba(201, 112, 122, 0.65)" : "rgba(130, 78, 84, 0.34)";
+      context.strokeStyle = visible
+        ? "rgba(201, 112, 122, 0.65)"
+        : "rgba(130, 78, 84, 0.34)";
       context.lineWidth = Math.max(1, Math.floor(tile / 12));
       context.beginPath();
-      context.moveTo(px + (tile * 0.2), py + (tile * 0.2));
-      context.lineTo(px + (tile * 0.8), py + (tile * 0.8));
-      context.moveTo(px + (tile * 0.8), py + (tile * 0.2));
-      context.lineTo(px + (tile * 0.2), py + (tile * 0.8));
+      context.moveTo(px + tile * 0.2, py + tile * 0.2);
+      context.lineTo(px + tile * 0.8, py + tile * 0.8);
+      context.moveTo(px + tile * 0.8, py + tile * 0.2);
+      context.lineTo(px + tile * 0.2, py + tile * 0.8);
       context.stroke();
       return;
     }
 
     if ((room.attrs & ROOM_START) === ROOM_START) {
-      context.strokeStyle = visible ? "rgba(136, 204, 229, 0.62)" : "rgba(91, 138, 156, 0.35)";
+      context.strokeStyle = visible
+        ? "rgba(136, 204, 229, 0.62)"
+        : "rgba(91, 138, 156, 0.35)";
       context.lineWidth = Math.max(1, Math.floor(tile / 12));
       context.beginPath();
-      context.arc(px + (tile / 2), py + (tile / 2), tile * 0.22, 0, Math.PI * 2);
+      context.arc(px + tile / 2, py + tile / 2, tile * 0.22, 0, Math.PI * 2);
       context.stroke();
     }
   };
@@ -271,7 +316,8 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
         continue;
       }
 
-      const room = tileType === TileType.Room ? activeRun.world.roomAt({ x, y }) : null;
+      const room =
+        tileType === TileType.Room ? activeRun.world.roomAt({ x, y }) : null;
       if (room) {
         drawTileAccent(x, y, room.attrs, visible);
       }
@@ -292,8 +338,12 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
       }
 
       context.strokeStyle = spritesReady
-        ? (visible ? "rgba(171, 212, 220, 0.28)" : "rgba(106, 136, 143, 0.22)")
-        : (visible ? "#87b2a3" : "#385449");
+        ? visible
+          ? "rgba(171, 212, 220, 0.28)"
+          : "rgba(106, 136, 143, 0.22)"
+        : visible
+          ? "#87b2a3"
+          : "#385449";
       context.lineWidth = Math.max(1, Math.floor(tile / 12));
 
       if (!activeRun.world.isPassable(x, y - 1)) {
@@ -345,7 +395,12 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
       drawSheetSprite(context, "props", clutter.sprite, px, py, tile);
     } else {
       context.fillStyle = "#7f6950";
-      context.fillRect(px + (tile * 0.2), py + (tile * 0.2), tile * 0.6, tile * 0.6);
+      context.fillRect(
+        px + tile * 0.2,
+        py + tile * 0.2,
+        tile * 0.6,
+        tile * 0.6,
+      );
     }
   }
 
@@ -368,14 +423,21 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
       drawSheetSprite(
         context,
         "items",
-        chest.chest.empty() ? SPRITE_IDS.items.chestOpen : SPRITE_IDS.items.chestClosed,
+        chest.chest.empty()
+          ? SPRITE_IDS.items.chestOpen
+          : SPRITE_IDS.items.chestClosed,
         px,
         py,
         tile,
       );
     } else {
       context.fillStyle = chest.chest.empty() ? "#6f7f8d" : "#d2a444";
-      context.fillRect(px + (tile * 0.2), py + (tile * 0.2), tile * 0.6, tile * 0.6);
+      context.fillRect(
+        px + tile * 0.2,
+        py + tile * 0.2,
+        tile * 0.6,
+        tile * 0.6,
+      );
     }
   }
 
@@ -384,7 +446,10 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
       continue;
     }
 
-    const idx = activeRun.world.idx(mob.creature.position.x, mob.creature.position.y);
+    const idx = activeRun.world.idx(
+      mob.creature.position.x,
+      mob.creature.position.y,
+    );
     if (!revealAll && activeRun.world.visible[idx] !== 1) {
       continue;
     }
@@ -403,20 +468,25 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
       if (bossMob) {
         context.strokeStyle = "rgba(246, 215, 136, 0.94)";
         context.lineWidth = Math.max(1, Math.floor(tile / 10));
-        context.strokeRect(px + (tile * 0.14), py + (tile * 0.14), tile * 0.72, tile * 0.72);
+        context.strokeRect(
+          px + tile * 0.14,
+          py + tile * 0.14,
+          tile * 0.72,
+          tile * 0.72,
+        );
 
         context.fillStyle = "rgba(242, 201, 111, 0.94)";
         context.beginPath();
-        context.moveTo(px + (tile * 0.5), py + (tile * 0.1));
-        context.lineTo(px + (tile * 0.62), py + (tile * 0.3));
-        context.lineTo(px + (tile * 0.38), py + (tile * 0.3));
+        context.moveTo(px + tile * 0.5, py + tile * 0.1);
+        context.lineTo(px + tile * 0.62, py + tile * 0.3);
+        context.lineTo(px + tile * 0.38, py + tile * 0.3);
         context.closePath();
         context.fill();
       }
     } else {
       context.fillStyle = bossMob ? "#d16a32" : "#c74646";
       context.beginPath();
-      context.arc(px + (tile / 2), py + (tile / 2), tile * 0.3, 0, Math.PI * 2);
+      context.arc(px + tile / 2, py + tile / 2, tile * 0.3, 0, Math.PI * 2);
       context.fill();
     }
   }
@@ -427,9 +497,21 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
   const playerY = playerRow * tile;
 
   if (spritesReady) {
-    drawSheetSprite(context, "chars", SPRITE_IDS.chars.player, playerX, playerY, tile);
+    drawSheetSprite(
+      context,
+      "chars",
+      SPRITE_IDS.chars.player,
+      playerX,
+      playerY,
+      tile,
+    );
   } else {
     context.fillStyle = "#f0f4f8";
-    context.fillRect(playerX + (tile * 0.2), playerY + (tile * 0.2), tile * 0.6, tile * 0.6);
+    context.fillRect(
+      playerX + tile * 0.2,
+      playerY + tile * 0.2,
+      tile * 0.6,
+      tile * 0.6,
+    );
   }
 }

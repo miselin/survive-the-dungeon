@@ -10,6 +10,7 @@ from .attributes import AttributeSet
 from .constants import (
     CREATURE_GOLD_MULTIPLIER,
     CREATURE_GOLD_SCALER,
+    PLAYER_CRIT_MINIMUM_MULTIPLIER,
     PLAYER_HP_HEAL_ON_LEVEL_UP,
     PLAYER_HP_PER_LEVEL_MULTIPLIER,
     PLAYER_INITIAL_HP,
@@ -186,9 +187,12 @@ class Creature:
 
         # Unarmed combat will always have a 2x damage critical
         if self.wieldpoints["hands"] is None:
-            return 2
+            return PLAYER_CRIT_MINIMUM_MULTIPLIER
 
-        critmult = self.wieldpoints["hands"].critical_multiplier()
+        critmult = max(
+            PLAYER_CRIT_MINIMUM_MULTIPLIER,
+            self.wieldpoints["hands"].critical_multiplier(),
+        )
         if self.mob:
             # Mobs with a crit multiplier that's too high can one-shot players.
             # Let's limit the multiplier for now to mitigate that.

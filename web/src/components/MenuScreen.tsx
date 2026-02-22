@@ -31,9 +31,20 @@ export function MenuScreen(props: MenuScreenProps) {
           }}
         />
         <div className="menu-actions">
-          <button id="start-run" type="button" onClick={props.onStart}>{EN.ui.startRunButton}</button>
-          <button id="load-run" type="button" onClick={props.onLoad}>{EN.ui.buttons.load}</button>
-          <button id="resume-latest" type="button" disabled={!props.hasLatestSave} onClick={props.onResumeLatest}>{EN.ui.buttons.resumeLast}</button>
+          <button id="start-run" type="button" onClick={props.onStart}>
+            {EN.ui.startRunButton}
+          </button>
+          <button id="load-run" type="button" onClick={props.onLoad}>
+            {EN.ui.buttons.load}
+          </button>
+          <button
+            id="resume-latest"
+            type="button"
+            disabled={!props.hasLatestSave}
+            onClick={props.onResumeLatest}
+          >
+            {EN.ui.buttons.resumeLast}
+          </button>
         </div>
         <p className="menu-help">{EN.ui.menuHelp}</p>
       </div>

@@ -14,7 +14,9 @@ export function Window(props: WindowProps) {
       </header>
       <div className="window-content">
         <div className="window-body">{props.children}</div>
-        {props.actions ? <div className="row-actions">{props.actions}</div> : null}
+        {props.actions ? (
+          <div className="row-actions">{props.actions}</div>
+        ) : null}
       </div>
     </div>
   );

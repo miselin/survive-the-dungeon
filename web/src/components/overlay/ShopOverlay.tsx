@@ -14,7 +14,11 @@ export function ShopOverlay(props: ShopOverlayProps) {
   return (
     <Window
       title={EN.ui.overlays.shop.title}
-      actions={<button type="button" onClick={props.onClose}>{EN.ui.buttons.close}</button>}
+      actions={
+        <button type="button" onClick={props.onClose}>
+          {EN.ui.buttons.close}
+        </button>
+      }
     >
       <ul className="item-list shop">
         {entries.map((entry) => {

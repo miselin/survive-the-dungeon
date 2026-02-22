@@ -1,5 +1,8 @@
 import type { AttributeName } from "../attributes";
-import { SHOP_REWARD_FALLBACK_GOLD, SHOP_REWARD_HEAL_FALLBACK_RATIO } from "../constants";
+import {
+  SHOP_REWARD_FALLBACK_GOLD,
+  SHOP_REWARD_HEAL_FALLBACK_RATIO,
+} from "../constants";
 
 const attributeLabels: Record<AttributeName, string> = {
   str: "Strength",
@@ -22,7 +25,8 @@ const attributeDescriptions: Record<AttributeName, string> = {
 export const EN = {
   ui: {
     appTitle: "Survive the Dungeon",
-    menuSubtitle: "Descend floor by floor, gather gear, and survive the boss gauntlet.",
+    menuSubtitle:
+      "Descend floor by floor, gather gear, and survive the boss gauntlet.",
     seedInputLabel: "Seed phrase (optional)",
     seedInputPlaceholder: "e.g. goblin-market-17",
     startRunButton: "Start Run",
@@ -111,7 +115,8 @@ export const EN = {
       floorReached: "Floor reached",
     },
     compare: {
-      hoverHint: "Hover or focus an Equip button to compare with your currently wielded gear.",
+      hoverHint:
+        "Hover or focus an Equip button to compare with your currently wielded gear.",
       atkBonus: "ATK Bonus",
       defBonus: "DEF Bonus",
       damageAvg: "Damage Avg",
@@ -140,21 +145,31 @@ export const EN = {
         title: (enemyName: string): string => `Battle: ${enemyName}`,
         noTargetTitle: "Battle",
         noTargetBody: "No target.",
-        yourHp: (current: number, max: number): string => `Your HP: ${current}/${max}`,
-        enemyHp: (current: number, max: number): string => `Enemy HP: ${current}/${max}`,
-        ambushProtectionHint: "Ambush protection active: enemy opening strike weakened and flee is easier.",
+        yourHp: (current: number, max: number): string =>
+          `Your HP: ${current}/${max}`,
+        enemyHp: (current: number, max: number): string =>
+          `Enemy HP: ${current}/${max}`,
+        ambushProtectionHint:
+          "Ambush protection active: enemy opening strike weakened and flee is easier.",
         healChoice: (choice: string): string => `Heal choice: ${choice}`,
         actions: {
           normal: { label: "Normal", subtitle: "1.0x damage, 1.0x defense" },
-          offensive: { label: "Offensive", subtitle: "2.0x damage, 0.3x defense" },
-          defensive: { label: "Defensive", subtitle: "0.5x damage, 1.5x defense" },
+          offensive: {
+            label: "Offensive",
+            subtitle: "2.0x damage, 0.3x defense",
+          },
+          defensive: {
+            label: "Defensive",
+            subtitle: "0.5x damage, 1.5x defense",
+          },
           heal: { label: "Heal", subtitle: "Use best healing item" },
           flee: { label: "Flee", subtitle: "Dexterity check to escape" },
         },
       },
       levelUp: {
         title: "Level Up",
-        body: (unspent: number): string => `Spend your stat point to shape your build. Unspent: ${unspent}`,
+        body: (unspent: number): string =>
+          `Spend your stat point to shape your build. Unspent: ${unspent}`,
         spend: (label: string): string => `+1 ${label}`,
       },
       bossReward: {
@@ -196,35 +211,64 @@ export const EN = {
       verdictSuccess: "Success",
       verdictFail: "Fail",
       damageRollTitle: (actor: string): string => `${actor} damage roll`,
-      damageRollDetail: (roll: number, multiplier: number, final: number, defender: string, remainingHp: number): string =>
+      damageRollDetail: (
+        roll: number,
+        multiplier: number,
+        final: number,
+        defender: string,
+        remainingHp: number,
+      ): string =>
         `${roll} x ${multiplier.toFixed(2)} = ${final} damage to ${defender} (now ${remainingHp} HP)`,
       healTitle: (actor: string): string => `${actor} heals`,
-      healDetail: (item: string, amount: number): string => `${item} restores ${amount} HP`,
+      healDetail: (item: string, amount: number): string =>
+        `${item} restores ${amount} HP`,
     },
   },
   combat: {
     logs: {
-      playerCritical: (attacker: string, multiplier: number): string => `${attacker} rolls a CRITICAL hit! Damage x${multiplier}.`,
+      playerCritical: (attacker: string, multiplier: number): string =>
+        `${attacker} rolls a CRITICAL hit! Damage x${multiplier}.`,
       playerCriticalMoment: (attacker: string, multiplier: number): string =>
         `${attacker} rolls a critical hit! Damage multiplied by ${multiplier}x.`,
-      enemyCritical: (attacker: string): string => `${attacker} lands a CRITICAL hit!`,
-      enemyCriticalDowngrade: (attacker: string): string => `${attacker} almost crit, but only lands a normal hit.`,
-      reducedDamageHit: (attacker: string, armorClass: number, totalAttack: number): string =>
+      enemyCritical: (attacker: string): string =>
+        `${attacker} lands a CRITICAL hit!`,
+      enemyCriticalDowngrade: (attacker: string): string =>
+        `${attacker} almost crit, but only lands a normal hit.`,
+      reducedDamageHit: (
+        attacker: string,
+        armorClass: number,
+        totalAttack: number,
+      ): string =>
         `${attacker} fails to beat AC ${armorClass} (${totalAttack}) and deals reduced damage.`,
-      hit: (attacker: string, totalAttack: number, armorClass: number): string => `${attacker} hits (${totalAttack} vs AC ${armorClass}).`,
-      damage: (attacker: string, damage: number, defender: string, remainingHp: number): string =>
+      hit: (
+        attacker: string,
+        totalAttack: number,
+        armorClass: number,
+      ): string => `${attacker} hits (${totalAttack} vs AC ${armorClass}).`,
+      damage: (
+        attacker: string,
+        damage: number,
+        defender: string,
+        remainingHp: number,
+      ): string =>
         `${attacker} deals ${damage} damage to ${defender} (now ${remainingHp} HP).`,
       falls: (defender: string): string => `${defender} falls.`,
       offensiveStance: "You commit to an offensive strike.",
       defensiveStance: "You take a defensive stance.",
-      fleeSuccess: (score: number, dc: number): string => `You escape (roll ${score} vs ${dc}).`,
-      fleeSuccessMoment: (score: number, dc: number): string => `Escape succeeded (${score} vs ${dc}).`,
-      fleeFail: (score: number, dc: number): string => `Retreat failed (roll ${score} vs ${dc}).`,
-      fleeFailMoment: (score: number, dc: number): string => `Escape failed (${score} vs ${dc}).`,
-      heal: (itemName: string, amount: number): string => `You use ${itemName} and restore ${amount} HP.`,
+      fleeSuccess: (score: number, dc: number): string =>
+        `You escape (roll ${score} vs ${dc}).`,
+      fleeSuccessMoment: (score: number, dc: number): string =>
+        `Escape succeeded (${score} vs ${dc}).`,
+      fleeFail: (score: number, dc: number): string =>
+        `Retreat failed (roll ${score} vs ${dc}).`,
+      fleeFailMoment: (score: number, dc: number): string =>
+        `Escape failed (${score} vs ${dc}).`,
+      heal: (itemName: string, amount: number): string =>
+        `You use ${itemName} and restore ${amount} HP.`,
       noHealingItem: "You have no healing item.",
       noHealingMoment: "No healing item available.",
-      enemyStyle: (enemyName: string, styleName: string): string => `${enemyName} uses ${styleName}.`,
+      enemyStyle: (enemyName: string, styleName: string): string =>
+        `${enemyName} uses ${styleName}.`,
     },
     enemyStyles: {
       guarded: "guarded strike",
@@ -232,7 +276,8 @@ export const EN = {
       steady: "steady attack",
     },
     healChoiceNone: "No healing item",
-    healChoiceItem: (itemName: string, hpBoost: number): string => `${itemName} (+${hpBoost} HP)`,
+    healChoiceItem: (itemName: string, hpBoost: number): string =>
+      `${itemName} (+${hpBoost} HP)`,
   },
   game: {
     names: {
@@ -327,19 +372,25 @@ export const EN = {
         },
         removePerk: {
           title: "Reforge Perk",
-          description: (perkName: string): string => `Remove your latest Perk: ${perkName}.`,
-          fallback: (): string => `No Perk active. Gain ${SHOP_REWARD_FALLBACK_GOLD} gold instead.`,
+          description: (perkName: string): string =>
+            `Remove your latest Perk: ${perkName}.`,
+          fallback: (): string =>
+            `No Perk active. Gain ${SHOP_REWARD_FALLBACK_GOLD} gold instead.`,
         },
         removeGambit: {
           title: "Cleanse Gambit",
-          description: (gambitName: string): string => `Remove your latest Gambit: ${gambitName}.`,
-          fallback: (): string => `No Gambit active. Restore ${Math.round(SHOP_REWARD_HEAL_FALLBACK_RATIO * 100)}% HP instead.`,
+          description: (gambitName: string): string =>
+            `Remove your latest Gambit: ${gambitName}.`,
+          fallback: (): string =>
+            `No Gambit active. Restore ${Math.round(SHOP_REWARD_HEAL_FALLBACK_RATIO * 100)}% HP instead.`,
         },
       },
       descriptions: {
-        removePerk: (perkName: string): string => `Remove your latest Perk: ${perkName}.`,
+        removePerk: (perkName: string): string =>
+          `Remove your latest Perk: ${perkName}.`,
         removePerkNone: "No active Perk to remove right now.",
-        removeGambit: (gambitName: string): string => `Remove your latest Gambit: ${gambitName}.`,
+        removeGambit: (gambitName: string): string =>
+          `Remove your latest Gambit: ${gambitName}.`,
         removeGambitNone: "No active Gambit to remove right now.",
       },
     },
@@ -351,7 +402,8 @@ export const EN = {
     ],
     logs: {
       descendFloor: (floor: number): string => `You descend to floor ${floor}.`,
-      breathRecover: (healed: number): string => `You catch your breath and recover ${healed} HP.`,
+      breathRecover: (healed: number): string =>
+        `You catch your breath and recover ${healed} HP.`,
       dangerWarning: (threat: number): string =>
         `You sense overwhelming danger here. Recommended level ${threat}. First contact grants ambush protection.`,
       engageEnemy: (enemyName: string): string => `You engage ${enemyName}.`,
@@ -360,27 +412,42 @@ export const EN = {
       enterShopRoom: "You find the shop room.",
       shopkeeperTuneup: "The shopkeeper offers a free build tune-up.",
       enemyAttacks: (enemyName: string): string => `${enemyName} attacks you!`,
-      dangerSenseProtected: "Your danger sense blunts the ambush. Enemy opening strike is weakened.",
+      dangerSenseProtected:
+        "Your danger sense blunts the ambush. Enemy opening strike is weakened.",
       retreat: "You break line of engagement and retreat.",
-      welcomeLevel: (level: number, points: number): string => `Welcome to level ${level}. (${points} point${points === 1 ? "" : "s"} to spend)`,
-      lootKillRewards: (gold: number, xp: number): string => `Looted ${gold} gold and gained ${xp} XP.`,
-      bossDownChooseReward: "The floor boss is down. Choose a Perk, a Gambit, or descend unchanged.",
-      enemiesRemain: (count: number, floor: number): string => `${count} enemies remain on floor ${floor}.`,
-      descendWithoutModifier: "You descend without taking a new build modifier.",
-      selectedBuildChoice: (kindLabel: string, name: string): string => `Selected ${kindLabel}: ${name}.`,
+      welcomeLevel: (level: number, points: number): string =>
+        `Welcome to level ${level}. (${points} point${points === 1 ? "" : "s"} to spend)`,
+      lootKillRewards: (gold: number, xp: number): string =>
+        `Looted ${gold} gold and gained ${xp} XP.`,
+      bossDownChooseReward:
+        "The floor boss is down. Choose a Perk, a Gambit, or descend unchanged.",
+      enemiesRemain: (count: number, floor: number): string =>
+        `${count} enemies remain on floor ${floor}.`,
+      descendWithoutModifier:
+        "You descend without taking a new build modifier.",
+      selectedBuildChoice: (kindLabel: string, name: string): string =>
+        `Selected ${kindLabel}: ${name}.`,
       shopRewardBonusPoint: "Shop reward: +1 stat point.",
-      shopRewardRemovedPerk: (name: string): string => `Shop reward: removed Perk ${name}.`,
-      shopRewardPerkFallbackGold: (): string => `No Perk to remove. You receive ${SHOP_REWARD_FALLBACK_GOLD} gold instead.`,
-      shopRewardRemovedGambit: (name: string): string => `Shop reward: removed Gambit ${name}.`,
-      shopRewardGambitFallbackHeal: (amount: number): string => `No Gambit to remove. Restored ${amount} HP instead.`,
-      levelUpSpent: (label: string): string => `Level-up point spent on ${label}.`,
-      equippedItem: (itemName: string, slot: string): string => `Equipped ${itemName} at ${slot}.`,
-      inventoryItemRestored: (itemName: string, healed: number): string => `${itemName} restored ${healed} HP.`,
+      shopRewardRemovedPerk: (name: string): string =>
+        `Shop reward: removed Perk ${name}.`,
+      shopRewardPerkFallbackGold: (): string =>
+        `No Perk to remove. You receive ${SHOP_REWARD_FALLBACK_GOLD} gold instead.`,
+      shopRewardRemovedGambit: (name: string): string =>
+        `Shop reward: removed Gambit ${name}.`,
+      shopRewardGambitFallbackHeal: (amount: number): string =>
+        `No Gambit to remove. Restored ${amount} HP instead.`,
+      levelUpSpent: (label: string): string =>
+        `Level-up point spent on ${label}.`,
+      equippedItem: (itemName: string, slot: string): string =>
+        `Equipped ${itemName} at ${slot}.`,
+      inventoryItemRestored: (itemName: string, healed: number): string =>
+        `${itemName} restored ${healed} HP.`,
       destroyedItem: (itemName: string): string => `Destroyed ${itemName}.`,
       lootedGold: (amount: number): string => `Looted ${amount} gold.`,
       lootedItem: (itemName: string): string => `Looted ${itemName}.`,
       inventoryFull: "Inventory is full.",
-      inventoryFullChestLeftovers: "Inventory is full. Some items were left in the chest.",
+      inventoryFullChestLeftovers:
+        "Inventory is full. Some items were left in the chest.",
       lootedAllChest: "Looted all chest contents.",
       notEnoughGold: "Not enough gold for that purchase.",
       boughtRespecToken: "Purchased a +1 stat point respec token.",
@@ -388,7 +455,8 @@ export const EN = {
       removedPerk: (name: string): string => `Removed Perk ${name}.`,
       noActiveGambitToRemove: "No active Gambit to remove.",
       removedGambit: (name: string): string => `Removed Gambit ${name}.`,
-      purchasedEntry: (name: string, cost: number): string => `Purchased ${name} for ${cost} gold.`,
+      purchasedEntry: (name: string, cost: number): string =>
+        `Purchased ${name} for ${cost} gold.`,
       goldCannotBePurchased: "Gold cannot be purchased.",
     },
   },

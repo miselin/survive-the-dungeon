@@ -64,7 +64,10 @@ type DebugBridge = {
   moveToRoom: (kind: "shop" | "boss") => DebugMoveResult;
   moveToMob: (mobId?: string) => DebugMoveResult;
   moveToChest: (chestId?: string) => DebugMoveResult;
-  resolveCombat: (action?: "normal" | "offensive" | "defensive" | "heal" | "flee", maxRounds?: number) => {
+  resolveCombat: (
+    action?: "normal" | "offensive" | "defensive" | "heal" | "flee",
+    maxRounds?: number,
+  ) => {
     rounds: number;
     state: string;
     overlay: string;
@@ -73,8 +76,13 @@ type DebugBridge = {
   openShop: () => void;
   closeOverlay: () => void;
   lootAll: () => void;
-  chooseBossReward: (kind?: "perk" | "gambit" | "none", choiceId?: string) => void;
-  claimShopReward: (choiceId: "bonus-point" | "remove-perk" | "remove-gambit") => void;
+  chooseBossReward: (
+    kind?: "perk" | "gambit" | "none",
+    choiceId?: string,
+  ) => void;
+  claimShopReward: (
+    choiceId: "bonus-point" | "remove-perk" | "remove-gambit",
+  ) => void;
   allocateLevelUp: (attr: LevelUpAttribute) => void;
   canOpenShop: () => boolean;
   grantRegressionPower: () => void;
@@ -97,13 +105,21 @@ declare global {
   }
 }
 
-function buildDebugMoveResult(activeRun: DungeonRun, steps: number, ok: boolean, reason?: string): DebugMoveResult {
+function buildDebugMoveResult(
+  activeRun: DungeonRun,
+  steps: number,
+  ok: boolean,
+  reason?: string,
+): DebugMoveResult {
   return {
     ok,
     steps,
     state: activeRun.state,
     overlay: activeRun.overlay.type,
-    position: { x: activeRun.player.position.x, y: activeRun.player.position.y },
+    position: {
+      x: activeRun.player.position.x,
+      y: activeRun.player.position.y,
+    },
     reason,
   };
 }
@@ -127,13 +143,22 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
 
   const getRun = options.getRun;
   const posKey = (pos: Position): string => `${pos.x},${pos.y}`;
-  const roomCenter = (room: { x: number; y: number; w: number; h: number }): Position => ({
+  const roomCenter = (room: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  }): Position => ({
     x: room.x + Math.floor(room.w / 2),
     y: room.y + Math.floor(room.h / 2),
   });
-  const manhattan = (a: Position, b: Position): number => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  const manhattan = (a: Position, b: Position): number =>
+    Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 
-  const roomSafeTile = (activeRun: DungeonRun, room: { x: number; y: number; w: number; h: number }): Position => {
+  const roomSafeTile = (
+    activeRun: DungeonRun,
+    room: { x: number; y: number; w: number; h: number },
+  ): Position => {
     const blocked = new Set<string>();
     for (const mob of activeRun.mobs) {
       if (mob.creature.alive) {
@@ -147,8 +172,8 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
     }
 
     const candidates: Position[] = [];
-    for (let y = room.y; y < (room.y + room.h); y += 1) {
-      for (let x = room.x; x < (room.x + room.w); x += 1) {
+    for (let y = room.y; y < room.y + room.h; y += 1) {
+      for (let x = room.x; x < room.x + room.w; x += 1) {
         if (!activeRun.world.isPassable(x, y)) {
           continue;
         }
@@ -164,7 +189,11 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       return roomCenter(room);
     }
 
-    candidates.sort((a, b) => manhattan(a, activeRun.player.position) - manhattan(b, activeRun.player.position));
+    candidates.sort(
+      (a, b) =>
+        manhattan(a, activeRun.player.position) -
+        manhattan(b, activeRun.player.position),
+    );
     return candidates[0];
   };
 
@@ -174,10 +203,20 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
     opts?: MoveToOptions,
   ): DebugMoveResult => {
     if (activeRun.overlay.type !== "none") {
-      return buildDebugMoveResult(activeRun, 0, false, `overlay:${activeRun.overlay.type}`);
+      return buildDebugMoveResult(
+        activeRun,
+        0,
+        false,
+        `overlay:${activeRun.overlay.type}`,
+      );
     }
     if (activeRun.state !== "playing") {
-      return buildDebugMoveResult(activeRun, 0, false, `state:${activeRun.state}`);
+      return buildDebugMoveResult(
+        activeRun,
+        0,
+        false,
+        `state:${activeRun.state}`,
+      );
     }
 
     const blocked = new Set<string>();
@@ -205,8 +244,16 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       }
     }
 
-    const path = activeRun.world.pathTo(activeRun.player.position, target, blocked);
-    if (path.length === 0 && (activeRun.player.position.x !== target.x || activeRun.player.position.y !== target.y)) {
+    const path = activeRun.world.pathTo(
+      activeRun.player.position,
+      target,
+      blocked,
+    );
+    if (
+      path.length === 0 &&
+      (activeRun.player.position.x !== target.x ||
+        activeRun.player.position.y !== target.y)
+    ) {
       return buildDebugMoveResult(activeRun, 0, false, "no-path");
     }
 
@@ -221,7 +268,12 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
         return buildDebugMoveResult(activeRun, steps, true);
       }
       if (activeRun.state !== "playing") {
-        return buildDebugMoveResult(activeRun, steps, false, `state:${activeRun.state}`);
+        return buildDebugMoveResult(
+          activeRun,
+          steps,
+          false,
+          `state:${activeRun.state}`,
+        );
       }
     }
 
@@ -267,7 +319,9 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
           items: chest.chest.count(),
         })),
         roomCount: activeRun.world.rooms.length,
-        logs: activeRun.logs.slice(-30).map((entry) => ({ text: entry.text, level: entry.level })),
+        logs: activeRun.logs
+          .slice(-30)
+          .map((entry) => ({ text: entry.text, level: entry.level })),
       };
     },
     setRevealMap: (enabled: boolean): void => {
@@ -294,7 +348,9 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
         return noRunResult();
       }
       const flag = kind === "shop" ? ROOM_SHOP : ROOM_BOSS;
-      const room = activeRun.world.rooms.find((candidate) => (candidate.attrs & flag) === flag);
+      const room = activeRun.world.rooms.find(
+        (candidate) => (candidate.attrs & flag) === flag,
+      );
       if (!room) {
         return buildDebugMoveResult(activeRun, 0, false, "room-not-found");
       }
@@ -308,19 +364,21 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       const alive = activeRun.mobs.filter((mob) => mob.creature.alive);
       const target = mobId
         ? alive.find((mob) => mob.id === mobId)
-        : alive
-          .slice()
-          .sort((a, b) => {
+        : alive.slice().sort((a, b) => {
             const da =
-              Math.abs(a.creature.position.x - activeRun.player.position.x) + Math.abs(a.creature.position.y - activeRun.player.position.y);
+              Math.abs(a.creature.position.x - activeRun.player.position.x) +
+              Math.abs(a.creature.position.y - activeRun.player.position.y);
             const db =
-              Math.abs(b.creature.position.x - activeRun.player.position.x) + Math.abs(b.creature.position.y - activeRun.player.position.y);
+              Math.abs(b.creature.position.x - activeRun.player.position.x) +
+              Math.abs(b.creature.position.y - activeRun.player.position.y);
             return da - db;
           })[0];
       if (!target) {
         return buildDebugMoveResult(activeRun, 0, false, "mob-not-found");
       }
-      return moveTo(activeRun, target.creature.position, { allowMobId: target.id });
+      return moveTo(activeRun, target.creature.position, {
+        allowMobId: target.id,
+      });
     },
     moveToChest: (chestId?: string): DebugMoveResult => {
       const activeRun = getRun();
@@ -330,16 +388,24 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       const target = chestId
         ? activeRun.chests.find((chest) => chest.id === chestId)
         : activeRun.chests
-          .filter((chest) => chest.chest.count() > 0)
-          .sort((a, b) => {
-            const da = Math.abs(a.chest.x - activeRun.player.position.x) + Math.abs(a.chest.y - activeRun.player.position.y);
-            const db = Math.abs(b.chest.x - activeRun.player.position.x) + Math.abs(b.chest.y - activeRun.player.position.y);
-            return da - db;
-          })[0];
+            .filter((chest) => chest.chest.count() > 0)
+            .sort((a, b) => {
+              const da =
+                Math.abs(a.chest.x - activeRun.player.position.x) +
+                Math.abs(a.chest.y - activeRun.player.position.y);
+              const db =
+                Math.abs(b.chest.x - activeRun.player.position.x) +
+                Math.abs(b.chest.y - activeRun.player.position.y);
+              return da - db;
+            })[0];
       if (!target) {
         return buildDebugMoveResult(activeRun, 0, false, "chest-not-found");
       }
-      return moveTo(activeRun, { x: target.chest.x, y: target.chest.y }, { ignoreChests: true });
+      return moveTo(
+        activeRun,
+        { x: target.chest.x, y: target.chest.y },
+        { ignoreChests: true },
+      );
     },
     resolveCombat: (
       action: "normal" | "offensive" | "defensive" | "heal" | "flee" = "normal",
@@ -350,11 +416,19 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
         return { rounds: 0, state: "none", overlay: "none" };
       }
       let rounds = 0;
-      while (activeRun.overlay.type === "battle" && activeRun.state === "playing" && rounds < maxRounds) {
+      while (
+        activeRun.overlay.type === "battle" &&
+        activeRun.state === "playing" &&
+        rounds < maxRounds
+      ) {
         activeRun.performCombat(action);
         rounds += 1;
       }
-      return { rounds, state: activeRun.state, overlay: activeRun.overlay.type };
+      return {
+        rounds,
+        state: activeRun.state,
+        overlay: activeRun.overlay.type,
+      };
     },
     openInventory: (): void => {
       getRun()?.openInventory();
@@ -370,10 +444,15 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       activeRun?.lootAll();
       activeRun?.closeOverlay();
     },
-    chooseBossReward: (kind: "perk" | "gambit" | "none" = "none", choiceId?: string): void => {
+    chooseBossReward: (
+      kind: "perk" | "gambit" | "none" = "none",
+      choiceId?: string,
+    ): void => {
       getRun()?.chooseBossReward(kind, choiceId);
     },
-    claimShopReward: (choiceId: "bonus-point" | "remove-perk" | "remove-gambit"): void => {
+    claimShopReward: (
+      choiceId: "bonus-point" | "remove-perk" | "remove-gambit",
+    ): void => {
       getRun()?.claimShopReward(choiceId);
     },
     allocateLevelUp: (attr: LevelUpAttribute): void => {
@@ -392,7 +471,10 @@ export function installDebugBridge(options: DebugBridgeOptions): void {
       activeRun.player.defenseBonus += 20;
       activeRun.player.damageDealtMultiplier *= 5.5;
       activeRun.player.damageTakenMultiplier *= 0.25;
-      activeRun.player.maxHitpoints = Math.max(activeRun.player.maxHitpoints, 2200);
+      activeRun.player.maxHitpoints = Math.max(
+        activeRun.player.maxHitpoints,
+        2200,
+      );
       activeRun.player.hitpoints = activeRun.player.currentMaxHitpoints();
       activeRun.player.gold += 2000;
       options.forceRender();

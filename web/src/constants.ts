@@ -30,9 +30,13 @@ export const DEFAULT_WEAPON_DEFENSE_BONUS = -1;
 export const MOB_CRITICAL_RANGE_MINIMUM = 17;
 export const MOB_CRITICAL_MULTIPLIER_MAXIMUM = 3;
 
-export const CREATURE_MAX_DAMAGE_AT_LEVEL_1 = Math.floor(PLAYER_INITIAL_HP * 0.3);
+export const CREATURE_MAX_DAMAGE_AT_LEVEL_1 = Math.floor(
+  PLAYER_INITIAL_HP * 0.3,
+);
 export const CREATURE_MAX_HP_AT_LEVEL_1 = 40;
-export const CREATURE_MIN_HP_AT_LEVEL_1 = Math.floor(CREATURE_MAX_HP_AT_LEVEL_1 * 0.5);
+export const CREATURE_MIN_HP_AT_LEVEL_1 = Math.floor(
+  CREATURE_MAX_HP_AT_LEVEL_1 * 0.5,
+);
 export const CREATURE_BASE_STR = 6;
 export const CREATURE_BASE_DEX = 4;
 export const CREATURE_BASE_CON = 2;

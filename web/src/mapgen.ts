@@ -17,25 +17,30 @@ function centerOf(room: Room): Position {
 function dist(a: Position, b: Position): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
-  return Math.sqrt((dx * dx) + (dy * dy));
+  return Math.sqrt(dx * dx + dy * dy);
 }
 
 function overlaps(a: Room, b: Room, padding = 1): boolean {
   const ax = a.x - padding;
   const ay = a.y - padding;
-  const aw = a.w + (padding * 2);
-  const ah = a.h + (padding * 2);
+  const aw = a.w + padding * 2;
+  const ah = a.h + padding * 2;
 
   const bx = b.x - padding;
   const by = b.y - padding;
-  const bw = b.w + (padding * 2);
-  const bh = b.h + (padding * 2);
+  const bw = b.w + padding * 2;
+  const bh = b.h + padding * 2;
 
-  return ax < (bx + bw) && (ax + aw) > bx && ay < (by + bh) && (ay + ah) > by;
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }
 
 function roomContains(room: Room, pos: Position): boolean {
-  return pos.x >= room.x && pos.x < (room.x + room.w) && pos.y >= room.y && pos.y < (room.y + room.h);
+  return (
+    pos.x >= room.x &&
+    pos.x < room.x + room.w &&
+    pos.y >= room.y &&
+    pos.y < room.y + room.h
+  );
 }
 
 export class WorldMap {
@@ -61,7 +66,7 @@ export class WorldMap {
   }
 
   idx(x: number, y: number): number {
-    return (y * this.width) + x;
+    return y * this.width + x;
   }
 
   tileAt(x: number, y: number): TileType {
@@ -141,7 +146,7 @@ export class WorldMap {
       for (let x = minX; x <= maxX; x += 1) {
         const dx = x - origin.x;
         const dy = y - origin.y;
-        if ((dx * dx) + (dy * dy) > (radius * radius)) {
+        if (dx * dx + dy * dy > radius * radius) {
           continue;
         }
 
@@ -217,35 +222,59 @@ export class WorldMap {
 }
 
 function carveRoom(cells: Uint8Array, width: number, room: Room): void {
-  for (let y = room.y; y < (room.y + room.h); y += 1) {
-    for (let x = room.x; x < (room.x + room.w); x += 1) {
-      cells[(y * width) + x] = TileType.Room;
+  for (let y = room.y; y < room.y + room.h; y += 1) {
+    for (let x = room.x; x < room.x + room.w; x += 1) {
+      cells[y * width + x] = TileType.Room;
     }
   }
 }
 
-function carveTunnel(cells: Uint8Array, width: number, height: number, from: Position, to: Position): void {
+function carveTunnel(
+  cells: Uint8Array,
+  width: number,
+  height: number,
+  from: Position,
+  to: Position,
+): void {
   let x = from.x;
   let y = from.y;
 
   const xStep = to.x >= from.x ? 1 : -1;
   while (x !== to.x) {
-    if (x >= 0 && x < width && y >= 0 && y < height && cells[(y * width) + x] === TileType.Empty) {
-      cells[(y * width) + x] = TileType.Hall;
+    if (
+      x >= 0 &&
+      x < width &&
+      y >= 0 &&
+      y < height &&
+      cells[y * width + x] === TileType.Empty
+    ) {
+      cells[y * width + x] = TileType.Hall;
     }
     x += xStep;
   }
 
   const yStep = to.y >= from.y ? 1 : -1;
   while (y !== to.y) {
-    if (x >= 0 && x < width && y >= 0 && y < height && cells[(y * width) + x] === TileType.Empty) {
-      cells[(y * width) + x] = TileType.Hall;
+    if (
+      x >= 0 &&
+      x < width &&
+      y >= 0 &&
+      y < height &&
+      cells[y * width + x] === TileType.Empty
+    ) {
+      cells[y * width + x] = TileType.Hall;
     }
     y += yStep;
   }
 
-  if (x >= 0 && x < width && y >= 0 && y < height && cells[(y * width) + x] === TileType.Empty) {
-    cells[(y * width) + x] = TileType.Hall;
+  if (
+    x >= 0 &&
+    x < width &&
+    y >= 0 &&
+    y < height &&
+    cells[y * width + x] === TileType.Empty
+  ) {
+    cells[y * width + x] = TileType.Hall;
   }
 }
 
@@ -257,14 +286,19 @@ const CARDINAL_STEPS: Position[] = [
 ];
 
 function isReverse(a: Position, b: Position): boolean {
-  return a.x === (-b.x) && a.y === (-b.y);
+  return a.x === -b.x && a.y === -b.y;
 }
 
-function carveLabyrinthBranches(cells: Uint8Array, width: number, height: number, rng: SeededRandom): void {
+function carveLabyrinthBranches(
+  cells: Uint8Array,
+  width: number,
+  height: number,
+  rng: SeededRandom,
+): void {
   const hallStarts: Position[] = [];
   for (let y = 1; y < height - 1; y += 1) {
     for (let x = 1; x < width - 1; x += 1) {
-      if (cells[(y * width) + x] === TileType.Hall) {
+      if (cells[y * width + x] === TileType.Hall) {
         hallStarts.push({ x, y });
       }
     }
@@ -282,16 +316,23 @@ function carveLabyrinthBranches(cells: Uint8Array, width: number, height: number
 
     for (let step = 0; step < steps; step += 1) {
       if (rng.chance(0.35)) {
-        const nextDirectionOptions = CARDINAL_STEPS.filter((candidate) => !isReverse(candidate, direction));
+        const nextDirectionOptions = CARDINAL_STEPS.filter(
+          (candidate) => !isReverse(candidate, direction),
+        );
         direction = rng.choice(nextDirectionOptions);
       }
 
       const next = { x: cursor.x + direction.x, y: cursor.y + direction.y };
-      if (next.x < 1 || next.y < 1 || next.x >= (width - 1) || next.y >= (height - 1)) {
+      if (
+        next.x < 1 ||
+        next.y < 1 ||
+        next.x >= width - 1 ||
+        next.y >= height - 1
+      ) {
         break;
       }
 
-      const idx = (next.y * width) + next.x;
+      const idx = next.y * width + next.x;
       const tile = cells[idx];
       if (tile === TileType.Room) {
         break;
@@ -303,11 +344,19 @@ function carveLabyrinthBranches(cells: Uint8Array, width: number, height: number
       cursor = next;
 
       if (rng.chance(0.15)) {
-        const sides = CARDINAL_STEPS.filter((candidate) => candidate.x !== direction.x || candidate.y !== direction.y);
+        const sides = CARDINAL_STEPS.filter(
+          (candidate) =>
+            candidate.x !== direction.x || candidate.y !== direction.y,
+        );
         const side = rng.choice(sides);
         const branch = { x: cursor.x + side.x, y: cursor.y + side.y };
-        if (branch.x > 0 && branch.y > 0 && branch.x < (width - 1) && branch.y < (height - 1)) {
-          const branchIdx = (branch.y * width) + branch.x;
+        if (
+          branch.x > 0 &&
+          branch.y > 0 &&
+          branch.x < width - 1 &&
+          branch.y < height - 1
+        ) {
+          const branchIdx = branch.y * width + branch.x;
           if (cells[branchIdx] === TileType.Empty) {
             cells[branchIdx] = TileType.Hall;
           }
@@ -317,7 +366,11 @@ function carveLabyrinthBranches(cells: Uint8Array, width: number, height: number
   }
 }
 
-function randomPointInRoom(room: Room, rng: SeededRandom, padding = 0): Position {
+function randomPointInRoom(
+  room: Room,
+  rng: SeededRandom,
+  padding = 0,
+): Position {
   const x = rng.int(room.x + padding, room.x + room.w - 1 - padding);
   const y = rng.int(room.y + padding, room.y + room.h - 1 - padding);
   return { x, y };
@@ -388,7 +441,14 @@ export function generateMap(rng: SeededRandom): WorldMap {
   const rooms: Room[] = [];
   let nextRoomId = 1;
 
-  const startRoom: Room = { id: nextRoomId, x: 1, y: 1, w: 8, h: 8, attrs: ROOM_START };
+  const startRoom: Room = {
+    id: nextRoomId,
+    x: 1,
+    y: 1,
+    w: 8,
+    h: 8,
+    attrs: ROOM_START,
+  };
   nextRoomId += 1;
   const bossRoom: Room = {
     id: nextRoomId,
@@ -418,7 +478,14 @@ export function generateMap(rng: SeededRandom): WorldMap {
     for (let attempt = 0; attempt < attemptsPerRoom; attempt += 1) {
       const roomX = rng.int(1, width - roomW - 2);
       const roomY = rng.int(1, height - roomH - 2);
-      const room: Room = { id: nextRoomId, x: roomX, y: roomY, w: roomW, h: roomH, attrs: 0 };
+      const room: Room = {
+        id: nextRoomId,
+        x: roomX,
+        y: roomY,
+        w: roomW,
+        h: roomH,
+        attrs: 0,
+      };
 
       let blocked = false;
       for (const other of rooms) {
@@ -436,11 +503,18 @@ export function generateMap(rng: SeededRandom): WorldMap {
     }
   }
 
-  const sortedByDistance = [...rooms].sort((a, b) => dist(centerOf(a), centerOf(startRoom)) - dist(centerOf(b), centerOf(startRoom)));
-  const eligibleShopRooms = sortedByDistance.filter((room) => (room.attrs & (ROOM_START | ROOM_BOSS)) === 0);
+  const sortedByDistance = [...rooms].sort(
+    (a, b) =>
+      dist(centerOf(a), centerOf(startRoom)) -
+      dist(centerOf(b), centerOf(startRoom)),
+  );
+  const eligibleShopRooms = sortedByDistance.filter(
+    (room) => (room.attrs & (ROOM_START | ROOM_BOSS)) === 0,
+  );
   if (eligibleShopRooms.length > 0) {
     const idx = Math.floor(eligibleShopRooms.length * 0.65);
-    eligibleShopRooms[Math.min(idx, eligibleShopRooms.length - 1)].attrs |= ROOM_SHOP;
+    eligibleShopRooms[Math.min(idx, eligibleShopRooms.length - 1)].attrs |=
+      ROOM_SHOP;
   }
 
   for (const room of rooms) {

@@ -4,8 +4,16 @@ import { assertEqual } from "./assert.js";
 
 export function runDiceTests(): void {
   const dice = new Dice(new SeededRandom("dice-flat-modifier"));
-  assertEqual(dice.rollNamed("1d1 +5"), 6, "Dice roll should include +modifier");
-  assertEqual(dice.rollNamed("2d1+3"), 5, "Dice roll should parse +modifier without spaces");
+  assertEqual(
+    dice.rollNamed("1d1 +5"),
+    6,
+    "Dice roll should include +modifier",
+  );
+  assertEqual(
+    dice.rollNamed("2d1+3"),
+    5,
+    "Dice roll should parse +modifier without spaces",
+  );
 
   const minMaxA = dice.minMax("2d4 +3");
   assertEqual(minMaxA[0], 5, "Dice min should include modifier");
