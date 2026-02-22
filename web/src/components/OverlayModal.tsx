@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { describeHealChoice, type CombatMoment } from "../combat";
 import type { DungeonRun } from "../game";
 import type { CombatFxState } from "../combatFx";
@@ -25,8 +26,8 @@ export function buildOverlayChrome(activeRun: DungeonRun, combatFx: CombatFxStat
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
-      modalClass: "modal-combat-fx",
-      windowKey: "combat-fx",
+      modalClass: "modal-battle",
+      windowKey: "battle",
     };
   }
 
@@ -234,6 +235,24 @@ function signed(value: number): string {
 
 export function OverlayModal(props: OverlayModalProps) {
   const activeRun = props.run;
+  const combatFxListRef = useRef<HTMLUListElement | null>(null);
+  const battleLogRef = useRef<HTMLUListElement | null>(null);
+
+  useEffect(() => {
+    const list = combatFxListRef.current;
+    if (!list || !props.combatFx) {
+      return;
+    }
+    list.scrollTop = list.scrollHeight;
+  }, [props.combatFx?.revealed, props.combatFx?.moments.length]);
+
+  useEffect(() => {
+    const list = battleLogRef.current;
+    if (!list || props.combatFx || activeRun.overlay.type !== "battle") {
+      return;
+    }
+    list.scrollTop = list.scrollHeight;
+  }, [props.combatFx, activeRun.overlay.type, activeRun.logs.length]);
 
   if (props.combatFx) {
     const shown = props.combatFx.moments.slice(0, Math.max(1, props.combatFx.revealed));
@@ -266,7 +285,7 @@ export function OverlayModal(props: OverlayModalProps) {
             ? <p className={combatMomentClass(knockoutMoment.level)}><b>{knockoutMoment.text}</b></p>
             : null
         }
-        <ul className="combat-fx-list">
+        <ul ref={combatFxListRef} className="combat-fx-list">
           {shown.map((moment) => renderCombatMoment(moment))}
         </ul>
       </Window>
@@ -370,7 +389,7 @@ export function OverlayModal(props: OverlayModalProps) {
           <button data-action="combat-flee" type="button"><span>{EN.ui.overlays.battle.actions.flee.label}</span><small>{EN.ui.overlays.battle.actions.flee.subtitle}</small></button>
         </div>
         <h3>{EN.ui.sidebar.combatLog}</h3>
-        <ul className="combat-log">
+        <ul ref={battleLogRef} className="combat-log">
           {activeRun.logs.slice(-8).map((entry, index) => (
             <li key={`${index}-${entry.level}-${entry.text}`} className={`log-${entry.level}`}>{entry.text}</li>
           ))}

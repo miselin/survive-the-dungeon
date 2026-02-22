@@ -39,7 +39,7 @@ type RunButtonRefs = {
   loadButton: HTMLButtonElement;
   inventoryButton: HTMLButtonElement;
   shopButton: HTMLButtonElement;
-  revealButton: HTMLButtonElement;
+  revealButton?: HTMLButtonElement | null;
   newRunButton: HTMLButtonElement;
   dpad: HTMLDivElement;
   modalBackdrop: HTMLDivElement;
@@ -55,6 +55,7 @@ const HIDDEN_OVERLAY_CHROME: OverlayChrome = {
 
 const COMBAT_FX_STEP_MS = 420;
 const AUTOSAVE_INTERVAL_MS = 5000;
+const DEBUG_TOOLS_ENABLED = import.meta.env.DEV;
 
 function isLevelUpAttribute(value: string): value is LevelUpAttribute {
   return LEVEL_UP_ATTRIBUTES.includes(value as LevelUpAttribute);
@@ -428,12 +429,13 @@ function App() {
       renderUI: () => renderUiRef.current(),
       resizeCanvas: () => resizeCanvasRef.current(),
       getModal: () => modalRef.current,
+      debugToolsEnabled: DEBUG_TOOLS_ENABLED,
     });
   }, []);
 
   useEffect(() => {
     installDebugBridge({
-      isDev: import.meta.env.DEV,
+      isDev: DEBUG_TOOLS_ENABLED,
       getRun: () => runRef.current,
       setRevealMap: (enabled): void => {
         setRevealMapEnabledRef.current(enabled);
@@ -454,7 +456,6 @@ function App() {
       loadButtonRef.current &&
       inventoryButtonRef.current &&
       shopButtonRef.current &&
-      revealButtonRef.current &&
       newRunButtonRef.current &&
       dpadRef.current &&
       modalBackdropRef.current &&
@@ -499,6 +500,7 @@ function App() {
       },
       invalidateOverlayCache: () => invalidateOverlayCacheRef.current(),
       updateInventoryCompare,
+      debugToolsEnabled: DEBUG_TOOLS_ENABLED,
     });
 
     resizeCanvasRef.current();
@@ -527,7 +529,6 @@ function App() {
     );
   }, [
     screenMode,
-    overlayChrome.key,
     overlayChrome.modalHidden,
     overlayChrome.windowKey,
   ]);
@@ -642,16 +643,18 @@ function App() {
             >
               {EN.ui.buttons.shop}
             </button>
-            <button
-              id="reveal-map-btn"
-              ref={revealButtonRef}
-              type="button"
-              data-active={revealMapEnabled ? "true" : "false"}
-            >
-              {revealMapEnabled
-                ? EN.ui.buttons.hideMap
-                : EN.ui.buttons.revealMap}
-            </button>
+            {DEBUG_TOOLS_ENABLED ? (
+              <button
+                id="reveal-map-btn"
+                ref={revealButtonRef}
+                type="button"
+                data-active={revealMapEnabled ? "true" : "false"}
+              >
+                {revealMapEnabled
+                  ? EN.ui.buttons.hideMap
+                  : EN.ui.buttons.revealMap}
+              </button>
+            ) : null}
             <button id="new-run-btn" ref={newRunButtonRef} type="button">
               {EN.ui.buttons.newRun}
             </button>

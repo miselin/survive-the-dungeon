@@ -121,6 +121,7 @@ function noRunResult(): DebugMoveResult {
 
 export function installDebugBridge(options: DebugBridgeOptions): void {
   if (!options.isDev) {
+    delete window.__surviveDebug;
     return;
   }
 

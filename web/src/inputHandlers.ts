@@ -15,7 +15,7 @@ type MountedInputRefs = {
   loadButton: HTMLButtonElement;
   inventoryButton: HTMLButtonElement;
   shopButton: HTMLButtonElement;
-  revealButton: HTMLButtonElement;
+  revealButton?: HTMLButtonElement | null;
   newRunButton: HTMLButtonElement;
   dpad: HTMLDivElement;
   modalBackdrop: HTMLDivElement;
@@ -37,6 +37,7 @@ type MountedRunInputHandlersOptions = {
   setRevealMapEnabled: (enabled: boolean) => void;
   invalidateOverlayCache: () => void;
   updateInventoryCompare: (itemId: string | null) => void;
+  debugToolsEnabled: boolean;
 };
 
 type GlobalInputHandlersOptions = {
@@ -52,6 +53,7 @@ type GlobalInputHandlersOptions = {
   renderUI: () => void;
   resizeCanvas: () => void;
   getModal: () => HTMLDivElement | null;
+  debugToolsEnabled: boolean;
 };
 
 function moveByKey(activeRun: DungeonRun, key: string): boolean {
@@ -94,6 +96,7 @@ export function bindMountedRunInputHandlers(options: MountedRunInputHandlersOpti
     setRevealMapEnabled,
     invalidateOverlayCache,
     updateInventoryCompare,
+    debugToolsEnabled,
   } = options;
 
   refs.saveButton.addEventListener("click", () => {
@@ -128,9 +131,11 @@ export function bindMountedRunInputHandlers(options: MountedRunInputHandlersOpti
     activeRun.openShop();
   });
 
-  refs.revealButton.addEventListener("click", () => {
-    setRevealMapEnabled(!getRevealMapEnabled());
-  });
+  if (debugToolsEnabled && refs.revealButton) {
+    refs.revealButton.addEventListener("click", () => {
+      setRevealMapEnabled(!getRevealMapEnabled());
+    });
+  }
 
   refs.newRunButton.addEventListener("click", () => {
     showMenu();
@@ -423,7 +428,7 @@ export function installGlobalInputHandlers(options: GlobalInputHandlersOptions):
       return;
     }
 
-    if (event.key === "m" || event.key === "M") {
+    if (options.debugToolsEnabled && (event.key === "m" || event.key === "M")) {
       options.setRevealMapEnabled(!options.getRevealMapEnabled());
       event.preventDefault();
       return;
