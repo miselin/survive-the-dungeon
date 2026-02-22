@@ -1,7 +1,9 @@
 import { describeHealChoice, type CombatMoment } from "./combat";
 import { type BuildChoice, type DungeonRun } from "./game";
 import { Weapon, WieldableItem } from "./items";
+import { applySavedWindowPosition } from "./modalWindowPosition";
 import { EN } from "./strings/en";
+import { wrapWindowFrame } from "./windowFrame";
 
 export type CombatFxState = {
   moments: CombatMoment[];
@@ -15,6 +17,8 @@ export type OverlayRenderView = {
   stateClass: string;
   modalHidden: boolean;
   modalHtml: string;
+  modalClass?: string;
+  windowKey?: string;
 };
 
 export type OverlayRenderRefs = {
@@ -358,6 +362,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-combat-fx",
+      windowKey: "combat-fx",
       modalHtml: `
         <h2>${EN.ui.overlays.combatFx.title}</h2>
         <p class="hint">${EN.ui.overlays.combatFx.hint}</p>
@@ -385,11 +391,15 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: won ? EN.ui.stateText.cleared : EN.ui.stateText.defeated,
       stateClass: `state-text ${won ? "state-win" : "state-dead"}`,
       modalHidden: false,
+      modalClass: "modal-run-end",
+      windowKey: "run-end",
       modalHtml: `
         <h2>${won ? EN.ui.overlays.runEnd.victoryTitle : EN.ui.overlays.runEnd.defeatTitle}</h2>
         <p>${won ? EN.ui.overlays.runEnd.victoryBody : EN.ui.overlays.runEnd.defeatBody}</p>
         ${runSummary(activeRun)}
-        <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        <div class="row-actions">
+          <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        </div>
       `,
     };
   }
@@ -400,6 +410,7 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: true,
+      modalClass: "modal-idle",
       modalHtml: "",
     };
   }
@@ -412,10 +423,14 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
         stateText: EN.ui.stateText.floor(activeRun.floor),
         stateClass: "state-text",
         modalHidden: false,
+        modalClass: "modal-battle",
+        windowKey: "battle",
         modalHtml: `
           <h2>${EN.ui.overlays.battle.noTargetTitle}</h2>
           <p>${EN.ui.overlays.battle.noTargetBody}</p>
-          <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+          <div class="row-actions">
+            <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+          </div>
         `,
       };
     }
@@ -430,6 +445,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-battle",
+      windowKey: "battle",
       modalHtml: `
         <h2>${htmlEscape(EN.ui.overlays.battle.title(enemy.creature.name))}</h2>
         <p>${EN.ui.overlays.battle.yourHp(activeRun.player.hitpoints, activeRun.player.currentMaxHitpoints())}</p>
@@ -445,7 +462,9 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
         </div>
         <h3>${EN.ui.sidebar.combatLog}</h3>
         <ul class="combat-log">${battleLog}</ul>
-        <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        <div class="row-actions">
+          <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        </div>
       `,
     };
   }
@@ -466,6 +485,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-level-up",
+      windowKey: "level-up",
       modalHtml: `
         <h2>${EN.ui.overlays.levelUp.title}</h2>
         <p>${EN.ui.overlays.levelUp.body(activeRun.player.unspentStatPoints)}</p>
@@ -483,10 +504,14 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
         stateText: EN.ui.stateText.floor(activeRun.floor),
         stateClass: "state-text",
         modalHidden: false,
+        modalClass: "modal-boss-reward",
+        windowKey: "boss-reward",
         modalHtml: `
           <h2>${EN.ui.overlays.bossReward.emptyTitle}</h2>
           <p>${EN.ui.overlays.bossReward.emptyBody}</p>
-          <button data-action="boss-none" type="button">${EN.ui.buttons.descend}</button>
+          <div class="row-actions">
+            <button data-action="boss-none" type="button">${EN.ui.buttons.descend}</button>
+          </div>
         `,
       };
     }
@@ -496,6 +521,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-boss-reward",
+      windowKey: "boss-reward",
       modalHtml: `
         <h2>${EN.ui.overlays.bossReward.title}</h2>
         <p>${EN.ui.overlays.bossReward.body(activeRun.floor)}</p>
@@ -504,7 +531,9 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
         <ul class="item-list">${renderBuildChoices(rewards.perks, "boss-perk")}</ul>
         <h3>${EN.ui.sidebar.gambits}</h3>
         <ul class="item-list">${renderBuildChoices(rewards.gambits, "boss-gambit")}</ul>
-        <button data-action="boss-none" type="button">${EN.ui.buttons.descendWithoutPicking}</button>
+        <div class="row-actions">
+          <button data-action="boss-none" type="button">${EN.ui.buttons.descendWithoutPicking}</button>
+        </div>
       `,
     };
   }
@@ -526,6 +555,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-shop-reward",
+      windowKey: "shop-reward",
       modalHtml: `
         <h2>${EN.ui.overlays.shopReward.title}</h2>
         <p>${EN.ui.overlays.shopReward.body}</p>
@@ -542,10 +573,14 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
         stateText: EN.ui.stateText.floor(activeRun.floor),
         stateClass: "state-text",
         modalHidden: false,
+        modalClass: "modal-chest",
+        windowKey: "chest",
         modalHtml: `
           <h2>${EN.ui.overlays.chest.title}</h2>
           <p>${EN.ui.overlays.chest.emptyBody}</p>
-          <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+          <div class="row-actions">
+            <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+          </div>
         `,
       };
     }
@@ -562,6 +597,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-chest",
+      windowKey: "chest",
       modalHtml: `
         <h2>${EN.ui.overlays.chest.title}</h2>
         <ul class="item-list">${rows.join("") || `<li>${EN.ui.overlays.chest.nothingLeft}</li>`}</ul>
@@ -601,6 +638,8 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
       stateText: EN.ui.stateText.floor(activeRun.floor),
       stateClass: "state-text",
       modalHidden: false,
+      modalClass: "modal-inventory",
+      windowKey: "inventory",
       modalHtml: `
         <h2>${EN.ui.overlays.inventory.title}</h2>
         <div class="inventory-layout">
@@ -610,7 +649,9 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
             <div data-equip-compare>${emptyComparisonPanel()}</div>
           </aside>
         </div>
-        <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        <div class="row-actions">
+          <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+        </div>
       `,
     };
   }
@@ -636,10 +677,14 @@ export function renderOverlayView(activeRun: DungeonRun, combatFx: CombatFxState
     stateText: EN.ui.stateText.floor(activeRun.floor),
     stateClass: "state-text",
     modalHidden: false,
+    modalClass: "modal-shop",
+    windowKey: "shop",
     modalHtml: `
       <h2>${EN.ui.overlays.shop.title}</h2>
       <ul class="item-list shop">${rows.join("")}</ul>
-      <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+      <div class="row-actions">
+        <button data-action="close" type="button">${EN.ui.buttons.close}</button>
+      </div>
     `,
   };
 }
@@ -648,7 +693,14 @@ export function applyOverlayRenderView(refs: OverlayRenderRefs, view: OverlayRen
   refs.stateText.textContent = view.stateText;
   refs.stateText.className = view.stateClass;
   refs.modalBackdrop.classList.toggle("hidden", view.modalHidden);
-  refs.modal.innerHTML = view.modalHtml;
+  refs.modal.className = view.modalClass ? `modal ${view.modalClass}` : "modal";
+  if (view.windowKey) {
+    refs.modal.dataset.windowKey = view.windowKey;
+  } else {
+    delete refs.modal.dataset.windowKey;
+  }
+  refs.modal.innerHTML = view.modalHidden ? "" : wrapWindowFrame(view.modalHtml);
+  applySavedWindowPosition(refs.modal, view.modalHidden ? null : view.windowKey ?? null);
 }
 
 type RenderOverlayIntoDomOptions = {

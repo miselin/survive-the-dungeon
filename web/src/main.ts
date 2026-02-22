@@ -328,6 +328,7 @@ installGlobalInputHandlers({
   invalidateOverlayCache,
   renderUI,
   resizeCanvas,
+  getModal: () => ui?.modal ?? null,
 });
 
 function frame(now: number): void {

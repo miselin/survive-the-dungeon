@@ -91,10 +91,12 @@ export function renderMountedRunScreen(app: HTMLDivElement): MountedRunScreenRef
         <aside class="sidebar">
           <div id="state-text" class="state-text"></div>
           <div id="stats" class="stats"></div>
-          <h2>${EN.ui.sidebar.logTitle}</h2>
-          <ul id="logs" class="logs"></ul>
         </aside>
       </main>
+      <section class="log-dock">
+        <h2>${EN.ui.sidebar.logTitle}</h2>
+        <ul id="logs" class="logs"></ul>
+      </section>
     </div>
     <div id="modal-backdrop" class="modal-backdrop hidden">
       <div id="modal" class="modal" role="dialog" aria-modal="true"></div>

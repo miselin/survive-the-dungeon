@@ -1,5 +1,11 @@
 import type { CombatMoment } from "./combat";
 import type { DungeonRun, LevelUpAttribute } from "./game";
+import {
+  clampModalPosition,
+  currentModalPosition,
+  placeModalAt,
+  writeWindowPosition,
+} from "./modalWindowPosition";
 import type { CombatFxState } from "./overlayRenderer";
 
 type ShopRewardActionId = "bonus-point" | "remove-perk" | "remove-gambit";
@@ -45,6 +51,7 @@ type GlobalInputHandlersOptions = {
   invalidateOverlayCache: () => void;
   renderUI: () => void;
   resizeCanvas: () => void;
+  getModal: () => HTMLDivElement | null;
 };
 
 function moveByKey(activeRun: DungeonRun, key: string): boolean {
@@ -292,6 +299,89 @@ export function bindMountedRunInputHandlers(options: MountedRunInputHandlersOpti
   refs.modal.addEventListener("mouseleave", () => {
     updateInventoryCompare(null);
   });
+
+  let dragPointerId: number | null = null;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+  let dragHandle: HTMLElement | null = null;
+
+  const stopDrag = (): void => {
+    if (dragPointerId === null) {
+      return;
+    }
+
+    if (dragHandle?.hasPointerCapture(dragPointerId)) {
+      dragHandle.releasePointerCapture(dragPointerId);
+    }
+
+    const windowKey = refs.modal.dataset.windowKey;
+    if (windowKey) {
+      const clamped = clampModalPosition(refs.modal, currentModalPosition(refs.modal));
+      placeModalAt(refs.modal, clamped);
+      writeWindowPosition(windowKey, clamped);
+    }
+
+    dragPointerId = null;
+    dragHandle = null;
+    refs.modal.classList.remove("is-dragging");
+    document.body.classList.remove("modal-dragging");
+  };
+
+  refs.modal.addEventListener("pointerdown", (event) => {
+    const target = event.target as HTMLElement;
+    const titleBar = target.closest<HTMLElement>("[data-window-drag-handle='true']");
+    const windowKey = refs.modal.dataset.windowKey;
+    if (!windowKey || !titleBar || !refs.modal.contains(titleBar)) {
+      return;
+    }
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    const rect = refs.modal.getBoundingClientRect();
+    dragOffsetX = event.clientX - rect.left;
+    dragOffsetY = event.clientY - rect.top;
+    dragPointerId = event.pointerId;
+    dragHandle = titleBar;
+
+    placeModalAt(refs.modal, {
+      left: rect.left,
+      top: rect.top,
+    });
+
+    refs.modal.classList.add("is-dragging");
+    document.body.classList.add("modal-dragging");
+    titleBar.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  refs.modal.addEventListener("pointermove", (event) => {
+    if (dragPointerId === null || event.pointerId !== dragPointerId) {
+      return;
+    }
+
+    const clamped = clampModalPosition(refs.modal, {
+      left: event.clientX - dragOffsetX,
+      top: event.clientY - dragOffsetY,
+    });
+    placeModalAt(refs.modal, clamped);
+  });
+
+  refs.modal.addEventListener("pointerup", (event) => {
+    if (dragPointerId !== null && event.pointerId === dragPointerId) {
+      stopDrag();
+    }
+  });
+
+  refs.modal.addEventListener("pointercancel", (event) => {
+    if (dragPointerId !== null && event.pointerId === dragPointerId) {
+      stopDrag();
+    }
+  });
+
+  refs.modal.addEventListener("lostpointercapture", () => {
+    stopDrag();
+  });
 }
 
 export function installGlobalInputHandlers(options: GlobalInputHandlersOptions): void {
@@ -390,6 +480,13 @@ export function installGlobalInputHandlers(options: GlobalInputHandlersOptions):
 
   window.addEventListener("resize", () => {
     options.resizeCanvas();
+    const modal = options.getModal();
+    const windowKey = modal?.dataset.windowKey;
+    if (modal && windowKey) {
+      const clamped = clampModalPosition(modal, currentModalPosition(modal));
+      placeModalAt(modal, clamped);
+      writeWindowPosition(windowKey, clamped);
+    }
     options.renderUI();
   });
 }
