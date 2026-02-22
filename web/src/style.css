@@ -17,7 +17,7 @@
   --bg-1: #142732;
   --bg-2: #224153;
   --ink: #dfeef4;
-  --ink-dim: #9db4be;
+  --ink-dim: #afc3cc;
   --good: #6dd18f;
   --warn: #f0b25d;
   --bad: #e06a5f;
@@ -141,7 +141,7 @@ input {
 .game-header p {
   margin: 0.2rem 0 0;
   color: var(--ink-dim);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .header-actions {
@@ -211,7 +211,7 @@ input {
 .stats {
   display: grid;
   gap: 0.55rem;
-  font-size: 0.9rem;
+  font-size: 0.94rem;
 }
 
 .meter-row {
@@ -255,7 +255,7 @@ input {
 
 .stat-grid strong {
   color: var(--ink-dim);
-  font-size: 0.8rem;
+  font-size: 0.86rem;
 }
 
 .stats details {
@@ -267,7 +267,7 @@ input {
 .stats pre {
   margin: 0.3rem 0 0;
   white-space: pre-wrap;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   color: var(--ink-dim);
 }
 
@@ -280,7 +280,8 @@ input {
   margin: 0;
   padding-left: 1rem;
   overflow: auto;
-  font-size: 0.88rem;
+  font-size: 0.94rem;
+  line-height: 1.3;
 }
 
 .logs li {
@@ -304,18 +305,28 @@ input {
   right: 0.65rem;
   bottom: 0.65rem;
   display: none;
-  grid-template-columns: 56px;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: auto auto;
   gap: 0.45rem;
+  justify-items: stretch;
+  align-items: stretch;
+}
+
+.dpad > button[data-move="up"] {
+  grid-column: 2;
 }
 
 .dpad button {
-  width: 56px;
+  width: 100%;
   height: 46px;
   font-size: 1rem;
+  padding: 0;
 }
 
 .dpad-middle {
-  display: flex;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
   gap: 0.45rem;
 }
 
@@ -370,7 +381,7 @@ input {
 .item-list li span {
   display: block;
   color: var(--ink-dim);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
 }
 
 .item-list li strong {
@@ -406,7 +417,7 @@ input {
 .compare-title {
   display: grid;
   gap: 0.2rem;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--ink-dim);
 }
 
@@ -417,7 +428,7 @@ input {
 .compare-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .compare-table th,
@@ -473,7 +484,7 @@ input {
 
 .action-grid button small {
   color: var(--ink-dim);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   line-height: 1.2;
 }
 

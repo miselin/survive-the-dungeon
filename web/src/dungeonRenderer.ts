@@ -397,10 +397,24 @@ export function renderDungeonMap(options: RenderDungeonMapOptions): void {
 
     const px = col * tile;
     const py = row * tile;
+    const bossMob = mob.creature.name === EN.game.names.dungeonBoss;
     if (spritesReady) {
       drawSheetSprite(context, "chars", SPRITE_IDS.chars.mob, px, py, tile);
+      if (bossMob) {
+        context.strokeStyle = "rgba(246, 215, 136, 0.94)";
+        context.lineWidth = Math.max(1, Math.floor(tile / 10));
+        context.strokeRect(px + (tile * 0.14), py + (tile * 0.14), tile * 0.72, tile * 0.72);
+
+        context.fillStyle = "rgba(242, 201, 111, 0.94)";
+        context.beginPath();
+        context.moveTo(px + (tile * 0.5), py + (tile * 0.1));
+        context.lineTo(px + (tile * 0.62), py + (tile * 0.3));
+        context.lineTo(px + (tile * 0.38), py + (tile * 0.3));
+        context.closePath();
+        context.fill();
+      }
     } else {
-      context.fillStyle = mob.creature.name === EN.game.names.dungeonBoss ? "#d16a32" : "#c74646";
+      context.fillStyle = bossMob ? "#d16a32" : "#c74646";
       context.beginPath();
       context.arc(px + (tile / 2), py + (tile / 2), tile * 0.3, 0, Math.PI * 2);
       context.fill();
