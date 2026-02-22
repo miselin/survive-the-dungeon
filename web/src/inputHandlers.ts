@@ -6,7 +6,7 @@ import {
   placeModalAt,
   writeWindowPosition,
 } from "./modalWindowPosition";
-import type { CombatFxState } from "./overlayRenderer";
+import type { CombatFxState } from "./combatFx";
 
 type ShopRewardActionId = "bonus-point" | "remove-perk" | "remove-gambit";
 

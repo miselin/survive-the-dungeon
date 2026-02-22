@@ -42,6 +42,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: "Share Tech Mono", "Courier Prime", "IBM Plex Mono", "Fira Mono", monospace;
+  line-height: 150%;
   color: var(--ink);
   background:
     radial-gradient(circle at 20% 20%, rgba(92, 156, 169, 0.25), transparent 42%),
@@ -265,6 +266,7 @@ input:focus-visible {
 .meter-row {
   display: grid;
   gap: 0.3rem;
+  flex: 0 1 auto;
 }
 
 .meter {
@@ -544,7 +546,6 @@ body.modal-dragging {
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  max-height: 4rem;
 }
 
 .item-list li span {
@@ -555,11 +556,6 @@ body.modal-dragging {
 
 .item-list li strong {
   display: block;
-}
-
-.inventory li,
-.shop li {
-  align-items: start;
 }
 
 .inventory-layout {
@@ -639,7 +635,10 @@ body.modal-dragging {
 .item-actions {
   display: flex;
   gap: 0.35rem;
-  flex-wrap: wrap;
+}
+
+.item-actions button {
+  min-width: 4rem;
 }
 
 .price {
@@ -818,4 +817,11 @@ body.modal-dragging {
     width: min(96vw, 720px);
     height: min(82vh, 620px);
   }
+}
+
+.seed-label {
+  margin-top: auto;
+  max-height: 1rem;
+  font-size: 0.65rem;
+  text-align: right;
 }

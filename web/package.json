@@ -11,7 +11,13 @@
     "test:unit": "esbuild src/tests/run.ts --bundle --platform=node --format=esm --outfile=.unit-dist/run.mjs && node .unit-dist/run.mjs"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "typescript": "~5.9.3",
     "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   }
 }

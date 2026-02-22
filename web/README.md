@@ -59,7 +59,7 @@ make web-test
 
 - Player-facing English strings are centralized in:
   - `/Users/miselin/src/survive-the-dungeon/web/src/strings/en.ts`
-- `main.ts`, `game.ts`, and `combat.ts` now consume that module, so wording tweaks do not require grep-based edits across gameplay files.
+- `main.tsx`, `game.ts`, and `combat.ts` now consume that module, so wording tweaks do not require grep-based edits across gameplay files.
 
 ## Balance Tuning
 
