@@ -140,6 +140,12 @@ export const EN = {
         title: "Combat Roll",
         hint: "Watch the checks resolve moment by moment.",
         skipAll: "Skip all combat roll animations",
+        anticipationTitle: "Dice roll incoming",
+        anticipationNeed: (
+          phaseLabel: string,
+          target: number,
+          defender: string,
+        ): string => `${phaseLabel}: need ${target}+ vs ${defender}.`,
       },
       battle: {
         title: (enemyName: string): string => `Battle: ${enemyName}`,
@@ -151,6 +157,20 @@ export const EN = {
           `Enemy HP: ${current}/${max}`,
         ambushProtectionHint:
           "Ambush protection active: enemy opening strike weakened and flee is easier.",
+        enemyIntent: (
+          intent: "chip" | "pressure" | "burst" | "guard",
+        ): string => {
+          if (intent === "guard") {
+            return "Enemy intent: guarded strike (safer, harder to break).";
+          }
+          if (intent === "burst") {
+            return "Enemy intent: reckless burst (high damage, lower defense).";
+          }
+          if (intent === "chip") {
+            return "Enemy intent: chip pressure and attrition.";
+          }
+          return "Enemy intent: steady pressure.";
+        },
         healChoice: (choice: string): string => `Heal choice: ${choice}`,
         actions: {
           normal: { label: "Normal", subtitle: "1.0x damage, 1.0x defense" },

@@ -736,6 +736,38 @@ body.modal-dragging {
   overflow: auto;
 }
 
+.combat-roll-preview {
+  border: 1px solid rgba(166, 205, 214, 0.42);
+  border-radius: var(--radius-control);
+  background: rgba(8, 20, 28, 0.7);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.roll-preview-die {
+  min-width: 52px;
+  text-align: center;
+  border: 1px solid rgba(221, 236, 240, 0.6);
+  border-radius: var(--radius-control);
+  padding: 0.35rem 0.45rem;
+  font-weight: 700;
+  background: rgba(48, 83, 102, 0.88);
+  animation: rolling-die-spin 420ms linear infinite;
+}
+
+.roll-preview-copy {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.88rem;
+}
+
+.roll-preview-copy span {
+  color: var(--ink-dim);
+}
+
 .fx-row {
   border: 1px solid rgba(136, 188, 197, 0.3);
   border-radius: var(--radius-control);
@@ -781,6 +813,21 @@ body.modal-dragging {
   gap: 0.4rem;
   color: var(--ink-dim);
   font-size: 0.88rem;
+}
+
+@keyframes rolling-die-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  35% {
+    transform: rotate(15deg) scale(1.04);
+  }
+  70% {
+    transform: rotate(-15deg) scale(0.98);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
 }
 
 .hidden {

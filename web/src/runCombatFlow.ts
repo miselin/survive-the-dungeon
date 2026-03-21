@@ -1,4 +1,10 @@
-import { type Combat, type CombatResult, type PlayerAction } from "./combat";
+import {
+  type Combat,
+  type CombatResult,
+  type EnemyActionId,
+  type PlannedEnemyAction,
+  type PlayerAction,
+} from "./combat";
 import {
   CREATURE_XP_MULTIPLIER,
   SURPRISE_PROTECTION_ATTACK_MULTIPLIER,
@@ -84,6 +90,21 @@ export function resolveCombatTurn(
     battle.surpriseProtection = false;
   }
 
+  const combatWithIntent = options.combat as Combat & {
+    planEnemyAction?: (enemy: Creature) => PlannedEnemyAction;
+    enemyActionForId?: (id: EnemyActionId) => PlannedEnemyAction;
+  };
+  let forcedEnemyAction: PlannedEnemyAction | undefined = undefined;
+  if (mob.nextEnemyActionId && combatWithIntent.enemyActionForId) {
+    forcedEnemyAction = combatWithIntent.enemyActionForId(mob.nextEnemyActionId);
+  } else if (combatWithIntent.planEnemyAction) {
+    forcedEnemyAction = combatWithIntent.planEnemyAction(mob.creature);
+  }
+  if (forcedEnemyAction) {
+    mob.intentHint = forcedEnemyAction.intentHint;
+  }
+  mob.nextEnemyActionId = undefined;
+
   const result = options.combat.turn(
     options.player,
     mob.creature,
@@ -93,6 +114,7 @@ export function resolveCombatTurn(
         ? SURPRISE_PROTECTION_ATTACK_MULTIPLIER
         : 1,
       fleeBonus: openingProtection ? SURPRISE_PROTECTION_FLEE_BONUS : 0,
+      forcedEnemyAction,
     },
   );
   for (const entry of result.logs) {
@@ -109,6 +131,8 @@ export function resolveCombatTurn(
     });
     options.player.inBattle = false;
     mob.creature.inBattle = false;
+    mob.intentHint = undefined;
+    mob.nextEnemyActionId = undefined;
 
     const nextCurrentRoom = options.world.roomAt(options.player.position);
     options.log(EN.game.logs.retreat, "info");
@@ -153,6 +177,8 @@ export function resolveCombatTurn(
 
     options.player.inBattle = false;
     mob.creature.inBattle = false;
+    mob.intentHint = undefined;
+    mob.nextEnemyActionId = undefined;
     nextOverlay = { type: "none" };
 
     const bossDefeated = mob.isBoss;
@@ -166,6 +192,10 @@ export function resolveCombatTurn(
         "info",
       );
     }
+  } else if (options.player.alive && combatWithIntent.planEnemyAction) {
+    const nextIntent = combatWithIntent.planEnemyAction(mob.creature);
+    mob.nextEnemyActionId = nextIntent.id;
+    mob.intentHint = nextIntent.intentHint;
   }
 
   if (!options.player.alive) {

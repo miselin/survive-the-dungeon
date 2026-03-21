@@ -28,6 +28,7 @@ import {
   PLAYER_LUCK_MAX_MISS_STREAK_BONUS,
   PLAYER_LUCK_MAX_TOTAL_BONUS,
 } from "./constants";
+import type { EnemyIntentHint } from "./encounterGrammar";
 import { Creature } from "./creature";
 import { Dice } from "./dice";
 import { InstantEffectItem } from "./items";
@@ -55,6 +56,16 @@ export type CombatResult = {
 export type CombatLuckState = {
   playerD20History: number[];
   playerMissStreak: number;
+};
+
+export type EnemyActionId = "guarded" | "reckless" | "steady";
+
+export type PlannedEnemyAction = {
+  id: EnemyActionId;
+  atk: number;
+  def: number;
+  name: string;
+  intentHint: EnemyIntentHint;
 };
 
 export type CombatMoment =
@@ -94,6 +105,7 @@ export type CombatMoment =
 type CombatTurnOptions = {
   enemyAttackMultiplier?: number;
   fleeBonus?: number;
+  forcedEnemyAction?: PlannedEnemyAction;
 };
 
 export function armorClassFor(
@@ -353,37 +365,49 @@ export class Combat {
     }
   }
 
-  private enemyAction(enemy: Creature): {
-    atk: number;
-    def: number;
-    name: string;
-  } {
+  enemyActionForId(id: EnemyActionId): PlannedEnemyAction {
+    if (id === "guarded") {
+      return {
+        id,
+        atk: ENEMY_STYLE_GUARDED_ATTACK_MULTIPLIER,
+        def: ENEMY_STYLE_GUARDED_DEFENSE_MULTIPLIER,
+        name: EN.combat.enemyStyles.guarded,
+        intentHint: "guard",
+      };
+    }
+    if (id === "reckless") {
+      return {
+        id,
+        atk: ENEMY_STYLE_RECKLESS_ATTACK_MULTIPLIER,
+        def: ENEMY_STYLE_RECKLESS_DEFENSE_MULTIPLIER,
+        name: EN.combat.enemyStyles.reckless,
+        intentHint: "burst",
+      };
+    }
+    return {
+      id: "steady",
+      atk: ENEMY_STYLE_STEADY_ATTACK_MULTIPLIER,
+      def: ENEMY_STYLE_STEADY_DEFENSE_MULTIPLIER,
+      name: EN.combat.enemyStyles.steady,
+      intentHint: "pressure",
+    };
+  }
+
+  planEnemyAction(enemy: Creature): PlannedEnemyAction {
     const hpRatio = enemy.hitpoints / Math.max(1, enemy.maxHitpoints);
 
     if (
       hpRatio < ENEMY_STYLE_LOW_HP_RATIO &&
       this.dice.roll(1, 100) <= ENEMY_STYLE_GUARDED_CHANCE_PERCENT
     ) {
-      return {
-        atk: ENEMY_STYLE_GUARDED_ATTACK_MULTIPLIER,
-        def: ENEMY_STYLE_GUARDED_DEFENSE_MULTIPLIER,
-        name: EN.combat.enemyStyles.guarded,
-      };
+      return this.enemyActionForId("guarded");
     }
 
     if (this.dice.roll(1, 100) <= ENEMY_STYLE_RECKLESS_CHANCE_PERCENT) {
-      return {
-        atk: ENEMY_STYLE_RECKLESS_ATTACK_MULTIPLIER,
-        def: ENEMY_STYLE_RECKLESS_DEFENSE_MULTIPLIER,
-        name: EN.combat.enemyStyles.reckless,
-      };
+      return this.enemyActionForId("reckless");
     }
 
-    return {
-      atk: ENEMY_STYLE_STEADY_ATTACK_MULTIPLIER,
-      def: ENEMY_STYLE_STEADY_DEFENSE_MULTIPLIER,
-      name: EN.combat.enemyStyles.steady,
-    };
+    return this.enemyActionForId("steady");
   }
 
   turn(
@@ -489,7 +513,7 @@ export class Combat {
     }
 
     if (enemy.alive) {
-      const enemyStyle = this.enemyAction(enemy);
+      const enemyStyle = options.forcedEnemyAction ?? this.planEnemyAction(enemy);
       const styleText = EN.combat.logs.enemyStyle(enemy.name, enemyStyle.name);
       logs.push({ text: styleText, level: "info" });
       moments.push({ type: "text", text: styleText, level: "info" });

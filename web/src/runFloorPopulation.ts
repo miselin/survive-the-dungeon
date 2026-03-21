@@ -52,6 +52,13 @@ import { creatureAtLevel, NameGenerator } from "./procgen";
 import type { SeededRandom } from "./rng";
 import { EN } from "./strings/en";
 import { ROOM_BOSS, ROOM_SHOP, ROOM_START } from "./types";
+import {
+  buildEncounterPlan,
+  ENCOUNTER_ROLE_TUNING,
+  type EncounterRole,
+  type EnemyIntentHint,
+} from "./encounterGrammar";
+import type { EnemyActionId } from "./combat";
 
 export type MobEntity = {
   id: string;
@@ -59,6 +66,10 @@ export type MobEntity = {
   roomId: number;
   isBoss: boolean;
   pursuitTurnsRemaining: number;
+  encounterRole?: EncounterRole;
+  encounterId?: string;
+  intentHint?: EnemyIntentHint;
+  nextEnemyActionId?: EnemyActionId;
 };
 
 export type ChestEntity = {
@@ -190,6 +201,14 @@ export function populateDungeon(
       );
     }
 
+    const encounterPlan = buildEncounterPlan({
+      floor: options.floor,
+      threat: challengeLevel,
+      roomKind: isBoss ? "boss" : "normal",
+      targetCount: mobCount,
+      rng: options.rng,
+    });
+
     const mobPositions = randomPositionsInRoom(
       room,
       options.rng,
@@ -215,9 +234,18 @@ export function populateDungeon(
       1,
     );
 
-    for (const pos of mobPositions) {
+    for (const [index, pos] of mobPositions.entries()) {
+      const encounterMember = encounterPlan[index];
+      const roleTuning = encounterMember
+        ? ENCOUNTER_ROLE_TUNING[encounterMember.role]
+        : null;
+      const mobChallengeLevel =
+        !isBoss && roleTuning
+          ? Math.max(0, challengeLevel + roleTuning.challengeOffset)
+          : challengeLevel;
+
       const mob = creatureAtLevel(
-        challengeLevel,
+        mobChallengeLevel,
         options.nameGenerator,
         options.rng,
       );
@@ -237,6 +265,16 @@ export function populateDungeon(
           ),
         );
         mob.hitpoints = mob.maxHitpoints;
+      } else if (roleTuning) {
+        mob.maxHitpoints = Math.max(
+          1,
+          Math.floor(mob.maxHitpoints * roleTuning.hitpointMultiplier),
+        );
+        mob.hitpoints = mob.maxHitpoints;
+        mob.attackBonus += roleTuning.attackBonusDelta;
+        mob.defenseBonus += roleTuning.defenseBonusDelta;
+        mob.damageDealtMultiplier *= roleTuning.damageDealtMultiplier;
+        mob.damageTakenMultiplier *= roleTuning.damageTakenMultiplier;
       }
 
       mob.mob = true;
@@ -249,6 +287,9 @@ export function populateDungeon(
         roomId: room.id,
         isBoss,
         pursuitTurnsRemaining: 0,
+        encounterRole: encounterMember?.role,
+        encounterId: encounterMember?.encounterId,
+        intentHint: encounterMember?.intentHint,
       });
     }
 

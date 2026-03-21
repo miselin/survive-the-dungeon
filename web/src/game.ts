@@ -422,6 +422,13 @@ export class DungeonRun {
     fallback: Position,
     roomId: number | null,
   ): void {
+    const mob = this.mobs.find((entry) => entry.id === mobId);
+    if (mob && !mob.nextEnemyActionId) {
+      const planned = this.combat.planEnemyAction(mob.creature);
+      mob.nextEnemyActionId = planned.id;
+      mob.intentHint = planned.intentHint;
+    }
+
     const surpriseProtection =
       roomId !== null && this.dangerProtectionArmedRooms.has(roomId);
     if (surpriseProtection) {

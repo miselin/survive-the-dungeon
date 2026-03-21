@@ -138,4 +138,38 @@ export function runCombatTests(): void {
     fallsMomentIndex > damageMomentIndex,
     "Defeat moment should appear after the damage moment in combat roll playback",
   );
+
+  const intentCombat = new Combat(new FixedDice([12]) as unknown as Dice);
+  const intentEnemy = makeCreature("Scout", 60);
+  intentEnemy.mob = true;
+  intentEnemy.hitpoints = 10;
+  intentEnemy.maxHitpoints = 100;
+  const plannedIntent = intentCombat.planEnemyAction(intentEnemy);
+  assertEqual(
+    plannedIntent.id,
+    "guarded",
+    "Low-HP enemies should be able to telegraph guarded intent",
+  );
+  assertEqual(
+    plannedIntent.intentHint,
+    "guard",
+    "Guarded enemy action should expose a guard intent hint",
+  );
+
+  const forcedIntentCombat = new Combat(new FixedDice([90]) as unknown as Dice);
+  const forcedPlayer = makeCreature("Player", 80);
+  const forcedEnemy = makeCreature("Bandit", 80);
+  forcedEnemy.mob = true;
+  const forcedResult = forcedIntentCombat.turn(
+    forcedPlayer,
+    forcedEnemy,
+    "normal",
+    {
+      forcedEnemyAction: forcedIntentCombat.enemyActionForId("guarded"),
+    },
+  );
+  assert(
+    forcedResult.logs.some((entry) => entry.text.includes("guarded strike")),
+    "Forced enemy intent should be reflected in combat logs",
+  );
 }

@@ -3,7 +3,7 @@ import {
   AttributeSet,
   type AttributesRecord,
 } from "./attributes";
-import type { CombatLuckState } from "./combat";
+import type { CombatLuckState, EnemyActionId } from "./combat";
 import { Creature } from "./creature";
 import {
   Buff,
@@ -18,6 +18,12 @@ import {
 } from "./items";
 import { WorldMap } from "./mapgen";
 import type { BuildChoiceDefinition } from "./buildChoices";
+import {
+  isEncounterRole,
+  isEnemyIntentHint,
+  type EncounterRole,
+  type EnemyIntentHint,
+} from "./encounterGrammar";
 import type {
   OverlayState,
   RunState,
@@ -64,6 +70,10 @@ type SavedMob = {
   roomId: number;
   isBoss: boolean;
   pursuitTurnsRemaining?: number;
+  encounterRole?: EncounterRole;
+  encounterId?: string;
+  intentHint?: EnemyIntentHint;
+  nextEnemyActionId?: EnemyActionId;
   creature: SavedCreature;
 };
 
@@ -141,6 +151,10 @@ export type RuntimeMob = {
   roomId: number;
   isBoss: boolean;
   pursuitTurnsRemaining: number;
+  encounterRole?: EncounterRole;
+  encounterId?: string;
+  intentHint?: EnemyIntentHint;
+  nextEnemyActionId?: EnemyActionId;
 };
 
 export type RuntimeChest = {
@@ -454,6 +468,10 @@ export function encodeRunSaveData(
       roomId: mob.roomId,
       isBoss: mob.isBoss,
       pursuitTurnsRemaining: mob.pursuitTurnsRemaining,
+      encounterRole: mob.encounterRole,
+      encounterId: mob.encounterId,
+      intentHint: mob.intentHint,
+      nextEnemyActionId: mob.nextEnemyActionId,
       creature: serializeCreature(mob.creature),
     })),
     chests: input.chests.map((entry) => ({
@@ -541,6 +559,24 @@ export function decodeRunSaveData(
         0,
         Math.floor(entry.pursuitTurnsRemaining ?? 0),
       ),
+      encounterRole:
+        typeof entry.encounterRole === "string" &&
+        isEncounterRole(entry.encounterRole)
+          ? entry.encounterRole
+          : undefined,
+      encounterId:
+        typeof entry.encounterId === "string" ? entry.encounterId : undefined,
+      intentHint:
+        typeof entry.intentHint === "string" &&
+        isEnemyIntentHint(entry.intentHint)
+          ? entry.intentHint
+          : undefined,
+      nextEnemyActionId:
+        entry.nextEnemyActionId === "guarded" ||
+        entry.nextEnemyActionId === "reckless" ||
+        entry.nextEnemyActionId === "steady"
+          ? entry.nextEnemyActionId
+          : undefined,
       creature,
     };
   });

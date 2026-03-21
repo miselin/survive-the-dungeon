@@ -24,9 +24,13 @@ var DEFAULT_WEAPON_ATTACK_BONUS = 4;
 var DEFAULT_WEAPON_DEFENSE_BONUS = -1;
 var MOB_CRITICAL_RANGE_MINIMUM = 17;
 var MOB_CRITICAL_MULTIPLIER_MAXIMUM = 3;
-var CREATURE_MAX_DAMAGE_AT_LEVEL_1 = Math.floor(PLAYER_INITIAL_HP * 0.3);
+var CREATURE_MAX_DAMAGE_AT_LEVEL_1 = Math.floor(
+  PLAYER_INITIAL_HP * 0.3
+);
 var CREATURE_MAX_HP_AT_LEVEL_1 = 40;
-var CREATURE_MIN_HP_AT_LEVEL_1 = Math.floor(CREATURE_MAX_HP_AT_LEVEL_1 * 0.5);
+var CREATURE_MIN_HP_AT_LEVEL_1 = Math.floor(
+  CREATURE_MAX_HP_AT_LEVEL_1 * 0.5
+);
 var CREATURE_BASE_STR = 6;
 var CREATURE_BASE_DEX = 4;
 var CREATURE_BASE_CON = 2;
@@ -150,6 +154,7 @@ var SHOP_REWARD_HEAL_FALLBACK_RATIO = 0.35;
 var AI_MOVE_MS = 450;
 var AI_WANDER_ROLL_MAX = 12;
 var AI_WANDER_MOVE_ROLL_MIN = 9;
+var AI_LEASH_PURSUIT_TURNS = 2;
 var LOG_LIMIT = 9;
 var DANGER_WARNING_LEVEL_GAP = 2;
 var SURPRISE_PROTECTION_ATTACK_MULTIPLIER = 0.35;
@@ -654,7 +659,9 @@ var EN = {
       combatFx: {
         title: "Combat Roll",
         hint: "Watch the checks resolve moment by moment.",
-        skipAll: "Skip all combat roll animations"
+        skipAll: "Skip all combat roll animations",
+        anticipationTitle: "Dice roll incoming",
+        anticipationNeed: (phaseLabel, target, defender) => `${phaseLabel}: need ${target}+ vs ${defender}.`
       },
       battle: {
         title: (enemyName) => `Battle: ${enemyName}`,
@@ -663,11 +670,29 @@ var EN = {
         yourHp: (current, max) => `Your HP: ${current}/${max}`,
         enemyHp: (current, max) => `Enemy HP: ${current}/${max}`,
         ambushProtectionHint: "Ambush protection active: enemy opening strike weakened and flee is easier.",
+        enemyIntent: (intent) => {
+          if (intent === "guard") {
+            return "Enemy intent: guarded strike (safer, harder to break).";
+          }
+          if (intent === "burst") {
+            return "Enemy intent: reckless burst (high damage, lower defense).";
+          }
+          if (intent === "chip") {
+            return "Enemy intent: chip pressure and attrition.";
+          }
+          return "Enemy intent: steady pressure.";
+        },
         healChoice: (choice) => `Heal choice: ${choice}`,
         actions: {
           normal: { label: "Normal", subtitle: "1.0x damage, 1.0x defense" },
-          offensive: { label: "Offensive", subtitle: "2.0x damage, 0.3x defense" },
-          defensive: { label: "Defensive", subtitle: "0.5x damage, 1.5x defense" },
+          offensive: {
+            label: "Offensive",
+            subtitle: "2.0x damage, 0.3x defense"
+          },
+          defensive: {
+            label: "Defensive",
+            subtitle: "0.5x damage, 1.5x defense"
+          },
           heal: { label: "Heal", subtitle: "Use best healing item" },
           flee: { label: "Flee", subtitle: "Dexterity check to escape" }
         }
@@ -1282,8 +1307,13 @@ function armorClassFor(defender, defenseMultiplier = 1) {
   );
 }
 function playerLuckBonusFromState(state, hpRatio) {
-  const lowRolls = state.playerD20History.filter((roll) => roll <= PLAYER_LUCK_LOW_ROLL_THRESHOLD).length;
-  const triggerExcess = Math.max(0, lowRolls - PLAYER_LUCK_LOW_ROLL_TRIGGER + 1);
+  const lowRolls = state.playerD20History.filter(
+    (roll) => roll <= PLAYER_LUCK_LOW_ROLL_THRESHOLD
+  ).length;
+  const triggerExcess = Math.max(
+    0,
+    lowRolls - PLAYER_LUCK_LOW_ROLL_TRIGGER + 1
+  );
   const historyBonus = Math.min(
     PLAYER_LUCK_MAX_HISTORY_BONUS,
     triggerExcess * PLAYER_LUCK_BONUS_PER_LOW_ROLL
@@ -1299,7 +1329,13 @@ function playerLuckBonusFromState(state, hpRatio) {
   if (hpRatio <= PLAYER_LUCK_CRITICAL_HP_RATIO) {
     hpBonus += PLAYER_LUCK_CRITICAL_HP_EXTRA_BONUS;
   }
-  return Math.max(0, Math.min(PLAYER_LUCK_MAX_TOTAL_BONUS, historyBonus + missStreakBonus + hpBonus));
+  return Math.max(
+    0,
+    Math.min(
+      PLAYER_LUCK_MAX_TOTAL_BONUS,
+      historyBonus + missStreakBonus + hpBonus
+    )
+  );
 }
 var Combat = class {
   constructor(dice) {
@@ -1357,10 +1393,16 @@ var Combat = class {
       if (!attacker.mob) {
         const critMultiplier = attacker.getWeaponCriticalMultiplier();
         attackDamageMultiplier = critMultiplier;
-        logs.push({ text: EN.combat.logs.playerCritical(attacker.name, critMultiplier), level: "success" });
+        logs.push({
+          text: EN.combat.logs.playerCritical(attacker.name, critMultiplier),
+          level: "success"
+        });
         moments.push({
           type: "text",
-          text: EN.combat.logs.playerCriticalMoment(attacker.name, critMultiplier),
+          text: EN.combat.logs.playerCriticalMoment(
+            attacker.name,
+            critMultiplier
+          ),
           level: "success"
         });
         this.recordPlayerD20Roll(attackRoll, true);
@@ -1379,9 +1421,15 @@ var Combat = class {
         });
         if (critConfirm > armorClass) {
           attackDamageMultiplier = attacker.getWeaponCriticalMultiplier();
-          logs.push({ text: EN.combat.logs.enemyCritical(attacker.name), level: "success" });
+          logs.push({
+            text: EN.combat.logs.enemyCritical(attacker.name),
+            level: "success"
+          });
         } else {
-          logs.push({ text: EN.combat.logs.enemyCriticalDowngrade(attacker.name), level: "info" });
+          logs.push({
+            text: EN.combat.logs.enemyCriticalDowngrade(attacker.name),
+            level: "info"
+          });
         }
       }
     } else {
@@ -1404,11 +1452,18 @@ var Combat = class {
       if (!hit) {
         attackDamageMultiplier *= Math.max(1, totalAttack) / Math.max(1, armorClass) * MAXIMUM_INEFFECTIVE_DAMAGE_MULTIPLIER;
         logs.push({
-          text: EN.combat.logs.reducedDamageHit(attacker.name, armorClass, totalAttack),
+          text: EN.combat.logs.reducedDamageHit(
+            attacker.name,
+            armorClass,
+            totalAttack
+          ),
           level: "warn"
         });
       } else {
-        logs.push({ text: EN.combat.logs.hit(attacker.name, totalAttack, armorClass), level: "success" });
+        logs.push({
+          text: EN.combat.logs.hit(attacker.name, totalAttack, armorClass),
+          level: "success"
+        });
       }
     }
     const damageRoll = this.dice.rollNamed(attacker.getWeaponDamage());
@@ -1420,7 +1475,12 @@ var Combat = class {
     defender.hitpoints -= finalDamage;
     const remainingHp = Math.max(0, defender.hitpoints);
     logs.push({
-      text: EN.combat.logs.damage(attacker.name, finalDamage, defender.name, remainingHp),
+      text: EN.combat.logs.damage(
+        attacker.name,
+        finalDamage,
+        defender.name,
+        remainingHp
+      ),
       level: "info"
     });
     const defenderFalls = defender.hitpoints <= 0;
@@ -1445,27 +1505,42 @@ var Combat = class {
       moments.push({ type: "text", text: fallsText, level: fallLevel });
     }
   }
-  enemyAction(enemy) {
-    const hpRatio = enemy.hitpoints / Math.max(1, enemy.maxHitpoints);
-    if (hpRatio < ENEMY_STYLE_LOW_HP_RATIO && this.dice.roll(1, 100) <= ENEMY_STYLE_GUARDED_CHANCE_PERCENT) {
+  enemyActionForId(id) {
+    if (id === "guarded") {
       return {
+        id,
         atk: ENEMY_STYLE_GUARDED_ATTACK_MULTIPLIER,
         def: ENEMY_STYLE_GUARDED_DEFENSE_MULTIPLIER,
-        name: EN.combat.enemyStyles.guarded
+        name: EN.combat.enemyStyles.guarded,
+        intentHint: "guard"
       };
     }
-    if (this.dice.roll(1, 100) <= ENEMY_STYLE_RECKLESS_CHANCE_PERCENT) {
+    if (id === "reckless") {
       return {
+        id,
         atk: ENEMY_STYLE_RECKLESS_ATTACK_MULTIPLIER,
         def: ENEMY_STYLE_RECKLESS_DEFENSE_MULTIPLIER,
-        name: EN.combat.enemyStyles.reckless
+        name: EN.combat.enemyStyles.reckless,
+        intentHint: "burst"
       };
     }
     return {
+      id: "steady",
       atk: ENEMY_STYLE_STEADY_ATTACK_MULTIPLIER,
       def: ENEMY_STYLE_STEADY_DEFENSE_MULTIPLIER,
-      name: EN.combat.enemyStyles.steady
+      name: EN.combat.enemyStyles.steady,
+      intentHint: "pressure"
     };
+  }
+  planEnemyAction(enemy) {
+    const hpRatio = enemy.hitpoints / Math.max(1, enemy.maxHitpoints);
+    if (hpRatio < ENEMY_STYLE_LOW_HP_RATIO && this.dice.roll(1, 100) <= ENEMY_STYLE_GUARDED_CHANCE_PERCENT) {
+      return this.enemyActionForId("guarded");
+    }
+    if (this.dice.roll(1, 100) <= ENEMY_STYLE_RECKLESS_CHANCE_PERCENT) {
+      return this.enemyActionForId("reckless");
+    }
+    return this.enemyActionForId("steady");
   }
   turn(player, enemy, action, options = {}) {
     const logs = [];
@@ -1479,12 +1554,20 @@ var Combat = class {
       playerAtkMult = COMBAT_OFFENSIVE_ATTACK_MULTIPLIER;
       playerDefMult = COMBAT_OFFENSIVE_DEFENSE_MULTIPLIER;
       logs.push({ text: EN.combat.logs.offensiveStance, level: "warn" });
-      moments.push({ type: "text", text: EN.combat.logs.offensiveStance, level: "warn" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.offensiveStance,
+        level: "warn"
+      });
     } else if (action === "defensive") {
       playerAtkMult = COMBAT_DEFENSIVE_ATTACK_MULTIPLIER;
       playerDefMult = COMBAT_DEFENSIVE_DEFENSE_MULTIPLIER;
       logs.push({ text: EN.combat.logs.defensiveStance, level: "info" });
-      moments.push({ type: "text", text: EN.combat.logs.defensiveStance, level: "info" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.defensiveStance,
+        level: "info"
+      });
     }
     if (action === "flee") {
       const fleeRoll = this.dice.roll(1, FLEE_DIE_SIDES);
@@ -1505,18 +1588,32 @@ var Combat = class {
       });
       this.recordPlayerD20Roll(fleeRoll, fleeSuccess);
       if (fleeSuccess) {
-        logs.push({ text: EN.combat.logs.fleeSuccess(score, dc), level: "success" });
-        moments.push({ type: "text", text: EN.combat.logs.fleeSuccessMoment(score, dc), level: "success" });
+        logs.push({
+          text: EN.combat.logs.fleeSuccess(score, dc),
+          level: "success"
+        });
+        moments.push({
+          type: "text",
+          text: EN.combat.logs.fleeSuccessMoment(score, dc),
+          level: "success"
+        });
         return { over: true, fled: true, logs, moments };
       }
       logs.push({ text: EN.combat.logs.fleeFail(score, dc), level: "warn" });
-      moments.push({ type: "text", text: EN.combat.logs.fleeFailMoment(score, dc), level: "warn" });
+      moments.push({
+        type: "text",
+        text: EN.combat.logs.fleeFailMoment(score, dc),
+        level: "warn"
+      });
     } else if (action === "heal") {
       const heal = player.bestHealItem();
       if (heal) {
         player.inventory.remove(heal);
         const amount = player.applyInstantItem(heal);
-        logs.push({ text: EN.combat.logs.heal(heal.name, amount), level: "success" });
+        logs.push({
+          text: EN.combat.logs.heal(heal.name, amount),
+          level: "success"
+        });
         moments.push({
           type: "heal",
           actor: player.name,
@@ -1525,13 +1622,17 @@ var Combat = class {
         });
       } else {
         logs.push({ text: EN.combat.logs.noHealingItem, level: "warn" });
-        moments.push({ type: "text", text: EN.combat.logs.noHealingMoment, level: "warn" });
+        moments.push({
+          type: "text",
+          text: EN.combat.logs.noHealingMoment,
+          level: "warn"
+        });
       }
     } else {
       this.attack(player, enemy, playerAtkMult, 1, logs, moments);
     }
     if (enemy.alive) {
-      const enemyStyle = this.enemyAction(enemy);
+      const enemyStyle = options.forcedEnemyAction ?? this.planEnemyAction(enemy);
       const styleText = EN.combat.logs.enemyStyle(enemy.name, enemyStyle.name);
       logs.push({ text: styleText, level: "info" });
       moments.push({ type: "text", text: styleText, level: "info" });
@@ -1574,7 +1675,14 @@ var ADJECTIVES = [
   "tempered",
   "radiant"
 ];
-var ADVERBS = ["eerily", "violently", "surprisingly", "quietly", "wildly", "ominously"];
+var ADVERBS = [
+  "eerily",
+  "violently",
+  "surprisingly",
+  "quietly",
+  "wildly",
+  "ominously"
+];
 var NameGenerator = class {
   constructor(rng) {
     this.rng = rng;
@@ -1598,23 +1706,42 @@ var NameGenerator = class {
   }
 };
 function createWeapon(name, maxDamage, challengeLevel, rng) {
-  const damage = rng.int(Math.max(1, Math.floor(maxDamage / 2)), Math.max(2, maxDamage));
-  const faces = Math.max(WEAPON_DAMAGE_FACE_MIN, Math.min(WEAPON_DAMAGE_FACE_MAX, damage));
+  const damage = rng.int(
+    Math.max(1, Math.floor(maxDamage / 2)),
+    Math.max(2, maxDamage)
+  );
+  const faces = Math.max(
+    WEAPON_DAMAGE_FACE_MIN,
+    Math.min(WEAPON_DAMAGE_FACE_MAX, damage)
+  );
   const count = Math.max(1, Math.floor(damage / faces));
   const flatBonus = Math.max(
     ITEM_WEAPON_FLAT_BONUS_BASE,
     ITEM_WEAPON_FLAT_BONUS_BASE + Math.floor(challengeLevel / ITEM_WEAPON_FLAT_BONUS_CHALLENGE_DIVISOR) + rng.int(0, ITEM_WEAPON_FLAT_BONUS_RANDOM_MAX)
   );
   const critRange = rng.int(PLAYER_CRIT_MINIMUM_ROLL, WEAPON_CRIT_MAXIMUM_ROLL);
-  const critMult = rng.int(PLAYER_CRIT_MINIMUM_MULTIPLIER, PLAYER_CRIT_MAXIMUM_MULTIPLIER);
-  return new Weapon(name, critRange, critMult, challengeLevel + 1, 0, `${count}d${faces} +${flatBonus}`);
+  const critMult = rng.int(
+    PLAYER_CRIT_MINIMUM_MULTIPLIER,
+    PLAYER_CRIT_MAXIMUM_MULTIPLIER
+  );
+  return new Weapon(
+    name,
+    critRange,
+    critMult,
+    challengeLevel + 1,
+    0,
+    `${count}d${faces} +${flatBonus}`
+  );
 }
 function createArmor(name, slot, challengeLevel, rng) {
   return new Armor(
     slot,
     name,
     challengeLevel,
-    rng.int(ITEM_ARMOR_DEFENSE_BASE_MIN, challengeLevel + ITEM_ARMOR_DEFENSE_CHALLENGE_BONUS)
+    rng.int(
+      ITEM_ARMOR_DEFENSE_BASE_MIN,
+      challengeLevel + ITEM_ARMOR_DEFENSE_CHALLENGE_BONUS
+    )
   );
 }
 function creatureAtLevel(challengeLevel, names, rng) {
@@ -1643,9 +1770,19 @@ function creatureAtLevel(challengeLevel, names, rng) {
   creature.attributes.modify("con", CREATURE_BASE_CON);
   creature.attackBonus = CREATURE_BASE_ATTACK_BONUS;
   creature.defenseBonus = CREATURE_BASE_DEFENSE_BONUS;
-  const weapon = createWeapon(names.generateName("hands"), maxDamage, challengeLevel, rng);
+  const weapon = createWeapon(
+    names.generateName("hands"),
+    maxDamage,
+    challengeLevel,
+    rng
+  );
   const armorSlot = rng.choice(["chest", "arms", "feet"]);
-  const armor = createArmor(names.generateName(armorSlot), armorSlot, challengeLevel, rng);
+  const armor = createArmor(
+    names.generateName(armorSlot),
+    armorSlot,
+    challengeLevel,
+    rng
+  );
   creature.wield("hands", weapon);
   creature.wield(armorSlot, armor);
   creature.maxHitpoints = rng.int(minHp, maxHp);
@@ -1661,7 +1798,9 @@ function assert(condition, message) {
 }
 function assertEqual(actual, expected, message) {
   if (actual !== expected) {
-    throw new Error(`${message} (expected ${String(expected)}, got ${String(actual)})`);
+    throw new Error(
+      `${message} (expected ${String(expected)}, got ${String(actual)})`
+    );
   }
 }
 
@@ -1702,17 +1841,27 @@ function runCombatTests() {
     const mob = creatureAtLevel(0, names, rng);
     maxAc = Math.max(maxAc, armorClassFor(mob));
   }
-  assert(maxAc <= 14, `Level-0 mob AC should stay manageable (<=14), got ${maxAc}`);
+  assert(
+    maxAc <= 14,
+    `Level-0 mob AC should stay manageable (<=14), got ${maxAc}`
+  );
   const neutralLuck = playerLuckBonusFromState(
     { playerD20History: [12, 14, 16, 18], playerMissStreak: 0 },
     0.9
   );
-  assertEqual(neutralLuck, 0, "Luck bonus should be 0 with healthy HP and normal rolls");
+  assertEqual(
+    neutralLuck,
+    0,
+    "Luck bonus should be 0 with healthy HP and normal rolls"
+  );
   const pressuredLuck = playerLuckBonusFromState(
     { playerD20History: [1, 2, 3, 4, 5, 6, 7, 8], playerMissStreak: 3 },
     0.1
   );
-  assert(pressuredLuck >= 4, `Luck bonus should increase under pressure, got ${pressuredLuck}`);
+  assert(
+    pressuredLuck >= 4,
+    `Luck bonus should increase under pressure, got ${pressuredLuck}`
+  );
   const player = makeCreature("Player", 100);
   player.maxHitpoints = 100;
   player.hitpoints = 10;
@@ -1728,37 +1877,388 @@ function runCombatTests() {
   const playerRoll = result.moments.find(
     (moment) => moment.type === "roll" && moment.actor === "Player" && moment.phase === "to-hit"
   );
-  assert(!!playerRoll && playerRoll.type === "roll", "Expected player to-hit roll moment");
+  assert(
+    !!playerRoll && playerRoll.type === "roll",
+    "Expected player to-hit roll moment"
+  );
   if (!playerRoll || playerRoll.type !== "roll") {
     return;
   }
-  assert(playerRoll.bonus > 0, `Expected positive luck-adjusted to-hit bonus, got ${playerRoll.bonus}`);
-  assert(playerRoll.success, "Expected luck-adjusted roll to convert the hit check to success");
+  assert(
+    playerRoll.bonus > 0,
+    `Expected positive luck-adjusted to-hit bonus, got ${playerRoll.bonus}`
+  );
+  assert(
+    playerRoll.success,
+    "Expected luck-adjusted roll to convert the hit check to success"
+  );
   const finisherPlayer = makeCreature("Player", 10);
   const finisherEnemy = makeCreature("Goblin", 1);
   finisherEnemy.mob = true;
   const finisherCombat = new Combat(new FixedDice([11]));
-  const finisherResult = finisherCombat.turn(finisherPlayer, finisherEnemy, "normal");
-  const damageMomentIndex = finisherResult.moments.findIndex((moment) => moment.type === "damage" && moment.actor === "Player" && moment.defender === "Goblin");
-  const fallsMomentIndex = finisherResult.moments.findIndex((moment) => moment.type === "text" && moment.text === "Goblin falls.");
-  assert(damageMomentIndex >= 0, "Expected a player damage moment when delivering a finishing blow");
+  const finisherResult = finisherCombat.turn(
+    finisherPlayer,
+    finisherEnemy,
+    "normal"
+  );
+  const damageMomentIndex = finisherResult.moments.findIndex(
+    (moment) => moment.type === "damage" && moment.actor === "Player" && moment.defender === "Goblin"
+  );
+  const fallsMomentIndex = finisherResult.moments.findIndex(
+    (moment) => moment.type === "text" && moment.text === "Goblin falls."
+  );
+  assert(
+    damageMomentIndex >= 0,
+    "Expected a player damage moment when delivering a finishing blow"
+  );
   assert(
     fallsMomentIndex > damageMomentIndex,
     "Defeat moment should appear after the damage moment in combat roll playback"
+  );
+  const intentCombat = new Combat(new FixedDice([12]));
+  const intentEnemy = makeCreature("Scout", 60);
+  intentEnemy.mob = true;
+  intentEnemy.hitpoints = 10;
+  intentEnemy.maxHitpoints = 100;
+  const plannedIntent = intentCombat.planEnemyAction(intentEnemy);
+  assertEqual(
+    plannedIntent.id,
+    "guarded",
+    "Low-HP enemies should be able to telegraph guarded intent"
+  );
+  assertEqual(
+    plannedIntent.intentHint,
+    "guard",
+    "Guarded enemy action should expose a guard intent hint"
+  );
+  const forcedIntentCombat = new Combat(new FixedDice([90]));
+  const forcedPlayer = makeCreature("Player", 80);
+  const forcedEnemy = makeCreature("Bandit", 80);
+  forcedEnemy.mob = true;
+  const forcedResult = forcedIntentCombat.turn(
+    forcedPlayer,
+    forcedEnemy,
+    "normal",
+    {
+      forcedEnemyAction: forcedIntentCombat.enemyActionForId("guarded")
+    }
+  );
+  assert(
+    forcedResult.logs.some((entry) => entry.text.includes("guarded strike")),
+    "Forced enemy intent should be reflected in combat logs"
   );
 }
 
 // src/tests/dice.test.ts
 function runDiceTests() {
   const dice = new Dice(new SeededRandom("dice-flat-modifier"));
-  assertEqual(dice.rollNamed("1d1 +5"), 6, "Dice roll should include +modifier");
-  assertEqual(dice.rollNamed("2d1+3"), 5, "Dice roll should parse +modifier without spaces");
+  assertEqual(
+    dice.rollNamed("1d1 +5"),
+    6,
+    "Dice roll should include +modifier"
+  );
+  assertEqual(
+    dice.rollNamed("2d1+3"),
+    5,
+    "Dice roll should parse +modifier without spaces"
+  );
   const minMaxA = dice.minMax("2d4 +3");
   assertEqual(minMaxA[0], 5, "Dice min should include modifier");
   assertEqual(minMaxA[1], 11, "Dice max should include modifier");
   const minMaxB = dice.minMax("3d6-2");
   assertEqual(minMaxB[0], 1, "Dice min should support negative modifier");
   assertEqual(minMaxB[1], 16, "Dice max should support negative modifier");
+}
+
+// src/encounterGrammar.ts
+var ENCOUNTER_ROLE_TUNING = {
+  swarmer: {
+    challengeOffset: -1,
+    hitpointMultiplier: 0.72,
+    attackBonusDelta: 1,
+    defenseBonusDelta: -1,
+    damageDealtMultiplier: 0.92,
+    damageTakenMultiplier: 1.24,
+    intentHint: "chip"
+  },
+  skirmisher: {
+    challengeOffset: 0,
+    hitpointMultiplier: 0.9,
+    attackBonusDelta: 1,
+    defenseBonusDelta: 0,
+    damageDealtMultiplier: 1,
+    damageTakenMultiplier: 1.08,
+    intentHint: "pressure"
+  },
+  striker: {
+    challengeOffset: 1,
+    hitpointMultiplier: 0.86,
+    attackBonusDelta: 2,
+    defenseBonusDelta: -1,
+    damageDealtMultiplier: 1.2,
+    damageTakenMultiplier: 1.12,
+    intentHint: "burst"
+  },
+  bulwark: {
+    challengeOffset: 1,
+    hitpointMultiplier: 1.35,
+    attackBonusDelta: -1,
+    defenseBonusDelta: 3,
+    damageDealtMultiplier: 0.95,
+    damageTakenMultiplier: 0.8,
+    intentHint: "guard"
+  },
+  brute: {
+    challengeOffset: 2,
+    hitpointMultiplier: 1.55,
+    attackBonusDelta: 3,
+    defenseBonusDelta: -2,
+    damageDealtMultiplier: 1.26,
+    damageTakenMultiplier: 0.92,
+    intentHint: "burst"
+  }
+};
+var ENCOUNTER_FORMS = [
+  [
+    "encounter",
+    "scout-pair",
+    ["when", ["floor", 1, 3], ["threat", 0, 6], ["room", "normal"]],
+    ["weight", 10],
+    ["pack", ["skirmisher", 2]]
+  ],
+  [
+    "encounter",
+    "swarmer-screen",
+    ["when", ["floor", 1, 6], ["threat", 0, 9], ["room", "normal"]],
+    ["weight", 7],
+    ["pack", ["swarmer", 2], ["skirmisher", 1]]
+  ],
+  [
+    "encounter",
+    "anvil-and-knife",
+    ["when", ["floor", 3, 12], ["threat", 4, 14], ["room", "normal"]],
+    ["weight", 8],
+    ["pack", ["bulwark", 1], ["striker", 1]]
+  ],
+  [
+    "encounter",
+    "hunter-cell",
+    ["when", ["floor", 4, 99], ["threat", 5, 99], ["room", "normal"]],
+    ["weight", 7],
+    ["pack", ["skirmisher", 1], ["striker", 2]]
+  ],
+  [
+    "encounter",
+    "brute-with-escort",
+    ["when", ["floor", 6, 99], ["threat", 7, 99], ["room", "normal"]],
+    ["weight", 5],
+    ["pack", ["brute", 1], ["swarmer", 2]]
+  ],
+  [
+    "encounter",
+    "bulwark-line",
+    ["when", ["floor", 8, 99], ["threat", 8, 99], ["room", "normal"]],
+    ["weight", 4],
+    ["pack", ["bulwark", 1], ["skirmisher", 2]]
+  ]
+];
+var FALLBACK_RULE = {
+  id: "fallback-skirmisher",
+  weight: 1,
+  minFloor: 1,
+  maxFloor: Number.MAX_SAFE_INTEGER,
+  minThreat: 0,
+  maxThreat: Number.MAX_SAFE_INTEGER,
+  roomKind: "normal",
+  pack: [{ role: "skirmisher", count: 1 }]
+};
+function isEncounterRoleValue(value) {
+  return typeof value === "string" && Object.hasOwn(ENCOUNTER_ROLE_TUNING, value);
+}
+function parseEncounterForm(form) {
+  const [, id, when, weightSpec, packSpec] = form;
+  const [, floorSpec, threatSpec, roomSpec] = when;
+  const [, minFloorRaw, maxFloorRaw] = floorSpec;
+  const [, minThreatRaw, maxThreatRaw] = threatSpec;
+  const [, roomKind] = roomSpec;
+  const [, weightRaw] = weightSpec;
+  const minFloor = Math.floor(minFloorRaw);
+  const maxFloor = Math.floor(maxFloorRaw);
+  const minThreat = Math.floor(minThreatRaw);
+  const maxThreat = Math.floor(maxThreatRaw);
+  const weight = Math.floor(weightRaw);
+  const entries = [];
+  for (const rawEntry of packSpec.slice(1)) {
+    const roleRaw = rawEntry[0];
+    const countRaw = rawEntry[1];
+    if (!isEncounterRoleValue(roleRaw)) {
+      continue;
+    }
+    if (typeof countRaw !== "number" || !Number.isFinite(countRaw)) {
+      continue;
+    }
+    entries.push({
+      role: roleRaw,
+      count: Math.max(1, Math.floor(countRaw))
+    });
+  }
+  return {
+    id,
+    weight: Math.max(1, weight),
+    minFloor: Math.max(1, minFloor),
+    maxFloor: Math.max(minFloor, maxFloor),
+    minThreat: Math.max(0, minThreat),
+    maxThreat: Math.max(minThreat, maxThreat),
+    roomKind,
+    pack: entries.length > 0 ? entries : FALLBACK_RULE.pack
+  };
+}
+var ENCOUNTER_RULES = ENCOUNTER_FORMS.map(
+  (form) => parseEncounterForm(form)
+);
+function matchesEncounterRule(rule, floor, threat, roomKind) {
+  return floor >= rule.minFloor && floor <= rule.maxFloor && threat >= rule.minThreat && threat <= rule.maxThreat && roomKind === rule.roomKind;
+}
+function pickWeighted(list, rng) {
+  let total = 0;
+  for (const entry of list) {
+    total += Math.max(1, entry.weight | 0);
+  }
+  if (total <= 0) {
+    return list[0];
+  }
+  let roll = rng.int(1, total);
+  for (const entry of list) {
+    roll -= Math.max(1, entry.weight | 0);
+    if (roll <= 0) {
+      return entry;
+    }
+  }
+  return list[list.length - 1];
+}
+function expandEncounterPack(rule) {
+  const roles = [];
+  for (const item of rule.pack) {
+    for (let i = 0; i < item.count; i += 1) {
+      roles.push(item.role);
+    }
+  }
+  return roles.length > 0 ? roles : ["skirmisher"];
+}
+function buildEncounterPlan(options) {
+  const wanted = Math.max(0, options.targetCount | 0);
+  if (wanted <= 0) {
+    return [];
+  }
+  const candidates = ENCOUNTER_RULES.filter(
+    (rule) => matchesEncounterRule(rule, options.floor, options.threat, options.roomKind)
+  );
+  const pool = candidates.length > 0 ? candidates : [FALLBACK_RULE];
+  const plan = [];
+  let steps = 0;
+  const maxSteps = Math.max(8, wanted * 6);
+  while (plan.length < wanted && steps < maxSteps) {
+    steps += 1;
+    const encounter = pickWeighted(pool, options.rng);
+    const pack = expandEncounterPack(encounter);
+    for (const role of pack) {
+      if (plan.length >= wanted) {
+        break;
+      }
+      const tuning = ENCOUNTER_ROLE_TUNING[role];
+      plan.push({
+        encounterId: encounter.id,
+        role,
+        intentHint: tuning.intentHint,
+        challengeOffset: tuning.challengeOffset
+      });
+    }
+  }
+  while (plan.length < wanted) {
+    const tuning = ENCOUNTER_ROLE_TUNING.skirmisher;
+    plan.push({
+      encounterId: FALLBACK_RULE.id,
+      role: "skirmisher",
+      intentHint: tuning.intentHint,
+      challengeOffset: tuning.challengeOffset
+    });
+  }
+  return plan;
+}
+function isEncounterRole(value) {
+  return isEncounterRoleValue(value);
+}
+function isEnemyIntentHint(value) {
+  return value === "chip" || value === "pressure" || value === "burst" || value === "guard";
+}
+
+// src/tests/encounterGrammar.test.ts
+function runEncounterGrammarTests() {
+  {
+    const plan = buildEncounterPlan({
+      floor: 4,
+      threat: 7,
+      roomKind: "normal",
+      targetCount: 5,
+      rng: new SeededRandom("encounter-count")
+    });
+    assertEqual(
+      plan.length,
+      5,
+      "Encounter planner should emit exactly the requested mob count"
+    );
+    assert(
+      plan.every((entry) => entry.encounterId.length > 0),
+      "Encounter planner should always annotate source encounter ids"
+    );
+  }
+  {
+    const options = {
+      floor: 8,
+      threat: 11,
+      roomKind: "normal",
+      targetCount: 7
+    };
+    const first = buildEncounterPlan({
+      ...options,
+      rng: new SeededRandom("encounter-deterministic")
+    });
+    const second = buildEncounterPlan({
+      ...options,
+      rng: new SeededRandom("encounter-deterministic")
+    });
+    assertEqual(
+      JSON.stringify(first),
+      JSON.stringify(second),
+      "Encounter planner should be deterministic for identical seeds"
+    );
+  }
+  {
+    const plan = buildEncounterPlan({
+      floor: 12,
+      threat: 12,
+      roomKind: "normal",
+      targetCount: 9,
+      rng: new SeededRandom("encounter-role-mix")
+    });
+    assert(
+      plan.some((entry) => entry.role !== "skirmisher"),
+      "Higher-threat plans should include specialist roles"
+    );
+  }
+  {
+    const plan = buildEncounterPlan({
+      floor: 12,
+      threat: 12,
+      roomKind: "boss",
+      targetCount: 3,
+      rng: new SeededRandom("encounter-boss-fallback")
+    });
+    assert(
+      plan.every((entry) => entry.encounterId === "fallback-skirmisher"),
+      "Unknown room kinds should fall back to a safe default encounter"
+    );
+  }
 }
 
 // src/buildChoices.ts
@@ -1855,32 +2355,50 @@ function findBuildChoice(id) {
 
 // src/lootAndShopStock.ts
 function makeBandages() {
-  const item = new InstantEffectItem(EN.game.itemNames.bandages, BANDAGES_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.bandages,
+    BANDAGES_HEAL_HP
+  );
   item.value = BANDAGES_GOLD_VALUE;
   return item;
 }
 function makeHealthPotion() {
-  const item = new InstantEffectItem(EN.game.itemNames.healthPotion, HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.healthPotion,
+    HEALTH_POTION_HEAL_HP
+  );
   item.value = HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 function makeLargePotion() {
-  const item = new InstantEffectItem(EN.game.itemNames.largeHealthPotion, LARGE_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.largeHealthPotion,
+    LARGE_HEALTH_POTION_HEAL_HP
+  );
   item.value = LARGE_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 function makeHugePotion() {
-  const item = new InstantEffectItem(EN.game.itemNames.hugeHealthPotion, HUGE_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.hugeHealthPotion,
+    HUGE_HEALTH_POTION_HEAL_HP
+  );
   item.value = HUGE_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 function makeColossalPotion() {
-  const item = new InstantEffectItem(EN.game.itemNames.colossalHealthPotion, COLOSSAL_HEALTH_POTION_HEAL_HP);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.colossalHealthPotion,
+    COLOSSAL_HEALTH_POTION_HEAL_HP
+  );
   item.value = COLOSSAL_HEALTH_POTION_GOLD_VALUE;
   return item;
 }
 function makeInstaheal() {
-  const item = new InstantEffectItem(EN.game.itemNames.instaheal, 1e9);
+  const item = new InstantEffectItem(
+    EN.game.itemNames.instaheal,
+    1e9
+  );
   item.value = INSTAHEAL_GOLD_VALUE;
   return item;
 }
@@ -1890,13 +2408,26 @@ function generateItemPools(dice, rng, nameGenerator) {
   for (let i = 0; i < ITEM_POOL_GENERATION_COUNT; i += 1) {
     const special = dice.roll() >= ITEM_SPECIAL_ROLL_MIN;
     const valueMultiplier = special ? ITEM_SPECIAL_VALUE_MULTIPLIER : ITEM_DEFAULT_VALUE_MULTIPLIER;
-    const mountpoint = rng.choice(["head", "chest", "arms", "hands", "legs", "feet"]);
+    const mountpoint = rng.choice([
+      "head",
+      "chest",
+      "arms",
+      "hands",
+      "legs",
+      "feet"
+    ]);
     const name = nameGenerator.generateName(mountpoint, special);
     if (mountpoint === "hands") {
       const weapon = createWeapon(
         name,
-        dice.roll(ITEM_WEAPON_MAX_DAMAGE_ROLL_MIN, ITEM_WEAPON_MAX_DAMAGE_ROLL_MAX),
-        dice.roll(ITEM_WEAPON_CHALLENGE_ROLL_MIN, ITEM_WEAPON_CHALLENGE_ROLL_MAX),
+        dice.roll(
+          ITEM_WEAPON_MAX_DAMAGE_ROLL_MIN,
+          ITEM_WEAPON_MAX_DAMAGE_ROLL_MAX
+        ),
+        dice.roll(
+          ITEM_WEAPON_CHALLENGE_ROLL_MIN,
+          ITEM_WEAPON_CHALLENGE_ROLL_MAX
+        ),
         rng
       );
       weapon.value = Math.floor(
@@ -1904,7 +2435,12 @@ function generateItemPools(dice, rng, nameGenerator) {
       );
       weapons.push(weapon);
     } else {
-      const armor = createArmor(name, mountpoint, dice.roll(ITEM_ARMOR_CHALLENGE_ROLL_MIN, ITEM_ARMOR_CHALLENGE_ROLL_MAX), rng);
+      const armor = createArmor(
+        name,
+        mountpoint,
+        dice.roll(ITEM_ARMOR_CHALLENGE_ROLL_MIN, ITEM_ARMOR_CHALLENGE_ROLL_MAX),
+        rng
+      );
       armor.value = Math.floor(
         (armor.getAttackBonus() * ITEM_ARMOR_VALUE_ATTACK_WEIGHT + armor.getDefenseBonus() * ITEM_ARMOR_VALUE_DEFENSE_WEIGHT) * valueMultiplier
       );
@@ -2201,7 +2737,9 @@ function carveLabyrinthBranches(cells, width, height, rng) {
     const steps = rng.int(7, 28);
     for (let step = 0; step < steps; step += 1) {
       if (rng.chance(0.35)) {
-        const nextDirectionOptions = CARDINAL_STEPS.filter((candidate) => !isReverse(candidate, direction));
+        const nextDirectionOptions = CARDINAL_STEPS.filter(
+          (candidate) => !isReverse(candidate, direction)
+        );
         direction = rng.choice(nextDirectionOptions);
       }
       const next = { x: cursor.x + direction.x, y: cursor.y + direction.y };
@@ -2218,7 +2756,9 @@ function carveLabyrinthBranches(cells, width, height, rng) {
       }
       cursor = next;
       if (rng.chance(0.15)) {
-        const sides = CARDINAL_STEPS.filter((candidate) => candidate.x !== direction.x || candidate.y !== direction.y);
+        const sides = CARDINAL_STEPS.filter(
+          (candidate) => candidate.x !== direction.x || candidate.y !== direction.y
+        );
         const side = rng.choice(sides);
         const branch = { x: cursor.x + side.x, y: cursor.y + side.y };
         if (branch.x > 0 && branch.y > 0 && branch.x < width - 1 && branch.y < height - 1) {
@@ -2291,7 +2831,14 @@ function generateMap(rng) {
   const cells = new Uint8Array(width * height);
   const rooms = [];
   let nextRoomId = 1;
-  const startRoom = { id: nextRoomId, x: 1, y: 1, w: 8, h: 8, attrs: ROOM_START };
+  const startRoom = {
+    id: nextRoomId,
+    x: 1,
+    y: 1,
+    w: 8,
+    h: 8,
+    attrs: ROOM_START
+  };
   nextRoomId += 1;
   const bossRoom = {
     id: nextRoomId,
@@ -2316,7 +2863,14 @@ function generateMap(rng) {
     for (let attempt = 0; attempt < attemptsPerRoom; attempt += 1) {
       const roomX = rng.int(1, width - roomW - 2);
       const roomY = rng.int(1, height - roomH - 2);
-      const room = { id: nextRoomId, x: roomX, y: roomY, w: roomW, h: roomH, attrs: 0 };
+      const room = {
+        id: nextRoomId,
+        x: roomX,
+        y: roomY,
+        w: roomW,
+        h: roomH,
+        attrs: 0
+      };
       let blocked = false;
       for (const other of rooms) {
         if (overlaps(room, other, 1)) {
@@ -2331,8 +2885,12 @@ function generateMap(rng) {
       }
     }
   }
-  const sortedByDistance = [...rooms].sort((a, b) => dist(centerOf(a), centerOf(startRoom)) - dist(centerOf(b), centerOf(startRoom)));
-  const eligibleShopRooms = sortedByDistance.filter((room) => (room.attrs & (ROOM_START | ROOM_BOSS)) === 0);
+  const sortedByDistance = [...rooms].sort(
+    (a, b) => dist(centerOf(a), centerOf(startRoom)) - dist(centerOf(b), centerOf(startRoom))
+  );
+  const eligibleShopRooms = sortedByDistance.filter(
+    (room) => (room.attrs & (ROOM_START | ROOM_BOSS)) === 0
+  );
   if (eligibleShopRooms.length > 0) {
     const idx = Math.floor(eligibleShopRooms.length * 0.65);
     eligibleShopRooms[Math.min(idx, eligibleShopRooms.length - 1)].attrs |= ROOM_SHOP;
@@ -2390,6 +2948,7 @@ function runAiStep(options) {
   if (options.overlayType !== "none") {
     return { battleTrigger: null };
   }
+  const roomById = new Map(options.world.rooms.map((room) => [room.id, room]));
   const occupied = /* @__PURE__ */ new Set();
   occupied.add(posKey(options.player.position));
   for (const chest of options.chests) {
@@ -2410,21 +2969,59 @@ function runAiStep(options) {
     }
     const playerRoom = options.world.roomAt(options.player.position);
     const mobRoom = options.world.roomAt(creature.position);
-    if (playerRoom && mobRoom && playerRoom.id === mobRoom.id) {
+    const mobInHomeRoom = mobRoom !== null && mobRoom.id === mob.roomId;
+    const playerInMobHomeRoom = playerRoom !== null && playerRoom.id === mob.roomId;
+    const homeAggro = mobInHomeRoom && playerInMobHomeRoom;
+    if (homeAggro) {
+      mob.pursuitTurnsRemaining = AI_LEASH_PURSUIT_TURNS;
+    }
+    const canPursuePlayer = homeAggro || mob.pursuitTurnsRemaining > 0;
+    if (canPursuePlayer) {
       const blocked = new Set(occupied);
       blocked.delete(posKey(creature.position));
-      const path = options.world.pathTo(creature.position, options.player.position, blocked);
+      const path = options.world.pathTo(
+        creature.position,
+        options.player.position,
+        blocked
+      );
       if (path.length === 1) {
         return {
           battleTrigger: {
             mobId: mob.id,
-            roomId: playerRoom?.id ?? mobRoom?.id ?? null,
+            roomId: playerRoom?.id ?? mobRoom?.id ?? mob.roomId,
             attackerName: creature.name
           }
         };
       }
       if (path.length > 0) {
         const next = path[0];
+        const nextKey = posKey(next);
+        if (!occupied.has(nextKey)) {
+          occupied.delete(posKey(creature.position));
+          creature.position = next;
+          occupied.add(nextKey);
+        }
+      }
+      if (!homeAggro && !mob.isBoss) {
+        mob.pursuitTurnsRemaining = Math.max(0, mob.pursuitTurnsRemaining - 1);
+      }
+      continue;
+    }
+    const homeRoom = roomById.get(mob.roomId) ?? null;
+    if (!mobInHomeRoom && homeRoom) {
+      const blocked = new Set(occupied);
+      blocked.delete(posKey(creature.position));
+      const homeTarget = {
+        x: homeRoom.x + Math.floor(homeRoom.w / 2),
+        y: homeRoom.y + Math.floor(homeRoom.h / 2)
+      };
+      const pathHome = options.world.pathTo(
+        creature.position,
+        homeTarget,
+        blocked
+      );
+      if (pathHome.length > 0) {
+        const next = pathHome[0];
         const nextKey = posKey(next);
         if (!occupied.has(nextKey)) {
           occupied.delete(posKey(creature.position));
@@ -2445,6 +3042,10 @@ function runAiStep(options) {
     ]);
     for (const next of steps) {
       if (!options.world.inBounds(next.x, next.y) || !options.world.isPassable(next.x, next.y)) {
+        continue;
+      }
+      const nextRoom = options.world.roomAt(next);
+      if (!nextRoom || nextRoom.id !== mob.roomId) {
         continue;
       }
       const nextKey = posKey(next);
@@ -2536,10 +3137,27 @@ function resolveCombatTurn(options) {
     options.log(EN.game.logs.dangerSenseProtected, "success");
     battle.surpriseProtection = false;
   }
-  const result = options.combat.turn(options.player, mob.creature, options.action, {
-    enemyAttackMultiplier: openingProtection ? SURPRISE_PROTECTION_ATTACK_MULTIPLIER : 1,
-    fleeBonus: openingProtection ? SURPRISE_PROTECTION_FLEE_BONUS : 0
-  });
+  const combatWithIntent = options.combat;
+  let forcedEnemyAction = void 0;
+  if (mob.nextEnemyActionId && combatWithIntent.enemyActionForId) {
+    forcedEnemyAction = combatWithIntent.enemyActionForId(mob.nextEnemyActionId);
+  } else if (combatWithIntent.planEnemyAction) {
+    forcedEnemyAction = combatWithIntent.planEnemyAction(mob.creature);
+  }
+  if (forcedEnemyAction) {
+    mob.intentHint = forcedEnemyAction.intentHint;
+  }
+  mob.nextEnemyActionId = void 0;
+  const result = options.combat.turn(
+    options.player,
+    mob.creature,
+    options.action,
+    {
+      enemyAttackMultiplier: openingProtection ? SURPRISE_PROTECTION_ATTACK_MULTIPLIER : 1,
+      fleeBonus: openingProtection ? SURPRISE_PROTECTION_FLEE_BONUS : 0,
+      forcedEnemyAction
+    }
+  );
   for (const entry of result.logs) {
     options.log(entry.text, entry.level);
   }
@@ -2553,6 +3171,8 @@ function resolveCombatTurn(options) {
     });
     options.player.inBattle = false;
     mob.creature.inBattle = false;
+    mob.intentHint = void 0;
+    mob.nextEnemyActionId = void 0;
     const nextCurrentRoom = options.world.roomAt(options.player.position);
     options.log(EN.game.logs.retreat, "info");
     options.world.updateFov(options.player.position);
@@ -2572,11 +3192,19 @@ function resolveCombatTurn(options) {
   let openBossReward = false;
   if (!mob.creature.alive) {
     options.stats.vanquished += 1;
-    const gainedXp = Math.floor(mob.creature.maxHitpoints * CREATURE_XP_MULTIPLIER);
+    const gainedXp = Math.floor(
+      mob.creature.maxHitpoints * CREATURE_XP_MULTIPLIER
+    );
     const gain = options.player.giveXp(gainedXp);
     options.stats.xpGained += gainedXp;
     if (gain.leveled > 0) {
-      options.log(EN.game.logs.welcomeLevel(options.player.level, options.player.unspentStatPoints), "success");
+      options.log(
+        EN.game.logs.welcomeLevel(
+          options.player.level,
+          options.player.unspentStatPoints
+        ),
+        "success"
+      );
     }
     const lootGold = mob.creature.gold;
     options.player.give(new Gold(lootGold));
@@ -2584,6 +3212,8 @@ function resolveCombatTurn(options) {
     options.log(EN.game.logs.lootKillRewards(lootGold, gainedXp), "success");
     options.player.inBattle = false;
     mob.creature.inBattle = false;
+    mob.intentHint = void 0;
+    mob.nextEnemyActionId = void 0;
     nextOverlay = { type: "none" };
     const bossDefeated = mob.isBoss;
     nextMobs = options.mobs.filter((entry) => entry.creature.alive);
@@ -2591,8 +3221,15 @@ function resolveCombatTurn(options) {
       options.log(EN.game.logs.bossDownChooseReward, "success");
       openBossReward = true;
     } else if (nextMobs.length > 0) {
-      options.log(EN.game.logs.enemiesRemain(nextMobs.length, options.floor), "info");
+      options.log(
+        EN.game.logs.enemiesRemain(nextMobs.length, options.floor),
+        "info"
+      );
     }
+  } else if (options.player.alive && combatWithIntent.planEnemyAction) {
+    const nextIntent = combatWithIntent.planEnemyAction(mob.creature);
+    mob.nextEnemyActionId = nextIntent.id;
+    mob.intentHint = nextIntent.intentHint;
   }
   if (!options.player.alive) {
     return {
@@ -2728,7 +3365,9 @@ function computeShopEntryCost(entry, player) {
   return Math.max(1, Math.floor(entry.value - entry.value * discount));
 }
 function buyShopEntry(options) {
-  const entry = options.shopStock.find((candidate) => candidate.id === options.entryId);
+  const entry = options.shopStock.find(
+    (candidate) => candidate.id === options.entryId
+  );
   if (!entry || entry.sold) {
     return;
   }
@@ -2786,13 +3425,19 @@ function buyShopEntry(options) {
 
 // src/runFloorPopulation.ts
 function populateDungeon(options) {
-  const pools = generateItemPools(options.dice, options.rng, options.nameGenerator);
+  const pools = generateItemPools(
+    options.dice,
+    options.rng,
+    options.nameGenerator
+  );
   const mobs = [];
   const chests = [];
   const shopClutter = [];
   const roomThreatById = /* @__PURE__ */ new Map();
   const startingRoom = options.world.rooms[0];
-  const bossRoom = options.world.rooms.find((room) => (room.attrs & ROOM_BOSS) === ROOM_BOSS) ?? options.world.rooms[options.world.rooms.length - 1];
+  const bossRoom = options.world.rooms.find(
+    (room) => (room.attrs & ROOM_BOSS) === ROOM_BOSS
+  ) ?? options.world.rooms[options.world.rooms.length - 1];
   const startY = roomCenter(startingRoom).y;
   const bossY = roomCenter(bossRoom).y;
   const yScaleSpan = Math.max(1, bossY - startY);
@@ -2827,8 +3472,15 @@ function populateDungeon(options) {
     roomThreatById.set(room.id, challengeLevel);
     if (isShop) {
       const roomSquares = room.w * room.h;
-      const clutterCount = Math.max(1, Math.ceil(roomSquares / SHOP_CLUTTER_DENSITY_DIVISOR));
-      const clutterPositions = randomPositionsInRoom(room, options.rng, clutterCount);
+      const clutterCount = Math.max(
+        1,
+        Math.ceil(roomSquares / SHOP_CLUTTER_DENSITY_DIVISOR)
+      );
+      const clutterPositions = randomPositionsInRoom(
+        room,
+        options.rng,
+        clutterCount
+      );
       const sprites = [88, 89, 90, 91, 92, 93, 94, 95];
       for (const pos of clutterPositions) {
         shopClutter.push({
@@ -2839,28 +3491,88 @@ function populateDungeon(options) {
       }
       continue;
     }
-    const scaled = Math.max(FLOOR_SCALE_MINIMUM, yScale + options.floor * FLOOR_DEPTH_SCALE_PER_FLOOR);
+    const scaled = Math.max(
+      FLOOR_SCALE_MINIMUM,
+      yScale + options.floor * FLOOR_DEPTH_SCALE_PER_FLOOR
+    );
     let mobCount = 0;
     if (isBoss) {
       mobCount = 1;
     } else if (!isStart) {
-      mobCount = options.dice.roll(1, Math.max(1, Math.ceil((FLOOR_MOB_BASE + options.floor * FLOOR_MOB_PER_FLOOR) * scaled)));
+      mobCount = options.dice.roll(
+        1,
+        Math.max(
+          1,
+          Math.ceil(
+            (FLOOR_MOB_BASE + options.floor * FLOOR_MOB_PER_FLOOR) * scaled
+          )
+        )
+      );
     }
-    const mobPositions = randomPositionsInRoom(room, options.rng, mobCount, [], 0);
+    const encounterPlan = buildEncounterPlan({
+      floor: options.floor,
+      threat: challengeLevel,
+      roomKind: isBoss ? "boss" : "normal",
+      targetCount: mobCount,
+      rng: options.rng
+    });
+    const mobPositions = randomPositionsInRoom(
+      room,
+      options.rng,
+      mobCount,
+      [],
+      0
+    );
     const chestCount = options.dice.roll(
       1,
-      Math.max(1, Math.ceil((FLOOR_CHEST_BASE + options.floor * FLOOR_CHEST_PER_FLOOR) * scaled))
+      Math.max(
+        1,
+        Math.ceil(
+          (FLOOR_CHEST_BASE + options.floor * FLOOR_CHEST_PER_FLOOR) * scaled
+        )
+      )
     );
-    const chestPositions = randomPositionsInRoom(room, options.rng, chestCount, mobPositions, 1);
-    for (const pos of mobPositions) {
-      const mob = creatureAtLevel(challengeLevel, options.nameGenerator, options.rng);
+    const chestPositions = randomPositionsInRoom(
+      room,
+      options.rng,
+      chestCount,
+      mobPositions,
+      1
+    );
+    for (const [index, pos] of mobPositions.entries()) {
+      const encounterMember = encounterPlan[index];
+      const roleTuning = encounterMember ? ENCOUNTER_ROLE_TUNING[encounterMember.role] : null;
+      const mobChallengeLevel = !isBoss && roleTuning ? Math.max(0, challengeLevel + roleTuning.challengeOffset) : challengeLevel;
+      const mob = creatureAtLevel(
+        mobChallengeLevel,
+        options.nameGenerator,
+        options.rng
+      );
       if (isBoss) {
         mob.name = EN.game.names.dungeonBoss;
         mob.attributes.modify("str", BOSS_STR_BONUS_BASE + floorOffset);
-        mob.attributes.modify("dex", BOSS_DEX_BONUS_BASE + Math.floor(floorOffset / BOSS_DEX_BONUS_FLOOR_DIVISOR));
+        mob.attributes.modify(
+          "dex",
+          BOSS_DEX_BONUS_BASE + Math.floor(floorOffset / BOSS_DEX_BONUS_FLOOR_DIVISOR)
+        );
         mob.attributes.modify("con", BOSS_CON_BONUS_BASE + floorOffset);
-        mob.maxHitpoints = Math.max(1, Math.floor(mob.maxHitpoints * (1 + floorOffset * BOSS_HP_SCALE_PER_FLOOR)));
+        mob.maxHitpoints = Math.max(
+          1,
+          Math.floor(
+            mob.maxHitpoints * (1 + floorOffset * BOSS_HP_SCALE_PER_FLOOR)
+          )
+        );
         mob.hitpoints = mob.maxHitpoints;
+      } else if (roleTuning) {
+        mob.maxHitpoints = Math.max(
+          1,
+          Math.floor(mob.maxHitpoints * roleTuning.hitpointMultiplier)
+        );
+        mob.hitpoints = mob.maxHitpoints;
+        mob.attackBonus += roleTuning.attackBonusDelta;
+        mob.defenseBonus += roleTuning.defenseBonusDelta;
+        mob.damageDealtMultiplier *= roleTuning.damageDealtMultiplier;
+        mob.damageTakenMultiplier *= roleTuning.damageTakenMultiplier;
       }
       mob.mob = true;
       mob.position = { x: pos.x, y: pos.y };
@@ -2869,7 +3581,11 @@ function populateDungeon(options) {
         id: options.nextId("mob"),
         creature: mob,
         roomId: room.id,
-        isBoss
+        isBoss,
+        pursuitTurnsRemaining: 0,
+        encounterRole: encounterMember?.role,
+        encounterId: encounterMember?.encounterId,
+        intentHint: encounterMember?.intentHint
       });
     }
     for (const pos of chestPositions) {
@@ -2886,7 +3602,9 @@ function populateDungeon(options) {
       if (options.dice.roll(1, 20) >= CHEST_HUGE_POTION_ROLL_MIN) {
         chest.add(makeLargePotion());
       } else if (options.dice.roll(1, 20) >= CHEST_LARGE_OR_HEALTH_ROLL_MIN) {
-        chest.add(challengeLevel >= CHEST_HIGH_TIER_LEVEL ? makeLargePotion() : makeHealthPotion());
+        chest.add(
+          challengeLevel >= CHEST_HIGH_TIER_LEVEL ? makeLargePotion() : makeHealthPotion()
+        );
       } else if (options.dice.roll(1, 20) >= CHEST_TIERED_POTION_ROLL_MIN) {
         if (challengeLevel >= CHEST_HIGH_TIER_LEVEL) {
           chest.add(makeLargePotion());
@@ -2911,7 +3629,14 @@ function populateDungeon(options) {
 }
 
 // src/runProgression.ts
-var ATTRIBUTE_ORDER = ["str", "dex", "con", "int", "wis", "chr"];
+var ATTRIBUTE_ORDER = [
+  "str",
+  "dex",
+  "con",
+  "int",
+  "wis",
+  "chr"
+];
 function toPublicBuildChoice(choice) {
   return {
     id: choice.id,
@@ -2922,7 +3647,9 @@ function toPublicBuildChoice(choice) {
 }
 function pickRandomBuildChoices(kind, count, rng, activePerks, activeGambits) {
   const pool = kind === "perk" ? PERK_POOL : GAMBIT_POOL;
-  const active = new Set((kind === "perk" ? activePerks : activeGambits).map((choice) => choice.id));
+  const active = new Set(
+    (kind === "perk" ? activePerks : activeGambits).map((choice) => choice.id)
+  );
   let available = pool.filter((choice) => !active.has(choice.id));
   if (available.length < count) {
     available = [...pool];
@@ -2932,7 +3659,13 @@ function pickRandomBuildChoices(kind, count, rng, activePerks, activeGambits) {
 function createPendingBossRewards(rng, activePerks, activeGambits) {
   return {
     perks: pickRandomBuildChoices("perk", 3, rng, activePerks, activeGambits),
-    gambits: pickRandomBuildChoices("gambit", 3, rng, activePerks, activeGambits)
+    gambits: pickRandomBuildChoices(
+      "gambit",
+      3,
+      rng,
+      activePerks,
+      activeGambits
+    )
   };
 }
 function applyBuildChoiceEffect(player, choice) {
@@ -2947,12 +3680,18 @@ function applyBuildChoiceEffect(player, choice) {
       }
       player.attributes.modify(attr, delta);
       if (attr === "con") {
-        player.maxHitpoints = Math.max(1, player.maxHitpoints + delta * PLAYER_CONSTITUTION_BONUS);
+        player.maxHitpoints = Math.max(
+          1,
+          player.maxHitpoints + delta * PLAYER_CONSTITUTION_BONUS
+        );
       }
     }
   }
   if (choice.maxHitpoints) {
-    player.maxHitpoints = Math.max(1, player.maxHitpoints + choice.maxHitpoints);
+    player.maxHitpoints = Math.max(
+      1,
+      player.maxHitpoints + choice.maxHitpoints
+    );
   }
   player.damageDealtMultiplier *= choice.damageDealtMultiplier ?? 1;
   player.damageTakenMultiplier *= choice.damageTakenMultiplier ?? 1;
@@ -2974,12 +3713,18 @@ function removeBuildChoiceEffect(player, choice) {
       }
       player.attributes.modify(attr, -delta);
       if (attr === "con") {
-        player.maxHitpoints = Math.max(1, player.maxHitpoints - delta * PLAYER_CONSTITUTION_BONUS);
+        player.maxHitpoints = Math.max(
+          1,
+          player.maxHitpoints - delta * PLAYER_CONSTITUTION_BONUS
+        );
       }
     }
   }
   if (choice.maxHitpoints) {
-    player.maxHitpoints = Math.max(1, player.maxHitpoints - choice.maxHitpoints);
+    player.maxHitpoints = Math.max(
+      1,
+      player.maxHitpoints - choice.maxHitpoints
+    );
   }
   player.damageDealtMultiplier /= choice.damageDealtMultiplier ?? 1;
   player.damageTakenMultiplier /= choice.damageTakenMultiplier ?? 1;
@@ -3036,7 +3781,10 @@ function chooseBossReward(options) {
     options.activeGambits.push(picked);
   }
   options.log(
-    EN.game.logs.selectedBuildChoice(picked.kind === "perk" ? EN.game.labels.perk : EN.game.labels.gambit, picked.name),
+    EN.game.logs.selectedBuildChoice(
+      picked.kind === "perk" ? EN.game.labels.perk : EN.game.labels.gambit,
+      picked.name
+    ),
     "success"
   );
   return {
@@ -3066,12 +3814,28 @@ function claimShopReward(options) {
   } else if (options.choiceId === "remove-gambit") {
     const removed = options.removeLatestChoice("gambit");
     if (removed) {
-      options.log(EN.game.logs.shopRewardRemovedGambit(removed.name), "success");
+      options.log(
+        EN.game.logs.shopRewardRemovedGambit(removed.name),
+        "success"
+      );
     } else {
-      const heal = Math.max(1, Math.floor(options.player.currentMaxHitpoints() * SHOP_REWARD_HEAL_FALLBACK_RATIO));
+      const heal = Math.max(
+        1,
+        Math.floor(
+          options.player.currentMaxHitpoints() * SHOP_REWARD_HEAL_FALLBACK_RATIO
+        )
+      );
       const before = options.player.hitpoints;
-      options.player.hitpoints = Math.min(options.player.currentMaxHitpoints(), options.player.hitpoints + heal);
-      options.log(EN.game.logs.shopRewardGambitFallbackHeal(options.player.hitpoints - before), "success");
+      options.player.hitpoints = Math.min(
+        options.player.currentMaxHitpoints(),
+        options.player.hitpoints + heal
+      );
+      options.log(
+        EN.game.logs.shopRewardGambitFallbackHeal(
+          options.player.hitpoints - before
+        ),
+        "success"
+      );
     }
   }
   return {
@@ -3101,7 +3865,10 @@ function allocateLevelUp(options) {
       nextOverlayType: null
     };
   }
-  options.log(EN.game.logs.levelUpSpent(EN.game.attributeLabels[options.attr]), "success");
+  options.log(
+    EN.game.logs.levelUpSpent(EN.game.attributeLabels[options.attr]),
+    "success"
+  );
   return {
     spent: true,
     nextOverlayType: options.player.unspentStatPoints > 0 ? "level-up" : "none"
@@ -3109,8 +3876,22 @@ function allocateLevelUp(options) {
 }
 
 // src/runSaveCodec.ts
-var ATTRIBUTE_ORDER2 = ["str", "dex", "con", "int", "wis", "chr"];
-var WIELD_SLOTS = ["head", "chest", "arms", "hands", "legs", "feet"];
+var ATTRIBUTE_ORDER2 = [
+  "str",
+  "dex",
+  "con",
+  "int",
+  "wis",
+  "chr"
+];
+var WIELD_SLOTS = [
+  "head",
+  "chest",
+  "arms",
+  "hands",
+  "legs",
+  "feet"
+];
 function bytesToBase64(bytes) {
   let binary = "";
   for (const value of bytes) {
@@ -3288,6 +4069,11 @@ function encodeRunSaveData(input) {
       id: mob.id,
       roomId: mob.roomId,
       isBoss: mob.isBoss,
+      pursuitTurnsRemaining: mob.pursuitTurnsRemaining,
+      encounterRole: mob.encounterRole,
+      encounterId: mob.encounterId,
+      intentHint: mob.intentHint,
+      nextEnemyActionId: mob.nextEnemyActionId,
       creature: serializeCreature(mob.creature)
     })),
     chests: input.chests.map((entry) => ({
@@ -3320,7 +4106,9 @@ function encodeRunSaveData(input) {
     activeGambitIds: [...input.activeGambitIds],
     pendingBossRewards: input.pendingBossRewards ? {
       perkIds: input.pendingBossRewards.perks.map((choice) => choice.id),
-      gambitIds: input.pendingBossRewards.gambits.map((choice) => choice.id)
+      gambitIds: input.pendingBossRewards.gambits.map(
+        (choice) => choice.id
+      )
     } : null,
     pendingShopRewards: input.pendingShopRewards ? input.pendingShopRewards.map((choice) => ({ ...choice })) : null,
     shopRewardClaimedFloors: [...input.shopRewardClaimedFloors],
@@ -3345,12 +4133,24 @@ function decodeRunSaveData(saved, deps) {
   );
   world.explored.set(worldExplored);
   const mobs = saved.mobs.map((entry) => {
-    const creature = new Creature(entry.creature.name, clonePos2(entry.creature.position), new AttributeSet(entry.creature.attributes));
+    const creature = new Creature(
+      entry.creature.name,
+      clonePos2(entry.creature.position),
+      new AttributeSet(entry.creature.attributes)
+    );
     hydrateCreatureFromSave(creature, entry.creature);
     return {
       id: entry.id,
       roomId: entry.roomId,
       isBoss: entry.isBoss,
+      pursuitTurnsRemaining: Math.max(
+        0,
+        Math.floor(entry.pursuitTurnsRemaining ?? 0)
+      ),
+      encounterRole: typeof entry.encounterRole === "string" && isEncounterRole(entry.encounterRole) ? entry.encounterRole : void 0,
+      encounterId: typeof entry.encounterId === "string" ? entry.encounterId : void 0,
+      intentHint: typeof entry.intentHint === "string" && isEnemyIntentHint(entry.intentHint) ? entry.intentHint : void 0,
+      nextEnemyActionId: entry.nextEnemyActionId === "guarded" || entry.nextEnemyActionId === "reckless" || entry.nextEnemyActionId === "steady" ? entry.nextEnemyActionId : void 0,
       creature
     };
   });
@@ -3401,12 +4201,19 @@ function decodeRunSaveData(saved, deps) {
     activePerks: saved.activePerkIds.map((id) => deps.findBuildChoice(id)),
     activeGambits: saved.activeGambitIds.map((id) => deps.findBuildChoice(id)),
     pendingBossRewards: saved.pendingBossRewards ? {
-      perks: saved.pendingBossRewards.perkIds.map((id) => deps.findBuildChoice(id)),
-      gambits: saved.pendingBossRewards.gambitIds.map((id) => deps.findBuildChoice(id))
+      perks: saved.pendingBossRewards.perkIds.map(
+        (id) => deps.findBuildChoice(id)
+      ),
+      gambits: saved.pendingBossRewards.gambitIds.map(
+        (id) => deps.findBuildChoice(id)
+      )
     } : null,
     pendingShopRewards: saved.pendingShopRewards ? saved.pendingShopRewards.map((choice) => ({ ...choice })) : null,
     shopRewardClaimedFloors: [...saved.shopRewardClaimedFloors],
-    combatLuck: saved.combatLuck ?? { playerD20History: [], playerMissStreak: 0 }
+    combatLuck: saved.combatLuck ?? {
+      playerD20History: [],
+      playerMissStreak: 0
+    }
   };
 }
 
@@ -3519,7 +4326,9 @@ var DungeonRun = class _DungeonRun {
     this.pendingBossRewards = null;
     this.pendingShopRewards = null;
     this.populateDungeon();
-    const startingRoom = this.world.rooms.find((room) => (room.attrs & ROOM_START) === ROOM_START) ?? this.world.rooms[0];
+    const startingRoom = this.world.rooms.find(
+      (room) => (room.attrs & ROOM_START) === ROOM_START
+    ) ?? this.world.rooms[0];
     this.player.position = roomCenter(startingRoom);
     this.currentRoom = this.world.roomAt(this.player.position);
     this.world.updateFov(this.player.position);
@@ -3556,11 +4365,18 @@ var DungeonRun = class _DungeonRun {
     return removed;
   }
   openBossReward() {
-    this.pendingBossRewards = createPendingBossRewards(this.rng, this.activePerks, this.activeGambits);
+    this.pendingBossRewards = createPendingBossRewards(
+      this.rng,
+      this.activePerks,
+      this.activeGambits
+    );
     this.overlay = { type: "boss-reward" };
   }
   prepareShopReward() {
-    this.pendingShopRewards = createPendingShopRewards(this.activePerks, this.activeGambits);
+    this.pendingShopRewards = createPendingShopRewards(
+      this.activePerks,
+      this.activeGambits
+    );
     this.overlay = { type: "shop-reward" };
   }
   maybeOpenAutoOverlay() {
@@ -3578,8 +4394,16 @@ var DungeonRun = class _DungeonRun {
     this.floor += 1;
     this.stats.floorReached = this.floor;
     const before = this.player.hitpoints;
-    const heal = Math.max(FLOOR_TRANSITION_HEAL_MINIMUM, Math.floor(this.player.currentMaxHitpoints() * FLOOR_TRANSITION_HEAL_RATIO));
-    this.player.hitpoints = Math.min(this.player.currentMaxHitpoints(), this.player.hitpoints + heal);
+    const heal = Math.max(
+      FLOOR_TRANSITION_HEAL_MINIMUM,
+      Math.floor(
+        this.player.currentMaxHitpoints() * FLOOR_TRANSITION_HEAL_RATIO
+      )
+    );
+    this.player.hitpoints = Math.min(
+      this.player.currentMaxHitpoints(),
+      this.player.hitpoints + heal
+    );
     this.player.inBattle = false;
     this.overlay = { type: "none" };
     this.buildFloor(false);
@@ -3617,6 +4441,12 @@ var DungeonRun = class _DungeonRun {
     this.log(EN.game.logs.dangerWarning(threat), "warn");
   }
   startBattle(mobId, fallback, roomId) {
+    const mob = this.mobs.find((entry) => entry.id === mobId);
+    if (mob && !mob.nextEnemyActionId) {
+      const planned = this.combat.planEnemyAction(mob.creature);
+      mob.nextEnemyActionId = planned.id;
+      mob.intentHint = planned.intentHint;
+    }
     const surpriseProtection = roomId !== null && this.dangerProtectionArmedRooms.has(roomId);
     if (surpriseProtection) {
       this.dangerProtectionArmedRooms.delete(roomId);
@@ -3659,11 +4489,16 @@ var DungeonRun = class _DungeonRun {
     if (this.overlay.type !== "none") {
       return;
     }
-    const next = { x: this.player.position.x + dx, y: this.player.position.y + dy };
+    const next = {
+      x: this.player.position.x + dx,
+      y: this.player.position.y + dy
+    };
     if (!this.world.inBounds(next.x, next.y) || !this.world.isPassable(next.x, next.y)) {
       return;
     }
-    const targetMob = this.mobs.find((mob) => mob.creature.alive && posEq(mob.creature.position, next));
+    const targetMob = this.mobs.find(
+      (mob) => mob.creature.alive && posEq(mob.creature.position, next)
+    );
     if (targetMob) {
       const roomId = this.world.roomAt(targetMob.creature.position)?.id ?? null;
       this.startBattle(targetMob.id, this.player.position, roomId);
@@ -3672,7 +4507,9 @@ var DungeonRun = class _DungeonRun {
       this.log(EN.game.logs.engageEnemy(targetMob.creature.name), "warn");
       return;
     }
-    const targetChest = this.chests.find((entry) => posEq(chestPos2(entry.chest), next) && !entry.chest.empty());
+    const targetChest = this.chests.find(
+      (entry) => posEq(chestPos2(entry.chest), next) && !entry.chest.empty()
+    );
     if (targetChest) {
       this.overlay = { type: "chest", chestId: targetChest.id };
       this.log(EN.game.logs.openChest, "info");
@@ -3718,9 +4555,15 @@ var DungeonRun = class _DungeonRun {
     });
     const battleTrigger = aiStep.battleTrigger;
     if (battleTrigger) {
-      this.startBattle(battleTrigger.mobId, this.player.position, battleTrigger.roomId);
+      this.startBattle(
+        battleTrigger.mobId,
+        this.player.position,
+        battleTrigger.roomId
+      );
       this.player.inBattle = true;
-      const attacker = this.mobs.find((entry) => entry.id === battleTrigger.mobId);
+      const attacker = this.mobs.find(
+        (entry) => entry.id === battleTrigger.mobId
+      );
       if (attacker) {
         attacker.creature.inBattle = true;
       }
@@ -3803,8 +4646,12 @@ var DungeonRun = class _DungeonRun {
       return null;
     }
     return {
-      perks: this.pendingBossRewards.perks.map((choice) => toPublicBuildChoice(choice)),
-      gambits: this.pendingBossRewards.gambits.map((choice) => toPublicBuildChoice(choice))
+      perks: this.pendingBossRewards.perks.map(
+        (choice) => toPublicBuildChoice(choice)
+      ),
+      gambits: this.pendingBossRewards.gambits.map(
+        (choice) => toPublicBuildChoice(choice)
+      )
     };
   }
   chooseBossReward(kind, choiceId) {
@@ -3873,13 +4720,25 @@ var DungeonRun = class _DungeonRun {
     return inventoryItems(this.player);
   }
   equipItem(itemId2) {
-    equipInventoryItem(this.player, itemId2, (text, level) => this.log(text, level));
+    equipInventoryItem(
+      this.player,
+      itemId2,
+      (text, level) => this.log(text, level)
+    );
   }
   useInventoryItem(itemId2) {
-    useInventoryItem(this.player, itemId2, (text, level) => this.log(text, level));
+    useInventoryItem(
+      this.player,
+      itemId2,
+      (text, level) => this.log(text, level)
+    );
   }
   destroyInventoryItem(itemId2) {
-    destroyInventoryItem(this.player, itemId2, (text, level) => this.log(text, level));
+    destroyInventoryItem(
+      this.player,
+      itemId2,
+      (text, level) => this.log(text, level)
+    );
   }
   lootItem(itemId2) {
     const chestEntity = this.getChest();
@@ -3907,7 +4766,11 @@ var DungeonRun = class _DungeonRun {
     });
   }
   shopEntries() {
-    return resolveShopEntries(this.shopStock, this.activePerks, this.activeGambits);
+    return resolveShopEntries(
+      this.shopStock,
+      this.activePerks,
+      this.activeGambits
+    );
   }
   shopEntryCost(entry) {
     return computeShopEntryCost(entry, this.player);
@@ -3982,7 +4845,11 @@ var DungeonRun = class _DungeonRun {
       run.dangerProtectionArmedRooms.add(roomId);
     }
     run.activePerks.splice(0, run.activePerks.length, ...decoded.activePerks);
-    run.activeGambits.splice(0, run.activeGambits.length, ...decoded.activeGambits);
+    run.activeGambits.splice(
+      0,
+      run.activeGambits.length,
+      ...decoded.activeGambits
+    );
     run.pendingBossRewards = decoded.pendingBossRewards;
     run.pendingShopRewards = decoded.pendingShopRewards;
     run.shopRewardClaimedFloors.clear();
@@ -4004,17 +4871,33 @@ function runGameTests() {
   run.player.grantAttributePoint(2);
   run.overlay = { type: "level-up" };
   const choices = run.levelUpChoices().map((choice) => choice.attr).join(",");
-  assertEqual(choices, "str,dex,con,chr", "Level-up choices should only include active gameplay stats");
+  assertEqual(
+    choices,
+    "str,dex,con,chr",
+    "Level-up choices should only include active gameplay stats"
+  );
   const pointsBefore = run.player.unspentStatPoints;
   run.allocateLevelUp("str");
-  assertEqual(run.player.unspentStatPoints, pointsBefore - 1, "Spending a level-up point should reduce available points");
+  assertEqual(
+    run.player.unspentStatPoints,
+    pointsBefore - 1,
+    "Spending a level-up point should reduce available points"
+  );
   run.overlay = { type: "level-up" };
   const intBefore = run.player.attributes.get("int");
   const pointsBeforeInvalid = run.player.unspentStatPoints;
   const allocate = run.allocateLevelUp;
   allocate.call(run, "int");
-  assertEqual(run.player.attributes.get("int"), intBefore, "Inactive attributes should not be spendable via level-up");
-  assertEqual(run.player.unspentStatPoints, pointsBeforeInvalid, "Invalid level-up attributes should not consume points");
+  assertEqual(
+    run.player.attributes.get("int"),
+    intBefore,
+    "Inactive attributes should not be spendable via level-up"
+  );
+  assertEqual(
+    run.player.unspentStatPoints,
+    pointsBeforeInvalid,
+    "Invalid level-up attributes should not consume points"
+  );
 }
 
 // src/tests/procgen.test.ts
@@ -4030,7 +4913,10 @@ function runProcgenTests() {
   for (let i = 0; i < 80; i += 1) {
     const weapon = createWeapon(`Blade-${i}`, 6, 0, procgenRng);
     const [minDamage] = dice.minMax(weapon.damage());
-    assert(minDamage > 1, `Procgen min damage should be >1, got ${minDamage} from ${weapon.damage()}`);
+    assert(
+      minDamage > 1,
+      `Procgen min damage should be >1, got ${minDamage} from ${weapon.damage()}`
+    );
     assert(
       weapon.criticalMultiplier() >= PLAYER_CRIT_MINIMUM_MULTIPLIER,
       `Procgen crit multiplier should be >=${PLAYER_CRIT_MINIMUM_MULTIPLIER}, got ${weapon.criticalMultiplier()}`
@@ -4041,6 +4927,213 @@ function runProcgenTests() {
     legacyWeapon.criticalMultiplier() >= PLAYER_CRIT_MINIMUM_MULTIPLIER,
     `Weapon constructor should clamp crit multiplier to >=${PLAYER_CRIT_MINIMUM_MULTIPLIER}, got ${legacyWeapon.criticalMultiplier()}`
   );
+}
+
+// src/tests/runAi.test.ts
+var ForcedWanderRng = class {
+  int(_min, _max) {
+    return AI_WANDER_ROLL_MAX;
+  }
+  shuffle(items) {
+    return [...items];
+  }
+};
+function makeActor(name, position, isMob) {
+  const actor = new Creature(
+    name,
+    position,
+    new AttributeSet({ str: 10, dex: 10, con: 10, int: 10, wis: 10, chr: 10 })
+  );
+  actor.mob = isMob;
+  return actor;
+}
+function buildTwoRoomWorld() {
+  const width = 9;
+  const height = 5;
+  const cells = new Uint8Array(width * height).fill(0 /* Empty */);
+  const rooms = [
+    { id: 1, x: 1, y: 1, w: 3, h: 3, attrs: 0 },
+    { id: 2, x: 5, y: 1, w: 3, h: 3, attrs: 0 }
+  ];
+  for (const room of rooms) {
+    for (let y = room.y; y < room.y + room.h; y += 1) {
+      for (let x = room.x; x < room.x + room.w; x += 1) {
+        cells[y * width + x] = 1 /* Room */;
+      }
+    }
+  }
+  cells[2 * width + 4] = 2 /* Hall */;
+  return new WorldMap(width, height, rooms, cells);
+}
+function runAiTests() {
+  {
+    const world = buildTwoRoomWorld();
+    const rng = new SeededRandom("ai-leash-return");
+    const player = makeActor("Player", { x: 3, y: 2 }, false);
+    const mobCreature = makeActor("Stalker", { x: 1, y: 2 }, true);
+    const mobs = [
+      {
+        id: "mob-1",
+        creature: mobCreature,
+        roomId: 1,
+        isBoss: false,
+        pursuitTurnsRemaining: 0
+      }
+    ];
+    const initial = runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      initial.battleTrigger,
+      null,
+      "Initial aggro should move toward player instead of starting battle at distance"
+    );
+    assertEqual(
+      mobs[0].pursuitTurnsRemaining,
+      AI_LEASH_PURSUIT_TURNS,
+      "Entering a mob's home room should arm leash pursuit turns"
+    );
+    player.position = { x: 7, y: 2 };
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      mobs[0].pursuitTurnsRemaining,
+      AI_LEASH_PURSUIT_TURNS - 1,
+      "First out-of-room chase tick should consume one leash pursuit turn"
+    );
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      mobs[0].pursuitTurnsRemaining,
+      0,
+      "Second out-of-room chase tick should fully consume leash pursuit turns"
+    );
+    assertEqual(
+      world.roomAt(mobCreature.position),
+      null,
+      "Mob should be in hall after spending leash turns while chasing"
+    );
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      world.roomAt(mobCreature.position)?.id ?? null,
+      1,
+      "Mob should return to its home room after leash pursuit ends"
+    );
+  }
+  {
+    const world = buildTwoRoomWorld();
+    const player = makeActor("Player", { x: 7, y: 2 }, false);
+    const mobCreature = makeActor("Wanderer", { x: 3, y: 2 }, true);
+    const mobs = [
+      {
+        id: "mob-1",
+        creature: mobCreature,
+        roomId: 1,
+        isBoss: false,
+        pursuitTurnsRemaining: 0
+      }
+    ];
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng: new ForcedWanderRng(),
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      world.roomAt(mobCreature.position)?.id ?? null,
+      1,
+      "Idle wandering should keep mobs inside their home room"
+    );
+  }
+  {
+    const world = buildTwoRoomWorld();
+    const rng = new SeededRandom("ai-boss-ignore-leash");
+    const player = makeActor("Player", { x: 3, y: 2 }, false);
+    const bossCreature = makeActor("Boss", { x: 1, y: 2 }, true);
+    const mobs = [
+      {
+        id: "boss-1",
+        creature: bossCreature,
+        roomId: 1,
+        isBoss: true,
+        pursuitTurnsRemaining: 0
+      }
+    ];
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      mobs[0].pursuitTurnsRemaining,
+      AI_LEASH_PURSUIT_TURNS,
+      "Boss should arm pursuit after initial aggro in home room"
+    );
+    player.position = { x: 7, y: 2 };
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    runAiStep({
+      overlayType: "none",
+      world,
+      rng,
+      player,
+      mobs,
+      chests: []
+    });
+    assertEqual(
+      world.roomAt(bossCreature.position)?.id ?? null,
+      2,
+      "Boss should continue pursuing beyond normal leash duration after aggro"
+    );
+    assertEqual(
+      mobs[0].pursuitTurnsRemaining,
+      AI_LEASH_PURSUIT_TURNS,
+      "Boss pursuit counter should not decay after aggro"
+    );
+  }
 }
 
 // src/tests/runCombatFlow.test.ts
@@ -4099,7 +5192,12 @@ function runCombatFlowTests() {
       state: "playing",
       overlay: { type: "none" },
       mobs: [],
-      combat: fakeCombat(() => ({ over: true, fled: false, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: false,
+        logs: [],
+        moments: []
+      })),
       player,
       world,
       chests: [],
@@ -4108,8 +5206,16 @@ function runCombatFlowTests() {
       floor: 1,
       log: noLogs()
     });
-    assertEqual(result.result, null, "Combat flow should no-op when there is no battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, false, "No-op combat flow should not request auto-overlay checks");
+    assertEqual(
+      result.result,
+      null,
+      "Combat flow should no-op when there is no battle overlay"
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      false,
+      "No-op combat flow should not request auto-overlay checks"
+    );
   }
   {
     const player = makePlayer();
@@ -4119,7 +5225,12 @@ function runCombatFlowTests() {
       state: "playing",
       overlay: battleOverlay("missing-mob"),
       mobs: [],
-      combat: fakeCombat(() => ({ over: true, fled: false, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: false,
+        logs: [],
+        moments: []
+      })),
       player,
       world,
       chests: [],
@@ -4128,8 +5239,16 @@ function runCombatFlowTests() {
       floor: 1,
       log: noLogs()
     });
-    assertEqual(result.overlay.type, "none", "Missing battle target should close the battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, true, "Missing battle target should allow auto-overlays to reopen");
+    assertEqual(
+      result.overlay.type,
+      "none",
+      "Missing battle target should close the battle overlay"
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      true,
+      "Missing battle target should allow auto-overlays to reopen"
+    );
   }
   {
     const player = makePlayer();
@@ -4137,14 +5256,27 @@ function runCombatFlowTests() {
     const enemy = makeMob("Runner");
     enemy.inBattle = true;
     player.inBattle = true;
-    const mobs = [{ id: "mob-1", creature: enemy, roomId: 1, isBoss: false }];
+    const mobs = [
+      {
+        id: "mob-1",
+        creature: enemy,
+        roomId: 1,
+        isBoss: false,
+        pursuitTurnsRemaining: 0
+      }
+    ];
     const chests = [];
     const result = resolveCombatTurn({
       action: "flee",
       state: "playing",
       overlay: battleOverlay("mob-1"),
       mobs,
-      combat: fakeCombat(() => ({ over: true, fled: true, logs: [], moments: [] })),
+      combat: fakeCombat(() => ({
+        over: true,
+        fled: true,
+        logs: [],
+        moments: []
+      })),
       player,
       world,
       chests,
@@ -4153,11 +5285,31 @@ function runCombatFlowTests() {
       floor: 1,
       log: noLogs()
     });
-    assertEqual(result.overlay.type, "none", "Successful flee should close the battle overlay");
-    assertEqual(result.maybeOpenAutoOverlay, true, "Successful flee should request auto-overlay checks");
-    assertEqual(player.inBattle, false, "Successful flee should clear player battle state");
-    assertEqual(enemy.inBattle, false, "Successful flee should clear enemy battle state");
-    assertEqual(result.currentRoom, null, "Successful flee should relocate the player outside the battle room when possible");
+    assertEqual(
+      result.overlay.type,
+      "none",
+      "Successful flee should close the battle overlay"
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      true,
+      "Successful flee should request auto-overlay checks"
+    );
+    assertEqual(
+      player.inBattle,
+      false,
+      "Successful flee should clear player battle state"
+    );
+    assertEqual(
+      enemy.inBattle,
+      false,
+      "Successful flee should clear enemy battle state"
+    );
+    assertEqual(
+      result.currentRoom,
+      null,
+      "Successful flee should relocate the player outside the battle room when possible"
+    );
   }
   {
     const player = makePlayer();
@@ -4166,7 +5318,15 @@ function runCombatFlowTests() {
     enemy.maxHitpoints = 40;
     enemy.hitpoints = 40;
     enemy.gold = 19;
-    const mobs = [{ id: "boss-1", creature: enemy, roomId: 1, isBoss: true }];
+    const mobs = [
+      {
+        id: "boss-1",
+        creature: enemy,
+        roomId: 1,
+        isBoss: true,
+        pursuitTurnsRemaining: 0
+      }
+    ];
     const stats = { vanquished: 0, goldEarned: 0, xpGained: 0 };
     const result = resolveCombatTurn({
       action: "normal",
@@ -4186,11 +5346,31 @@ function runCombatFlowTests() {
       floor: 2,
       log: noLogs()
     });
-    assertEqual(result.openBossReward, true, "Defeating a boss should request opening boss rewards");
-    assertEqual(result.mobs.length, 0, "Defeated enemies should be removed from the live mob list");
-    assertEqual(stats.vanquished, 1, "Defeating an enemy should increment vanquish stats");
-    assertEqual(stats.goldEarned, 19, "Defeating an enemy should award its gold");
-    assertEqual(stats.xpGained, Math.floor(40 * CREATURE_XP_MULTIPLIER), "XP gain should scale with enemy max HP");
+    assertEqual(
+      result.openBossReward,
+      true,
+      "Defeating a boss should request opening boss rewards"
+    );
+    assertEqual(
+      result.mobs.length,
+      0,
+      "Defeated enemies should be removed from the live mob list"
+    );
+    assertEqual(
+      stats.vanquished,
+      1,
+      "Defeating an enemy should increment vanquish stats"
+    );
+    assertEqual(
+      stats.goldEarned,
+      19,
+      "Defeating an enemy should award its gold"
+    );
+    assertEqual(
+      stats.xpGained,
+      Math.floor(40 * CREATURE_XP_MULTIPLIER),
+      "XP gain should scale with enemy max HP"
+    );
   }
   {
     const player = makePlayer();
@@ -4200,7 +5380,15 @@ function runCombatFlowTests() {
       action: "normal",
       state: "playing",
       overlay: battleOverlay("mob-1"),
-      mobs: [{ id: "mob-1", creature: enemy, roomId: 1, isBoss: false }],
+      mobs: [
+        {
+          id: "mob-1",
+          creature: enemy,
+          roomId: 1,
+          isBoss: false,
+          pursuitTurnsRemaining: 0
+        }
+      ],
       combat: fakeCombat((combatPlayer) => {
         combatPlayer.alive = false;
         combatPlayer.hitpoints = 0;
@@ -4214,9 +5402,21 @@ function runCombatFlowTests() {
       floor: 1,
       log: noLogs()
     });
-    assertEqual(result.state, "dead", "Player death during combat should transition run state to dead");
-    assertEqual(result.finalizeStats, true, "Player death during combat should request final stats finalization");
-    assertEqual(result.maybeOpenAutoOverlay, false, "Player death should not request auto-overlay reopening");
+    assertEqual(
+      result.state,
+      "dead",
+      "Player death during combat should transition run state to dead"
+    );
+    assertEqual(
+      result.finalizeStats,
+      true,
+      "Player death during combat should request final stats finalization"
+    );
+    assertEqual(
+      result.maybeOpenAutoOverlay,
+      false,
+      "Player death should not request auto-overlay reopening"
+    );
   }
 }
 
@@ -4250,8 +5450,16 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(result.shouldAdvanceFloor, true, "Skipping boss rewards should advance to the next floor");
-    assertEqual(result.pendingBossRewards, null, "Skipping boss rewards should clear pending boss rewards");
+    assertEqual(
+      result.shouldAdvanceFloor,
+      true,
+      "Skipping boss rewards should advance to the next floor"
+    );
+    assertEqual(
+      result.pendingBossRewards,
+      null,
+      "Skipping boss rewards should clear pending boss rewards"
+    );
   }
   {
     const player = makePlayer2();
@@ -4273,10 +5481,25 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(result.shouldAdvanceFloor, true, "Picking a boss reward should advance to the next floor");
-    assertEqual(activePerks.length, 1, "Picked perk should be added to active perks");
-    assertEqual(activePerks[0].id, perk.id, "Picked perk should match selected id");
-    assert(player.attackBonus > baseAttack, "Picked perk should apply its combat effect immediately");
+    assertEqual(
+      result.shouldAdvanceFloor,
+      true,
+      "Picking a boss reward should advance to the next floor"
+    );
+    assertEqual(
+      activePerks.length,
+      1,
+      "Picked perk should be added to active perks"
+    );
+    assertEqual(
+      activePerks[0].id,
+      perk.id,
+      "Picked perk should match selected id"
+    );
+    assert(
+      player.attackBonus > baseAttack,
+      "Picked perk should apply its combat effect immediately"
+    );
   }
   {
     const player = makePlayer2();
@@ -4291,10 +5514,26 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(result.claimed, true, "Claiming a shop reward should report success when overlay is active");
-    assertEqual(result.pendingShopRewards, null, "Claiming a shop reward should clear pending rewards");
-    assertEqual(player.gold, SHOP_REWARD_FALLBACK_GOLD, "Missing perk removal should grant fallback gold");
-    assertEqual(stats.goldEarned, SHOP_REWARD_FALLBACK_GOLD, "Fallback gold should be tracked in run stats");
+    assertEqual(
+      result.claimed,
+      true,
+      "Claiming a shop reward should report success when overlay is active"
+    );
+    assertEqual(
+      result.pendingShopRewards,
+      null,
+      "Claiming a shop reward should clear pending rewards"
+    );
+    assertEqual(
+      player.gold,
+      SHOP_REWARD_FALLBACK_GOLD,
+      "Missing perk removal should grant fallback gold"
+    );
+    assertEqual(
+      stats.goldEarned,
+      SHOP_REWARD_FALLBACK_GOLD,
+      "Fallback gold should be tracked in run stats"
+    );
   }
   {
     const player = makePlayer2();
@@ -4310,8 +5549,15 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(result.claimed, true, "Missing gambit removal should still claim the reward");
-    assert(player.hitpoints > before, "Missing gambit removal should trigger fallback healing");
+    assertEqual(
+      result.claimed,
+      true,
+      "Missing gambit removal should still claim the reward"
+    );
+    assert(
+      player.hitpoints > before,
+      "Missing gambit removal should trigger fallback healing"
+    );
   }
   {
     const player = makePlayer2();
@@ -4324,8 +5570,16 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(validResult.spent, true, "Valid level-up allocation should spend a point");
-    assertEqual(validResult.nextOverlayType, "none", "Overlay should close when no level-up points remain");
+    assertEqual(
+      validResult.spent,
+      true,
+      "Valid level-up allocation should spend a point"
+    );
+    assertEqual(
+      validResult.nextOverlayType,
+      "none",
+      "Overlay should close when no level-up points remain"
+    );
     const invalidResult = allocateLevelUp({
       overlayType: "level-up",
       attr: "int",
@@ -4334,7 +5588,11 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(invalidResult.spent, false, "Inactive attributes must not be spendable");
+    assertEqual(
+      invalidResult.spent,
+      false,
+      "Inactive attributes must not be spendable"
+    );
     const wrongOverlayResult = allocateLevelUp({
       overlayType: "shop",
       attr: "str",
@@ -4343,7 +5601,11 @@ function runProgressionTests() {
       log: () => {
       }
     });
-    assertEqual(wrongOverlayResult.spent, false, "Level-up allocation should no-op outside the level-up overlay");
+    assertEqual(
+      wrongOverlayResult.spent,
+      false,
+      "Level-up allocation should no-op outside the level-up overlay"
+    );
   }
 }
 
@@ -4423,16 +5685,46 @@ function runSaveTests() {
   run.player.gold = 321;
   run.player.hitpoints = Math.max(1, run.player.hitpoints - 7);
   const token = encodeSaveToken(run);
-  assert(token.startsWith("std1."), "Save token should include the std1 prefix");
+  assert(
+    token.startsWith("std1."),
+    "Save token should include the std1 prefix"
+  );
   const loaded = loadRunFromToken(token);
-  assertEqual(loaded.seedPhrase, run.seedPhrase, "Loaded run should preserve the original seed phrase");
-  assertEqual(loaded.player.gold, run.player.gold, "Loaded run should preserve gold");
-  assertEqual(loaded.player.hitpoints, run.player.hitpoints, "Loaded run should preserve hitpoints");
+  assertEqual(
+    loaded.seedPhrase,
+    run.seedPhrase,
+    "Loaded run should preserve the original seed phrase"
+  );
+  assertEqual(
+    loaded.player.gold,
+    run.player.gold,
+    "Loaded run should preserve gold"
+  );
+  assertEqual(
+    loaded.player.hitpoints,
+    run.player.hitpoints,
+    "Loaded run should preserve hitpoints"
+  );
   assertEqual(loaded.floor, run.floor, "Loaded run should preserve floor");
-  const url = buildSaveUrl(token, { origin: "https://example.com", pathname: "/play" });
-  assertEqual(extractSaveToken(url), token, "Token extraction should work from a save URL");
-  assertEqual(extractSaveToken(` ${token} `), token, "Token extraction should trim surrounding whitespace");
-  assertEqual(extractSaveTokenFromSearch(`?save=${encodeURIComponent(token)}`), token, "Search extraction should decode save tokens");
+  const url = buildSaveUrl(token, {
+    origin: "https://example.com",
+    pathname: "/play"
+  });
+  assertEqual(
+    extractSaveToken(url),
+    token,
+    "Token extraction should work from a save URL"
+  );
+  assertEqual(
+    extractSaveToken(` ${token} `),
+    token,
+    "Token extraction should trim surrounding whitespace"
+  );
+  assertEqual(
+    extractSaveTokenFromSearch(`?save=${encodeURIComponent(token)}`),
+    token,
+    "Search extraction should decode save tokens"
+  );
 }
 
 // src/tests/run.ts
@@ -4440,6 +5732,8 @@ var tests = [
   { name: "dice", run: runDiceTests },
   { name: "procgen", run: runProcgenTests },
   { name: "combat", run: runCombatTests },
+  { name: "encounter-grammar", run: runEncounterGrammarTests },
+  { name: "run-ai", run: runAiTests },
   { name: "run-combat-flow", run: runCombatFlowTests },
   { name: "run-progression", run: runProgressionTests },
   { name: "game", run: runGameTests },

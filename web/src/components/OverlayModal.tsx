@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   describeHealChoice,
   type CombatMoment,
@@ -45,16 +45,21 @@ function combatMomentClass(level: "info" | "warn" | "success"): string {
   return "";
 }
 
+function combatPhaseLabel(
+  phase: Extract<CombatMoment, { type: "roll" }>["phase"],
+): string {
+  return phase === "flee"
+    ? EN.ui.combatFxMoments.phaseLabel.flee
+    : phase === "crit-check"
+      ? EN.ui.combatFxMoments.phaseLabel.critCheck
+      : phase === "crit-confirm"
+        ? EN.ui.combatFxMoments.phaseLabel.critConfirm
+        : EN.ui.combatFxMoments.phaseLabel.toHit;
+}
+
 function renderCombatMoment(moment: CombatMoment) {
   if (moment.type === "roll") {
-    const phaseLabel =
-      moment.phase === "flee"
-        ? EN.ui.combatFxMoments.phaseLabel.flee
-        : moment.phase === "crit-check"
-          ? EN.ui.combatFxMoments.phaseLabel.critCheck
-          : moment.phase === "crit-confirm"
-            ? EN.ui.combatFxMoments.phaseLabel.critConfirm
-            : EN.ui.combatFxMoments.phaseLabel.toHit;
+    const phaseLabel = combatPhaseLabel(moment.phase);
 
     return (
       <li
@@ -149,6 +154,16 @@ export function OverlayModal(props: OverlayModalProps) {
   const activeRun = props.run;
   const combatFxListRef = useRef<HTMLUListElement | null>(null);
   const battleLogRef = useRef<HTMLUListElement | null>(null);
+  const [rollingPreviewFace, setRollingPreviewFace] = useState(1);
+
+  const pendingRollMoment =
+    props.combatFx &&
+    props.combatFx.revealed < props.combatFx.moments.length &&
+    props.combatFx.moments[props.combatFx.revealed]?.type === "roll"
+      ? (props.combatFx.moments[
+          props.combatFx.revealed
+        ] as Extract<CombatMoment, { type: "roll" }>)
+      : null;
 
   useEffect(() => {
     const list = combatFxListRef.current;
@@ -156,7 +171,7 @@ export function OverlayModal(props: OverlayModalProps) {
       return;
     }
     list.scrollTop = list.scrollHeight;
-  }, [props.combatFx?.revealed, props.combatFx?.moments.length]);
+  }, [props.combatFx]);
 
   useEffect(() => {
     const list = battleLogRef.current;
@@ -165,6 +180,18 @@ export function OverlayModal(props: OverlayModalProps) {
     }
     list.scrollTop = list.scrollHeight;
   }, [props.combatFx, activeRun.overlay.type, activeRun.logs.length]);
+
+  useEffect(() => {
+    if (!pendingRollMoment) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setRollingPreviewFace((value) => (value % 20) + 1);
+    }, 80);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [pendingRollMoment]);
 
   if (props.combatFx) {
     const shown = props.combatFx.moments.slice(
@@ -209,6 +236,21 @@ export function OverlayModal(props: OverlayModalProps) {
           <p className={combatMomentClass(knockoutMoment.level)}>
             <b>{knockoutMoment.text}</b>
           </p>
+        ) : null}
+        {pendingRollMoment ? (
+          <div className="combat-roll-preview">
+            <div className="roll-preview-die">{rollingPreviewFace}</div>
+            <div className="roll-preview-copy">
+              <strong>{EN.ui.overlays.combatFx.anticipationTitle}</strong>
+              <span>
+                {EN.ui.overlays.combatFx.anticipationNeed(
+                  combatPhaseLabel(pendingRollMoment.phase),
+                  pendingRollMoment.target,
+                  pendingRollMoment.defender,
+                )}
+              </span>
+            </div>
+          </div>
         ) : null}
         <ul ref={combatFxListRef} className="combat-fx-list">
           {shown.map((moment) => renderCombatMoment(moment))}
@@ -315,6 +357,11 @@ export function OverlayModal(props: OverlayModalProps) {
         </p>
         {activeRun.overlay.surpriseProtection ? (
           <p className="hint">{EN.ui.overlays.battle.ambushProtectionHint}</p>
+        ) : null}
+        {enemy.intentHint ? (
+          <p className="hint">
+            {EN.ui.overlays.battle.enemyIntent(enemy.intentHint)}
+          </p>
         ) : null}
         <p className="hint">
           {EN.ui.overlays.battle.healChoice(
